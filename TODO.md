@@ -3,6 +3,7 @@
 - other optimizations? sparse indexes?
 - Reformat everything using `gofmt -w file`. Add a makefile directive to reformat everything
 - Setup CI
+- Review project layout - https://eli.thegreenplace.net/2019/simple-go-project-layout-with-modules/
 
 # Robustness
 - Thread safe LSB operations and/or use a dedicated thread with a buffered channel for other threads to send (and load??) data to the LSB. This is very important before we cut web over to the SST solution.
