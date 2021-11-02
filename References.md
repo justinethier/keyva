@@ -29,3 +29,6 @@ We now understand how a basic LSM tree storage engine works:
 - When a read comes in we check the bloom filter. If the bloom filter indicates that the value is not present then we tell the client that the key could not be found. If the bloom filter indicates that the value is present then we begin iterating over our segment files from newest to oldest.
 - For each segment file, we check a sparse index and scan the offsets where we expect the key to be found until we find the key. We'll return the value as soon as we find it in a segment file.
 
+## Other
+
+* https://www.igvita.com/2012/02/06/sstable-and-log-structured-storage-leveldb/
