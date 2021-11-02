@@ -15,7 +15,7 @@
 package main
 
 import (
-  "keyva/cache"
+  "github.com/justinethier/keyva/cache"
 
   "net/http"
   "fmt"

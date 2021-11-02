@@ -12,7 +12,7 @@ import (
   "regexp"
   "sort"
   "strconv"
-  "keyva/bloom"
+  "github.com/justinethier/keyva/bloom"
   "time"
 )
 
