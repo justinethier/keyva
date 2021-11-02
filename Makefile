@@ -7,12 +7,10 @@ clean:
 .phony: bench test
 
 bench:
-	cd cache ; go test -bench=.
+	go test ./cache/... ./lsb/... -bench=.
 
 test:
-	cd cache ; go test
-	cd lsb; go test
-
+	go test ./cache/... ./lsb/...
 
 # Integration testing
 
