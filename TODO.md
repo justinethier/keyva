@@ -5,6 +5,7 @@
 - Setup CI
 - Review project layout - https://eli.thegreenplace.net/2019/simple-go-project-layout-with-modules/
 - Proper header comments for packages, review package exports, etc
+- Fix bloom filter layout, maybe remove entirely and just use the remote module how go is intended to work
 
 # Robustness
 - Thread safe LSB operations and/or use a dedicated thread with a buffered channel for other threads to send (and load??) data to the LSB. This is very important before we cut web over to the SST solution.
