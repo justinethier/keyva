@@ -3,9 +3,10 @@
 package lsb
 
 import (
-    "bufio"
-    "encoding/json"
-    "os"
+  "bufio"
+  "encoding/json"
+  "os"
+  "github.com/justinethier/keyva/util"
 )
 
 type Log struct {
@@ -49,13 +50,13 @@ func ReadLog(filename string) []Log {
     defer f.Close()
 
     r := bufio.NewReader(f)
-    s, e := Readln(r)
+    s, e := util.Readln(r)
     for e == nil {
         var data Log
         err = json.Unmarshal([]byte(s), &data)
         //fmt.Println(data)
         buf = append(buf, data)
-        s,e = Readln(r)
+        s,e = util.Readln(r)
     }
 
     return buf

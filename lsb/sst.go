@@ -13,6 +13,7 @@ import (
   "sort"
   "strconv"
   "github.com/justinethier/keyva/bloom"
+  "github.com/justinethier/keyva/util"
   "time"
 )
 
@@ -222,13 +223,13 @@ func (s *SstBuf) LoadEntriesFromSstFile(filename string) []SstEntry{
     defer f.Close()
 
     r := bufio.NewReader(f)
-    str, e := Readln(r)
+    str, e := util.Readln(r)
     for e == nil {
         var data SstEntry
         err = json.Unmarshal([]byte(str), &data)
         //fmt.Println(data)
         buf = append(buf, data)
-        str, e = Readln(r)
+        str, e = util.Readln(r)
     }
 
   return buf

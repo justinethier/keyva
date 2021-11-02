@@ -1,4 +1,4 @@
-package lsb
+package util
 
 import (
   "bufio"

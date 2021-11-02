@@ -1,5 +1,5 @@
 # Basic
-- Extract sst out into its own package. Also have a util package as well, and move util.go there. we can have a log package for the old log implementation
+- Extract sst out into its own package. we can have a log package for the old log implementation
 - other optimizations? sparse indexes?
 - Reformat everything using `gofmt -w file`. Add a makefile directive to reformat everything
 - Setup CI
