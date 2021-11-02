@@ -2,7 +2,6 @@
 - Extract sst out into its own package. we can have a log package for the old log implementation
 - other optimizations? sparse indexes?
 - Reformat everything using `gofmt -w file`. Add a makefile directive to reformat everything
-- Setup CI
 - Review project layout - https://eli.thegreenplace.net/2019/simple-go-project-layout-with-modules/
 - Proper header comments for packages, review package exports, etc
 - Fix bloom filter layout, maybe remove entirely and just use the remote module how go is intended to work
