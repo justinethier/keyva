@@ -3,6 +3,7 @@
 - other optimizations? sparse indexes?
 - Reformat everything using `gofmt -w file`. Add a makefile directive to reformat everything
 - Setup CI
+- Review module name, probably want to use github link now
 - Review project layout - https://eli.thegreenplace.net/2019/simple-go-project-layout-with-modules/
 
 # Robustness
