@@ -1,3 +1,3 @@
-module sparkv
+module keyva
 
 go 1.13

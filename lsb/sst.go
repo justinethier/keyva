@@ -12,7 +12,7 @@ import (
   "regexp"
   "sort"
   "strconv"
-  "sparkv/bloom"
+  "keyva/bloom"
   "time"
 )
 

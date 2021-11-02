@@ -15,7 +15,7 @@
 package main
 
 import (
-  "sparkv/cache"
+  "keyva/cache"
 
   "net/http"
   "fmt"
