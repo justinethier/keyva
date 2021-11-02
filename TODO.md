@@ -1,11 +1,10 @@
-- New project name - keva. Or maybe "keyva"
 - Extract sst out into its own package. Also have a util package as well, and move util.go there. we can have a log package for the old log implementation
 - other optimizations? sparse indexes?
-- Consider a hybrid in-memory map/cache and disked-back LSB for both speed an reliability
+- Add GC for cached content
 - Reformat everything using `gofmt -w file`. Add a makefile directive to reformat everything
 
 # Robustness
-- Thread save LSB operations and/or use a dedicated thread with a buffered channel for other threads to send (and load??) data to the LSB
+- Thread safe LSB operations and/or use a dedicated thread with a buffered channel for other threads to send (and load??) data to the LSB. This is very important before we cut web over to the SST solution.
 - Add a write-ahead-log (WAL) to handle crashes. otherwise un-flushed data might be lost
 
 # Web 
