@@ -7,10 +7,10 @@ import (
 	"testing"
 )
 
-var tbl = NewSstBuf(".", 5000)
+var tbl = New(".", 5000)
 
 func BenchmarkSstKeyValueSet(b *testing.B) {
-	//tbl = NewSstBuf(".", 5000)
+	//tbl = New(".", 5000)
 	tbl.ResetDB()
 
 	for i := 0; i < b.N; i++ {
@@ -37,7 +37,7 @@ func BenchmarkSstKeyValueDelete(b *testing.B) {
 }
 
 func TestSstInternals(t *testing.T) {
-	var tbl = NewSstBuf(".", 25)
+	var tbl = New(".", 25)
 
 	tbl.ResetDB()
 
@@ -51,7 +51,7 @@ func TestSstInternals(t *testing.T) {
 
 func TestSstKeyValue(t *testing.T) {
 	var N = 100
-	var tbl = NewSstBuf(".", 25)
+	var tbl = New(".", 25)
 
 	tbl.ResetDB()
 
