@@ -1,16 +1,21 @@
+PACKAGES=./cache/... ./lsb/... ./sst...
+
 .phony: clean
 
 clean:
 	git clean -fdx
 
 # Unit testing
-.phony: bench test
+.phony: bench test fmt
+
+fmt:
+	go fmt $(PACKAGES)
 
 bench:
-	go test ./cache/... ./lsb/... ./sst/... -bench=.
+	go test $(PACKAGES) -bench=.
 
 test:
-	go test ./cache/... ./lsb/... ./sst/...
+	go test $(PACKAGES)
 
 # Integration testing
 
