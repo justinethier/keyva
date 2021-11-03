@@ -1,5 +1,5 @@
 // TODO: not thread safe!
-package lsb
+package sst
 
 import (
   "bufio"
