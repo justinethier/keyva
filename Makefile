@@ -6,7 +6,11 @@ clean:
 	git clean -fdx
 
 # Unit testing
-.phony: bench test fmt
+.phony: bench test fmt doc
+
+# Start documentation web server
+doc:
+	godoc -http=:6060
 
 fmt:
 	go fmt $(PACKAGES)

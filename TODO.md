@@ -1,5 +1,4 @@
 # Basic
-- Reformat everything using `gofmt -w file`. Add a makefile directive to reformat everything
 - Add makefile directive to generate go documentation
 - Review project layout - https://eli.thegreenplace.net/2019/simple-go-project-layout-with-modules/
 - Proper header comments for packages, review package exports, etc
