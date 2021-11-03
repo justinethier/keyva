@@ -7,10 +7,10 @@ clean:
 .phony: bench test
 
 bench:
-	go test ./cache/... ./lsb/... -bench=.
+	go test ./cache/... ./lsb/... ./sst/... -bench=.
 
 test:
-	go test ./cache/... ./lsb/...
+	go test ./cache/... ./lsb/... ./sst/...
 
 # Integration testing
 
