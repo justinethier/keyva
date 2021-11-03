@@ -1,5 +1,4 @@
 # Basic
-- Add makefile directive to generate go documentation
 - Review project layout - https://eli.thegreenplace.net/2019/simple-go-project-layout-with-modules/
 - Proper header comments for packages, review package exports, etc
 - Fix bloom filter layout, maybe remove entirely and just use the remote module how go is intended to work
@@ -13,6 +12,6 @@
 - Key will be preserving functionality and speed while adding these "real-world" features
 
 # Web 
-- Hook LSB implementation up to web interface when ready
+- Hook SST implementation up to web interface when ready
 - Have a static web page that makes it easy to perform RUD operations. EG: post entered data to a key, or update/delete that key
 - Use http.DetectContentType if content type is not supplied (EG: empty string)

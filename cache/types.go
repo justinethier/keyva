@@ -1,3 +1,5 @@
+// Package cache implements and in-memory key-value store using a map.
+
 package cache
 
 import (

@@ -1,3 +1,19 @@
+// Package SST implements an efficient disk backed key-value store using
+// storted string tables (SST) to store data to disk.
+//
+// Records are initially inserted into an in-memory buffer.
+//
+// Once too many records are written, all of the records are sorted and
+// flushed to a new SST file on disk.
+//
+// Bloom filters are used to efficiently scan SST files to find the value
+// for a given key.
+//
+// Experimenting with caching of SST file contents to memory.
+//
+// Other optimizations TBD including write-ahead log, sparse indexes, GC
+// of cached files, compaction of SST files, etc.
+
 // TODO: not thread safe!
 package sst
 

@@ -1,3 +1,5 @@
+// Package lsb implements a simple key-value store using an append-only log.
+//
 // TODO: none of this is thread safe!!
 
 package lsb
