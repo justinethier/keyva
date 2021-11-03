@@ -1,9 +1,8 @@
 package lsb
 
-import (
-)
+import ()
 
 type Value struct {
-  Data []byte
-  ContentType string
+	Data        []byte
+	ContentType string
 }
