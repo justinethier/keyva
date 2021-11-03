@@ -1,21 +1,23 @@
-// Package SST implements an efficient disk backed key-value store using
-// storted string tables (SST) to store data to disk.
+// Package lsm implements a log-structured merge-tree (LSM tree) data structure.
+// Ttypically used when dealing with write-heavy workloads, the write path is 
+// optimized by only performing sequential writes.
 //
 // Records are initially inserted into an in-memory buffer.
 //
 // Once too many records are written, all of the records are sorted and
-// flushed to a new SST file on disk.
+// flushed to a new sorted string table (SST) file on disk.
 //
 // Bloom filters are used to efficiently scan SST files to find the value
 // for a given key.
 //
-// Experimenting with caching of SST file contents to memory.
+// Experimenting with caching of SST file contents to memory to improve read
+// performance.
 //
 // Other optimizations TBD including write-ahead log, sparse indexes, GC
 // of cached files, compaction of SST files, etc.
 
 // TODO: not thread safe!
-package sst
+package lsm
 
 import (
 	"bufio"
