@@ -14,6 +14,7 @@ doc:
 
 fmt:
 	go fmt $(PACKAGES)
+	go fmt *.go
 
 bench:
 	go test $(PACKAGES) -bench=.
