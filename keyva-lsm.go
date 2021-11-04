@@ -31,7 +31,6 @@ func main() {
   mux := http.NewServeMux()
   m := lsm.New(".", 50) // TODO: optionally, make these parameters configurable
                         // TODO: use a larger default (5000?). This is small for testing purposes
-  // TODO: s := cache.NewSequence()
 
   // Background on http handlers -
   // https://stackoverflow.com/questions/6564558/wildcards-in-the-pattern-for-http-handlefunc
@@ -55,6 +54,16 @@ func main() {
 //    (*m).Lock.RUnlock()
 //  })
   // mux.Handle("/seq/", s)
+  mux.HandleFunc("/seq/", func(w http.ResponseWriter, req *http.Request) {
+		switch req.Method {
+		case "GET":
+			result := m.Increment(req.URL.Path)
+			fmt.Fprintln(w, result)
+		case "DELETE":
+			m.Delete(req.URL.Path)
+			fmt.Fprintln(w, "Deleted sequence")
+		}
+  })
   mux.Handle("/kv/", m)
 
   // TODO: allow optionally running an HTTPS server based on command-line flag(s):
