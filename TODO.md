@@ -1,5 +1,6 @@
 # Basic
 - Proper header comments for packages, review package exports, etc
+- Repeated writes to a single key will create an SST file with only one entry (see seq bench example)
 
 # Robustness
 - Thread safe LSB operations and/or use a dedicated thread with a buffered channel for other threads to send (and load??) data to the LSB. This is very important before we cut web over to the SST solution.
