@@ -1,5 +1,5 @@
 // Package lsm implements a log-structured merge-tree (LSM tree) data structure.
-// Ttypically used when dealing with write-heavy workloads, the write path is 
+// Ttypically used when dealing with write-heavy workloads, the write path is
 // optimized by only performing sequential writes.
 //
 // Records are initially inserted into an in-memory buffer.
@@ -100,21 +100,21 @@ func (tree *LsmTree) set(k string, value Value, deleted bool) {
 }
 
 func (tree *LsmTree) Increment(k string) uint32 {
-  var result uint32
-  if val, ok := tree.Get(k); ok {
-    n := binary.LittleEndian.Uint32(val.Data)
-    n++
-    binary.LittleEndian.PutUint32(val.Data, n)
-    tree.set(k, val, false)
-    result = n
-  } else {
-    bs := make([]byte, 4)
-    binary.LittleEndian.PutUint32(bs, 0)
-    tree.set(k, Value{bs, ""}, false)
-    result = 0
-  }
+	var result uint32
+	if val, ok := tree.Get(k); ok {
+		n := binary.LittleEndian.Uint32(val.Data)
+		n++
+		binary.LittleEndian.PutUint32(val.Data, n)
+		tree.set(k, val, false)
+		result = n
+	} else {
+		bs := make([]byte, 4)
+		binary.LittleEndian.PutUint32(bs, 0)
+		tree.set(k, Value{bs, ""}, false)
+		result = 0
+	}
 
-  return result
+	return result
 }
 
 // Read all sst files from disk and load a bloom filter for each one into memory
