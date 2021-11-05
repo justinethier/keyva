@@ -24,15 +24,15 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
-	"log"
-	//  "math"
 	"github.com/justinethier/keyva/bloom"
 	"github.com/justinethier/keyva/util"
+	"io/ioutil"
+	"log"
 	"os"
 	"regexp"
 	"sort"
 	"strconv"
+	"sync"
 	"time"
 )
 
@@ -58,40 +58,46 @@ type SstFile struct {
 
 type LsmTree struct {
 	Path            string
-	Buffer          []SstEntry
-	BufferSize      int
-	MaxBufferLength int
+	buffer          []SstEntry
+	bufferSize      int
+	maxBufferLength int
 	filter          *bloom.Filter
 	files           []SstFile
+	lock            sync.RWMutex
 }
 
 func New(path string, bufSize int) *LsmTree {
+	lock := sync.RWMutex{}
 	buf := make([]SstEntry, bufSize)
 	f := bloom.New(bufSize, 200)
 	var files []SstFile
-	tree := LsmTree{path, buf, 0, bufSize, f, files}
+	tree := LsmTree{path, buf, 0, bufSize, f, files, lock}
 	tree.LoadFilters() // Read all SST files on disk and generate bloom filters
 	return &tree
 }
 
 func (tree *LsmTree) Set(k string, value Value) {
+	tree.lock.Lock()
+	defer tree.lock.Unlock()
 	tree.set(k, value, false)
 }
 
 func (tree *LsmTree) Delete(k string) {
 	var val Value
+	tree.lock.Lock()
+	defer tree.lock.Unlock()
 	tree.set(k, val, true)
 }
 
 func (tree *LsmTree) set(k string, value Value, deleted bool) {
 	entry := SstEntry{k, value, deleted}
-	i := tree.BufferSize
-	tree.Buffer[i] = entry
-	tree.BufferSize++
+	i := tree.bufferSize
+	tree.buffer[i] = entry
+	tree.bufferSize++
 
 	tree.filter.Add(k)
 
-	if tree.BufferSize < tree.MaxBufferLength {
+	if tree.bufferSize < tree.maxBufferLength {
 		// Buffer is not full yet, we're good
 		return
 	}
@@ -101,7 +107,10 @@ func (tree *LsmTree) set(k string, value Value, deleted bool) {
 
 func (tree *LsmTree) Increment(k string) uint32 {
 	var result uint32
-	if val, ok := tree.Get(k); ok {
+	tree.lock.Lock()
+	defer tree.lock.Unlock()
+	val, ok := tree.get(k)
+	if ok {
 		n := binary.LittleEndian.Uint32(val.Data)
 		n++
 		binary.LittleEndian.PutUint32(val.Data, n)
@@ -123,7 +132,7 @@ func (tree *LsmTree) LoadFilters() {
 	for _, filename := range sstFilenames {
 		fmt.Println("DEBUG: loading bloom filter from file", filename)
 		entries := tree.LoadEntriesFromSstFile(filename)
-		filter := bloom.New(tree.MaxBufferLength, 200)
+		filter := bloom.New(tree.maxBufferLength, 200)
 		for _, entry := range entries {
 			filter.Add(entry.Key)
 		}
@@ -133,19 +142,19 @@ func (tree *LsmTree) LoadFilters() {
 }
 
 func (tree *LsmTree) Flush() {
-	if tree.BufferSize == 0 {
+	if tree.bufferSize == 0 {
 		return
 	}
 
 	// Remove duplicate entries
 	m := make(map[string]SstEntry)
-	for i := 0; i < tree.BufferSize; i++ {
-		e := tree.Buffer[i]
+	for i := 0; i < tree.bufferSize; i++ {
+		e := tree.buffer[i]
 		m[e.Key] = e
 	}
 
 	// sort list of keys and setup bloom filter
-	filter := bloom.New(tree.BufferSize, 200)
+	filter := bloom.New(tree.bufferSize, 200)
 	keys := make([]string, 0, len(m))
 	for k := range m {
 		filter.Add(k)
@@ -162,7 +171,7 @@ func (tree *LsmTree) Flush() {
 	tree.files = append(tree.files, sstfile)
 
 	// Clear buffer
-	tree.BufferSize = 0
+	tree.bufferSize = 0
 }
 
 func check(e error) {
@@ -238,8 +247,8 @@ func (tree *LsmTree) findLatestBufferEntryValue(key string) (SstEntry, bool) {
 		return empty, false
 	}
 
-	for i := 0; i < tree.BufferSize; i++ {
-		entry := tree.Buffer[i]
+	for i := 0; i < tree.bufferSize; i++ {
+		entry := tree.buffer[i]
 		if entry.Key == key {
 			return entry, true
 		}
@@ -296,6 +305,13 @@ func (tree *LsmTree) FindEntryValue(key string, entries []SstEntry) (SstEntry, b
 }
 
 func (tree *LsmTree) Get(k string) (Value, bool) {
+	tree.lock.Lock()
+	defer tree.lock.Unlock()
+	val, ok := tree.Get(k)
+	return val, ok
+}
+
+func (tree *LsmTree) get(k string) (Value, bool) {
 	// Check in-memory buffer
 	if latestBufEntry, ok := tree.findLatestBufferEntryValue(k); ok {
 		if latestBufEntry.Deleted {
