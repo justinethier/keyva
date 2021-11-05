@@ -72,8 +72,19 @@ func New(path string, bufSize int) *LsmTree {
 	f := bloom.New(bufSize, 200)
 	var files []SstFile
 	tree := LsmTree{path, buf, 0, bufSize, f, files, lock}
-	tree.LoadFilters() // Read all SST files on disk and generate bloom filters
+	tree.loadFilters() // Read all SST files on disk and generate bloom filters
 	return &tree
+}
+
+func (tree *LsmTree) ResetDB() {
+	tree.lock.Lock()
+	defer tree.lock.Unlock()
+
+	tree.files = make([]SstFile, 0) // Clear from memory
+	sstFilenames := tree.getSstFilenames()
+	for _, filename := range sstFilenames {
+		os.Remove(filename) // ... and remove from disk
+	}
 }
 
 func (tree *LsmTree) Set(k string, value Value) {
@@ -87,22 +98,6 @@ func (tree *LsmTree) Delete(k string) {
 	tree.lock.Lock()
 	defer tree.lock.Unlock()
 	tree.set(k, val, true)
-}
-
-func (tree *LsmTree) set(k string, value Value, deleted bool) {
-	entry := SstEntry{k, value, deleted}
-	i := tree.bufferSize
-	tree.buffer[i] = entry
-	tree.bufferSize++
-
-	tree.filter.Add(k)
-
-	if tree.bufferSize < tree.maxBufferLength {
-		// Buffer is not full yet, we're good
-		return
-	}
-
-	tree.Flush()
 }
 
 func (tree *LsmTree) Increment(k string) uint32 {
@@ -126,12 +121,43 @@ func (tree *LsmTree) Increment(k string) uint32 {
 	return result
 }
 
+func (tree *LsmTree) Flush() {
+	tree.lock.Lock()
+	defer tree.lock.Unlock()
+	tree.flush()
+}
+
+func (tree *LsmTree) Get(k string) (Value, bool) {
+	tree.lock.Lock()
+	defer tree.lock.Unlock()
+	val, ok := tree.get(k)
+	return val, ok
+}
+
+
+
+func (tree *LsmTree) set(k string, value Value, deleted bool) {
+	entry := SstEntry{k, value, deleted}
+	i := tree.bufferSize
+	tree.buffer[i] = entry
+	tree.bufferSize++
+
+	tree.filter.Add(k)
+
+	if tree.bufferSize < tree.maxBufferLength {
+		// Buffer is not full yet, we're good
+		return
+	}
+
+	tree.flush()
+}
+
 // Read all sst files from disk and load a bloom filter for each one into memory
-func (tree *LsmTree) LoadFilters() {
-	sstFilenames := tree.GetSstFilenames()
+func (tree *LsmTree) loadFilters() {
+	sstFilenames := tree.getSstFilenames()
 	for _, filename := range sstFilenames {
 		fmt.Println("DEBUG: loading bloom filter from file", filename)
-		entries := tree.LoadEntriesFromSstFile(filename)
+		entries := tree.loadEntriesFromSstFile(filename)
 		filter := bloom.New(tree.maxBufferLength, 200)
 		for _, entry := range entries {
 			filter.Add(entry.Key)
@@ -141,7 +167,7 @@ func (tree *LsmTree) LoadFilters() {
 	}
 }
 
-func (tree *LsmTree) Flush() {
+func (tree *LsmTree) flush() {
 	if tree.bufferSize == 0 {
 		return
 	}
@@ -163,8 +189,8 @@ func (tree *LsmTree) Flush() {
 	sort.Strings(keys)
 
 	// Flush buffer to disk
-	var filename = tree.NextSstFilename()
-	CreateSstFile(filename, keys, m)
+	var filename = tree.nextSstFilename()
+	createSstFile(filename, keys, m)
 
 	// Add information to memory
 	var sstfile = SstFile{filename, filter, []SstEntry{}, time.Now()}
@@ -180,7 +206,7 @@ func check(e error) {
 	}
 }
 
-func CreateSstFile(filename string, keys []string, m map[string]SstEntry) {
+func createSstFile(filename string, keys []string, m map[string]SstEntry) {
 	f, err := os.Create(filename)
 	check(err)
 
@@ -198,7 +224,7 @@ func CreateSstFile(filename string, keys []string, m map[string]SstEntry) {
 	}
 }
 
-func (tree *LsmTree) NextSstFilename() string {
+func (tree *LsmTree) nextSstFilename() string {
 	files, err := ioutil.ReadDir(tree.Path)
 	if err != nil {
 		log.Fatal(err)
@@ -222,7 +248,7 @@ func (tree *LsmTree) NextSstFilename() string {
 	return "sorted-string-table-0000.json"
 }
 
-func (tree *LsmTree) GetSstFilenames() []string {
+func (tree *LsmTree) getSstFilenames() []string {
 	files, err := ioutil.ReadDir(tree.Path)
 	if err != nil {
 		log.Fatal(err)
@@ -257,7 +283,7 @@ func (tree *LsmTree) findLatestBufferEntryValue(key string) (SstEntry, bool) {
 	return empty, false
 }
 
-func (tree *LsmTree) LoadEntriesFromSstFile(filename string) []SstEntry {
+func (tree *LsmTree) loadEntriesFromSstFile(filename string) []SstEntry {
 	var buf []SstEntry
 
 	f, err := os.Open(filename)
@@ -280,7 +306,7 @@ func (tree *LsmTree) LoadEntriesFromSstFile(filename string) []SstEntry {
 	return buf
 }
 
-func (tree *LsmTree) FindEntryValue(key string, entries []SstEntry) (SstEntry, bool) {
+func (tree *LsmTree) findEntryValue(key string, entries []SstEntry) (SstEntry, bool) {
 	var entry SstEntry
 	var left = 0
 	var right = len(entries) - 1
@@ -304,13 +330,6 @@ func (tree *LsmTree) FindEntryValue(key string, entries []SstEntry) (SstEntry, b
 	return entry, false
 }
 
-func (tree *LsmTree) Get(k string) (Value, bool) {
-	tree.lock.Lock()
-	defer tree.lock.Unlock()
-	val, ok := tree.Get(k)
-	return val, ok
-}
-
 func (tree *LsmTree) get(k string) (Value, bool) {
 	// Check in-memory buffer
 	if latestBufEntry, ok := tree.findLatestBufferEntryValue(k); ok {
@@ -331,7 +350,7 @@ func (tree *LsmTree) get(k string) (Value, bool) {
 
 			if len(tree.files[i].cache) == 0 {
 				// No cache, read files from disk and cache them
-				entries = tree.LoadEntriesFromSstFile(tree.files[i].filename)
+				entries = tree.loadEntriesFromSstFile(tree.files[i].filename)
 				tree.files[i].cache = entries
 			} else {
 				entries = tree.files[i].cache
@@ -339,7 +358,7 @@ func (tree *LsmTree) get(k string) (Value, bool) {
 			tree.files[i].cachedAt = time.Now() // Update cached time
 
 			// Search for key in the file's entries
-			if entry, found := tree.FindEntryValue(k, entries); found {
+			if entry, found := tree.findEntryValue(k, entries); found {
 				if entry.Deleted {
 					return entry.Value, false
 				} else {
@@ -354,10 +373,3 @@ func (tree *LsmTree) get(k string) (Value, bool) {
 	return val, false
 }
 
-func (tree *LsmTree) ResetDB() {
-	tree.files = make([]SstFile, 0) // Clear from memory
-	sstFilenames := tree.GetSstFilenames()
-	for _, filename := range sstFilenames {
-		os.Remove(filename) // ... and remove from disk
-	}
-}

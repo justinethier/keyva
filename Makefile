@@ -1,3 +1,6 @@
+all: 
+	go build keyva-lsm.go
+
 PACKAGES=./cache/... ./appendlog/... ./lsm/...
 
 .phony: clean
