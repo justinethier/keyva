@@ -134,8 +134,6 @@ func (tree *LsmTree) Get(k string) (Value, bool) {
 	return val, ok
 }
 
-
-
 func (tree *LsmTree) set(k string, value Value, deleted bool) {
 	entry := SstEntry{k, value, deleted}
 	i := tree.bufferSize
@@ -349,7 +347,7 @@ func (tree *LsmTree) get(k string) (Value, bool) {
 			var entries []SstEntry
 
 			if len(tree.files[i].cache) == 0 {
-				// No cache, read files from disk and cache them
+				// No cache, read file from disk and cache entries
 				entries = tree.loadEntriesFromSstFile(tree.files[i].filename)
 				tree.files[i].cache = entries
 			} else {
@@ -372,4 +370,3 @@ func (tree *LsmTree) get(k string) (Value, bool) {
 	var val Value
 	return val, false
 }
-

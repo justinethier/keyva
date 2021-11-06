@@ -36,6 +36,9 @@ func main() {
 	// https://stackoverflow.com/questions/6564558/wildcards-in-the-pattern-for-http-handlefunc
 	// https://www.honeybadger.io/blog/go-web-services/
 	mux.Handle("/api/args", http.HandlerFunc(ArgServer))
+	mux.HandleFunc("/api/gc", func(w http.ResponseWriter, req *http.Request) {
+		m.CacheGC()
+	})
 	//  mux.HandleFunc("/api/stats", func(w http.ResponseWriter, req *http.Request) {
 	//    (*m).Lock.RLock()
 	//    fmt.Fprintln(w, "Number of key/value pairs = ", len(m.Data))
