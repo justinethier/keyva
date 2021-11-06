@@ -38,6 +38,7 @@ func main() {
 	mux.Handle("/api/args", http.HandlerFunc(ArgServer))
 	mux.HandleFunc("/api/gc", func(w http.ResponseWriter, req *http.Request) {
 		m.CacheGC()
+		fmt.Fprintln(w, "Cleared old entries from cache")
 	})
 	//  mux.HandleFunc("/api/stats", func(w http.ResponseWriter, req *http.Request) {
 	//    (*m).Lock.RLock()
