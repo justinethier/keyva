@@ -58,6 +58,7 @@ type SstFile struct {
 
 type LsmTree struct {
 	Path            string
+	// buffer AKA MemTable, used as initial in-memory store of new data
 	buffer          []SstEntry
 	bufferSize      int
 	maxBufferLength int
