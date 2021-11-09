@@ -13,6 +13,8 @@
   https://stackoverflow.com/questions/256511/skip-list-vs-binary-search-tree/28270537
 
 - Add a write-ahead-log (WAL) to handle crashes. otherwise un-flushed data might be lost
+  do we need direct I/O? - https://stackoverflow.com/questions/33095053/how-do-i-skip-the-filesystem-cache-when-reading-a-file-in-golang
+
 - Add GC for cached content
 - Add a compaction thread/phase
 - Key will be preserving functionality and speed while adding these "real-world" features
