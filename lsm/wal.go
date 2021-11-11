@@ -12,3 +12,12 @@ package lsm
 // Other considerations:
 // - general background: https://martinfowler.com/articles/patterns-of-distributed-systems/wal.html
 // - fsync (maybe use initially?) - https://stackoverflow.com/a/10862573/101258
+
+//log entry - id, data, timestamp (?)
+//id can just be an int we increment, since we need to sync access to log anyway for writing
+//provide operations - append, getAll (for using log to reconstruct on startup)
+//also need some means of restricting log growth. eg: segment, see links
+
+func New() string {
+  return "todo"
+}
