@@ -1,4 +1,4 @@
-package lsm
+package wal
 
 // TODO: write-ahead log
 
