@@ -26,6 +26,7 @@ import (
 	"fmt"
 	"github.com/justinethier/keyva/bloom"
 	"github.com/justinethier/keyva/util"
+  "github.com/huandu/skiplist"
 	"io/ioutil"
 	"log"
 	"os"
@@ -59,8 +60,7 @@ type SstFile struct {
 type LsmTree struct {
 	Path            string
 	// buffer AKA MemTable, used as initial in-memory store of new data
-	buffer          []SstEntry
-	bufferSize      int
+	buffer          *skiplist.SkipList
 	maxBufferLength int
 	filter          *bloom.Filter
 	files           []SstFile
@@ -69,10 +69,10 @@ type LsmTree struct {
 
 func New(path string, bufSize int) *LsmTree {
 	lock := sync.RWMutex{}
-	buf := make([]SstEntry, bufSize)
+	buf := skiplist.New(skiplist.String)
 	f := bloom.New(bufSize, 200)
 	var files []SstFile
-	tree := LsmTree{path, buf, 0, bufSize, f, files, lock}
+	tree := LsmTree{path, buf, bufSize, f, files, lock}
 	tree.loadFilters() // Read all SST files on disk and generate bloom filters
 	return &tree
 }
@@ -137,13 +137,11 @@ func (tree *LsmTree) Get(k string) (Value, bool) {
 
 func (tree *LsmTree) set(k string, value Value, deleted bool) {
 	entry := SstEntry{k, value, deleted}
-	i := tree.bufferSize
-	tree.buffer[i] = entry
-	tree.bufferSize++
+	tree.buffer.Set(k, entry)
 
 	tree.filter.Add(k)
 
-	if tree.bufferSize < tree.maxBufferLength {
+	if tree.buffer.Len() < tree.maxBufferLength {
 		// Buffer is not full yet, we're good
 		return
 	}
@@ -167,19 +165,19 @@ func (tree *LsmTree) loadFilters() {
 }
 
 func (tree *LsmTree) flush() {
-	if tree.bufferSize == 0 {
+	if tree.buffer.Len() == 0 {
 		return
 	}
 
 	// Remove duplicate entries
 	m := make(map[string]SstEntry)
-	for i := 0; i < tree.bufferSize; i++ {
-		e := tree.buffer[i]
-		m[e.Key] = e
+	for elem := tree.buffer.Front(); elem != nil; elem = elem.Next() {
+		e := elem.Value
+		m[elem.Key().(string)] = e.(SstEntry)
 	}
 
 	// sort list of keys and setup bloom filter
-	filter := bloom.New(tree.bufferSize, 200)
+	filter := bloom.New(tree.maxBufferLength, 200)
 	keys := make([]string, 0, len(m))
 	for k := range m {
 		filter.Add(k)
@@ -196,7 +194,7 @@ func (tree *LsmTree) flush() {
 	tree.files = append(tree.files, sstfile)
 
 	// Clear buffer
-	tree.bufferSize = 0
+	tree.buffer = skiplist.New(skiplist.String)
 }
 
 func check(e error) {
@@ -272,12 +270,10 @@ func (tree *LsmTree) findLatestBufferEntryValue(key string) (SstEntry, bool) {
 		return empty, false
 	}
 
-	for i := 0; i < tree.bufferSize; i++ {
-		entry := tree.buffer[i]
-		if entry.Key == key {
-			return entry, true
-		}
-	}
+	elem := tree.buffer.Get(key)
+  if elem != nil {
+    return elem.Value.(SstEntry), true
+  }
 
 	return empty, false
 }
