@@ -3,6 +3,7 @@ package wal
 import (
  "os"
  "encoding/json"
+ "time"
  )
 
 // TODO: write-ahead log
@@ -27,11 +28,16 @@ type WriteAheadLog struct {
   NextId uint64
   path string
   file *os.File
+  // TODO: channel?
+  // want to be able to send requests to the channel from go threads,
+  // and have a WAL go thread that receives data, appends to log, etc
 }
 
 type Entry struct {
+  Id uint64
   Key string
   Value []byte
+  Time int64
 }
 
 func New(path string) *WriteAheadLog {
@@ -45,21 +51,50 @@ func New(path string) *WriteAheadLog {
 }
 
 func (wal *WriteAheadLog) Append(key string, value []byte) {
-  e := Entry{key, value}
+  wal.NextId++
+  e := Entry{wal.NextId, key, value, time.Now().Unix()}
   b, err := json.Marshal(e)
 	if err != nil {
 		panic(err)
 	}
   _, err = wal.file.Write(b)
 	if err != nil {
-		panic(err)
+		panic(err) // TODO: probably don't want to do this... ???
 	}
+
+  // TODO: start a new log file if the current one is too large
+  //   maybe do this as a separate function, if we are using a channel then
+  //   we want to finish append, respond to caller, then switch logs without
+  //   explicitly blocking any callers
 }
 
 func (wal *WriteAheadLog) Entries() []Entry {
   var e []Entry
   // TODO: read from filesystem
   return e
+}
+
+// TODO: supply ID we need to read back to. ideally we have this so the entire log
+//       does not have to be traversed all the time. eventually it will grow much
+//       too large...
+//
+func loadFromFile(filename string) {
+//  fp, err := os.Open(filename)
+//	if err != nil {
+//		panic(err)
+//	}
+//  defer os.Close(fp)
+
+// 	r := bufio.NewReader(f)
+// 	str, e := util.Readln(r)
+// 	for e == nil {
+// 		var data SstEntry
+// 		err = json.Unmarshal([]byte(str), &data)
+// 		//fmt.Println(data)
+// 		buf = append(buf, data)
+// 		str, e = util.Readln(r)
+// 	}
+
 }
 
 func (wal *WriteAheadLog) Close() {
