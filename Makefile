@@ -1,5 +1,5 @@
 all: 
-	go build keyva-lsm.go
+	cd cmd/keyva; go build
 
 PACKAGES=./cache/... ./appendlog/... ./lsm/...
 
