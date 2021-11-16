@@ -70,6 +70,12 @@ func (wal *WriteAheadLog) Append(key string, value []byte) {
 		panic(err)
 	}
 
+  // Ensure data is written to file system (performance issue?)
+  err = wal.file.Sync()
+	if err != nil {
+		panic(err)
+	}
+
   // TODO: start a new log file if the current one is too large
   //   maybe do this as a separate function, if we are using a channel then
   //   we want to finish append, respond to caller, then switch logs without
