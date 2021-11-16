@@ -2,10 +2,11 @@ package wal
 
 import (
   "testing"
+  "os"
 )
 
 func TestBasic (t *testing.T) {
-  // TODO: delete all files from disk
+  os.Remove("wal.log")
   wal := New(".")
   wal.Append("a", []byte("a string"))
   wal.Append("b", []byte("a string"))

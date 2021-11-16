@@ -1,8 +1,10 @@
 package wal
 
 import (
+	"bufio"
  "os"
  "encoding/json"
+	"github.com/justinethier/keyva/util"
  "time"
  )
 
@@ -42,11 +44,12 @@ type Entry struct {
 
 func New(path string) *WriteAheadLog {
   filename := "wal.log"
+  id := Load(filename)
 	f, err := os.OpenFile(filename, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
   if err != nil {
     panic(err)
   }
-  wal := WriteAheadLog{0, path, f}
+  wal := WriteAheadLog{id, path, f}
   return &wal
 }
 
@@ -60,6 +63,11 @@ func (wal *WriteAheadLog) Append(key string, value []byte) {
   _, err = wal.file.Write(b)
 	if err != nil {
 		panic(err) // TODO: probably don't want to do this... ???
+	}
+
+	_, err = wal.file.Write([]byte("\n"))
+	if err != nil {
+		panic(err)
 	}
 
   // TODO: start a new log file if the current one is too large
@@ -78,23 +86,28 @@ func (wal *WriteAheadLog) Entries() []Entry {
 //       does not have to be traversed all the time. eventually it will grow much
 //       too large...
 //
-func loadFromFile(filename string) {
-//  fp, err := os.Open(filename)
-//	if err != nil {
-//		panic(err)
-//	}
-//  defer os.Close(fp)
+func Load(filename string) uint64 {
+  fp, err := os.Open(filename)
+  if os.IsNotExist(err) {
+    return 0 // Empty log
+  } else if err != nil {
+		panic(err)
+	}
+  defer fp.Close()
 
-// 	r := bufio.NewReader(f)
-// 	str, e := util.Readln(r)
-// 	for e == nil {
-// 		var data SstEntry
-// 		err = json.Unmarshal([]byte(str), &data)
-// 		//fmt.Println(data)
-// 		buf = append(buf, data)
-// 		str, e = util.Readln(r)
-// 	}
+  var i uint64 = 0
+	r := bufio.NewReader(fp)
+	str, e := util.Readln(r)
+	for e == nil {
+		var data Entry
+		err = json.Unmarshal([]byte(str), &data)
+    i = data.Id
+		//fmt.Println(data)
+		//buf = append(buf, data)
+		str, e = util.Readln(r)
+	}
 
+  return i
 }
 
 func (wal *WriteAheadLog) Close() {
