@@ -17,7 +17,7 @@ func BenchmarkSstKeyValueSet(b *testing.B) {
 		token := make([]byte, 8)
 		rand.Read(token)
 		j := rand.Intn(b.N)
-		tbl.Set(strconv.Itoa(j), Value{Data: token, ContentType: "test content"})
+		tbl.Set(strconv.Itoa(j), Value{Data: token /*, ContentType: "test content"*/})
 	}
 }
 
@@ -41,7 +41,7 @@ func TestSstInternals(t *testing.T) {
 
 	tbl.ResetDB()
 
-	tbl.Set("test value", Value{[]byte("1"), "text"})
+	tbl.Set("test value", Value{[]byte("1")})
 	val, ok := tbl.findLatestBufferEntryValue("test value")
 
 	if !ok || bytes.Compare(val.Value.Data, []byte("1")) != 0 {
@@ -57,7 +57,7 @@ func TestSstKeyValue(t *testing.T) {
 
 	for i := N - 1; i >= 0; i-- {
 		// encode predictable value for i
-		tbl.Set(strconv.Itoa(i), Value{Data: []byte(strconv.Itoa(i)), ContentType: "test content"})
+		tbl.Set(strconv.Itoa(i), Value{Data: []byte(strconv.Itoa(i)) /*, ContentType: "test content"*/ })
 	}
 
 	tbl.Delete(strconv.Itoa(100))
@@ -86,7 +86,7 @@ func TestSstKeyValue(t *testing.T) {
 	}
 
 	// add a key back
-	tbl.Set("abcd", Value{[]byte("test"), "text"})
+	tbl.Set("abcd", Value{[]byte("test")})
 
 	// verify that key exists now
 	if val, found := tbl.Get("abcd"); found {

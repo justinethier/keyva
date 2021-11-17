@@ -4,5 +4,5 @@ import ()
 
 type Value struct {
 	Data        []byte
-	ContentType string
+	//ContentType string
 }

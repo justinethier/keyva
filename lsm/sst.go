@@ -116,7 +116,7 @@ func (tree *LsmTree) Increment(k string) uint32 {
 	} else {
 		bs := make([]byte, 4)
 		binary.LittleEndian.PutUint32(bs, 0)
-		tree.set(k, Value{bs, ""}, false)
+		tree.set(k, Value{bs}, false)
 		result = 0
 	}
 

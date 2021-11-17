@@ -23,7 +23,7 @@ func (m *LsmTree) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	switch req.Method {
 	case "GET":
 		if val, ok := m.Get(req.URL.Path); ok {
-			w.Header().Set("Content-Type", val.ContentType)
+			// TODO: w.Header().Set("Content-Type", val.ContentType)
 			w.Write(val.Data)
 		} else {
 			w.WriteHeader(http.StatusNotFound)
@@ -35,7 +35,7 @@ func (m *LsmTree) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			log.Fatalln(err)
 		}
 		var val Value
-		val.ContentType = req.Header.Get("Content-Type")
+		// TODO: val.ContentType = req.Header.Get("Content-Type")
 		val.Data = b //string(b)
 
 		m.Set(req.URL.Path, val)
