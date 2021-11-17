@@ -5,6 +5,7 @@ import (
  "os"
  "encoding/json"
 	"github.com/justinethier/keyva/util"
+ "sync"
  "time"
  )
 
@@ -27,19 +28,21 @@ import (
 //also need some means of restricting log growth. eg: segment, see links
 
 type WriteAheadLog struct {
-  NextId uint64
+  nextId uint64
   path string
   file *os.File
-  // TODO: channel?
   // want to be able to send requests to the channel from go threads,
   // and have a WAL go thread that receives data, appends to log, etc
+  lock sync.Mutex
 }
 
 type Entry struct {
   Id uint64
   Key string
   Value []byte
+  Deleted bool
   Time int64
+
 }
 
 func New(path string) *WriteAheadLog {
@@ -49,13 +52,18 @@ func New(path string) *WriteAheadLog {
   if err != nil {
     panic(err)
   }
-  wal := WriteAheadLog{id, path, f}
+  lock := sync.Mutex{}
+  wal := WriteAheadLog{id, path, f, lock}
   return &wal
 }
 
-func (wal *WriteAheadLog) Append(key string, value []byte) {
-  wal.NextId++
-  e := Entry{wal.NextId, key, value, time.Now().Unix()}
+func (wal *WriteAheadLog) Append(key string, value []byte, deleted bool) uint64 {
+  wal.lock.Lock()
+  defer wal.lock.Unlock()
+
+  wal.nextId++
+  id := wal.nextId
+  e := Entry{id, key, value, deleted, time.Now().Unix()}
   b, err := json.Marshal(e)
 	if err != nil {
 		panic(err)
@@ -80,6 +88,7 @@ func (wal *WriteAheadLog) Append(key string, value []byte) {
   //   maybe do this as a separate function, if we are using a channel then
   //   we want to finish append, respond to caller, then switch logs without
   //   explicitly blocking any callers
+  return id
 }
 
 func (wal *WriteAheadLog) Entries() []Entry {

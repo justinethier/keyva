@@ -26,6 +26,7 @@ import (
 	"fmt"
 	"github.com/justinethier/keyva/bloom"
 	"github.com/justinethier/keyva/util"
+	"github.com/justinethier/keyva/lsm/wal"
   "github.com/huandu/skiplist"
 	"io/ioutil"
 	"log"
@@ -66,14 +67,16 @@ type LsmTree struct {
 	filter          *bloom.Filter
 	files           []SstFile
 	lock            sync.RWMutex
+  wal             *wal.WriteAheadLog
 }
 
 func New(path string, bufSize int) *LsmTree {
 	lock := sync.RWMutex{}
 	buf := skiplist.New(skiplist.String)
 	f := bloom.New(bufSize, 200)
+  wal := wal.New(path)
 	var files []SstFile
-	tree := LsmTree{path, buf, bufSize, f, files, lock}
+	tree := LsmTree{path, buf, bufSize, f, files, lock, wal}
 	tree.loadFilters() // Read all SST files on disk and generate bloom filters
 	return &tree
 }

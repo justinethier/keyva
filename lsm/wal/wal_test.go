@@ -8,9 +8,9 @@ import (
 func TestBasic (t *testing.T) {
   os.Remove("wal.log")
   wal := New(".")
-  wal.Append("a", []byte("a string"))
-  wal.Append("b", []byte("a string"))
-  wal.Append("c", []byte("a string"))
+  wal.Append("a", []byte("a string"), false)
+  wal.Append("b", []byte("a string"), false)
+  wal.Append("c", []byte("a string"), false)
 }
 
 
