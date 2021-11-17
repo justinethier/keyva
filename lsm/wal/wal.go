@@ -5,7 +5,7 @@ import (
  "os"
  "encoding/json"
 	"github.com/justinethier/keyva/util"
- "sync"
+ //"sync"
  "time"
  )
 
@@ -27,13 +27,11 @@ import (
 //provide operations - append, getAll (for using log to reconstruct on startup)
 //also need some means of restricting log growth. eg: segment, see links
 
+// TODO: no thread safety, for now we rely on the caller to hold the proper locks
 type WriteAheadLog struct {
   nextId uint64
   path string
   file *os.File
-  // want to be able to send requests to the channel from go threads,
-  // and have a WAL go thread that receives data, appends to log, etc
-  lock sync.Mutex
 }
 
 type Entry struct {
@@ -52,14 +50,18 @@ func New(path string) *WriteAheadLog {
   if err != nil {
     panic(err)
   }
-  lock := sync.Mutex{}
-  wal := WriteAheadLog{id, path, f, lock}
+  //lock := sync.Mutex{}
+  wal := WriteAheadLog{id, path, f}
   return &wal
 }
 
+func (wal *WriteAheadLog) Sequence() uint64 {
+  return wal.nextId
+}
+
 func (wal *WriteAheadLog) Append(key string, value []byte, deleted bool) uint64 {
-  wal.lock.Lock()
-  defer wal.lock.Unlock()
+  //wal.lock.Lock()
+  //defer wal.lock.Unlock()
 
   wal.nextId++
   id := wal.nextId
