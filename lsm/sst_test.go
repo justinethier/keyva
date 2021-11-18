@@ -41,17 +41,18 @@ func BenchmarkSstKeyValueDelete(b *testing.B) {
 // Test loading data from the WAL
 func TestWal(t *testing.T) {
   os.Remove("wal.log")
-  wal := wal.New(".")
-  wal.Append("a", []byte("1"), false)
-  wal.Append("b", []byte("2"), false)
-  wal.Append("c", []byte("3"), false)
-  wal.Append("d", []byte("4"), false)
-  wal.Append("e", []byte("5"), false)
-  wal.Append("f", []byte("6"), false)
-  wal.Append("g", []byte("7"), false)
-  wal.Close()
+  w := wal.New(".")
+  w.Append("a", []byte("1"), false)
+  w.Append("b", []byte("2"), false)
+  w.Append("c", []byte("3"), false)
+  w.Append("d", []byte("4"), false)
+  w.Append("e", []byte("5"), false)
+  w.Append("f", []byte("6"), false)
+  w.Append("g", []byte("7"), false)
+  w.Close()
 
 	var tbl = New(".", 25)
+  tbl.Set("h", Value{[]byte("8")})
   if v, found := tbl.Get("a"); found {
 			if bytes.Compare(v.Data, []byte("1")) != 0 {
 				t.Error("Unexpected value", v.Data, "for key", "a")
@@ -59,7 +60,6 @@ func TestWal(t *testing.T) {
   } else {
     t.Error("Value not found for key a")
   }
-  os.Remove("wal.log")
 }
 
 // TODO: second WAL test case, setup wal and sst files, test
