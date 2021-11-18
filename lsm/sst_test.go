@@ -1,10 +1,12 @@
 package lsm
 
 import (
+  "os"
 	"bytes"
 	"math/rand"
 	"strconv"
 	"testing"
+	"github.com/justinethier/keyva/lsm/wal"
 )
 
 var tbl = New(".", 5000)
@@ -35,6 +37,34 @@ func BenchmarkSstKeyValueDelete(b *testing.B) {
 	}
 	tbl.ResetDB()
 }
+
+// Test loading data from the WAL
+func TestWal(t *testing.T) {
+  os.Remove("wal.log")
+  wal := wal.New(".")
+  wal.Append("a", []byte("1"), false)
+  wal.Append("b", []byte("2"), false)
+  wal.Append("c", []byte("3"), false)
+  wal.Append("d", []byte("4"), false)
+  wal.Append("e", []byte("5"), false)
+  wal.Append("f", []byte("6"), false)
+  wal.Append("g", []byte("7"), false)
+  wal.Close()
+
+	var tbl = New(".", 25)
+  if v, found := tbl.Get("a"); found {
+			if bytes.Compare(v.Data, []byte("1")) != 0 {
+				t.Error("Unexpected value", v.Data, "for key", "a")
+			}
+  } else {
+    t.Error("Value not found for key a")
+  }
+  os.Remove("wal.log")
+}
+
+// TODO: second WAL test case, setup wal and sst files, test
+// only loading part of the data from WAL and using rest from
+// sst files
 
 func TestSstInternals(t *testing.T) {
 	var tbl = New(".", 25)

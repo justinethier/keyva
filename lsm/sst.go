@@ -321,7 +321,7 @@ func (tree *LsmTree) loadEntriesFromSstFile(filename string) []SstEntry {
 		var data SstEntry
 		err = json.Unmarshal([]byte(str), &data)
     check(err)
-		fmt.Println(data)
+		//fmt.Println(data)
 		buf = append(buf, data)
 		str, e = util.Readln(r)
 	}
