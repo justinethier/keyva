@@ -45,6 +45,10 @@ type SstEntry struct {
 	Deleted bool
 }
 
+type SstFileHeader struct {
+  Seq   uint64
+}
+
 type SstFile struct {
 	filename string
 	filter   *bloom.Filter
@@ -195,7 +199,7 @@ func (tree *LsmTree) flush(seqNum uint64) {
 
 	// Flush buffer to disk
 	var filename = tree.nextSstFilename()
-	createSstFile(filename, keys, m)
+	createSstFile(filename, keys, m, seqNum)
 
 	// Add information to memory
 	var sstfile = SstFile{filename, filter, []SstEntry{}, time.Now()}
@@ -211,11 +215,19 @@ func check(e error) {
 	}
 }
 
-func createSstFile(filename string, keys []string, m map[string]SstEntry) {
+func createSstFile(filename string, keys []string, m map[string]SstEntry, seqNum uint64) {
 	f, err := os.Create(filename)
 	check(err)
 
 	defer f.Close()
+
+  header := SstFileHeader{seqNum}
+  b, err := json.Marshal(header)
+	check(err)
+  _, err = f.Write(b)
+	check(err)
+	_, err = f.Write([]byte("\n"))
+	check(err)
 
 	for _, k := range keys {
 		b, err := json.Marshal(m[k])
@@ -297,11 +309,19 @@ func (tree *LsmTree) loadEntriesFromSstFile(filename string) []SstEntry {
 	defer f.Close()
 
 	r := bufio.NewReader(f)
+  var header SstFileHeader
 	str, e := util.Readln(r)
+  check(e)
+	err = json.Unmarshal([]byte(str), &header)
+  check(e)
+	//fmt.Println(header)
+
+	str, e = util.Readln(r)
 	for e == nil {
 		var data SstEntry
 		err = json.Unmarshal([]byte(str), &data)
-		//fmt.Println(data)
+    check(err)
+		fmt.Println(data)
 		buf = append(buf, data)
 		str, e = util.Readln(r)
 	}
