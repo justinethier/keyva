@@ -1,7 +1,7 @@
 all: 
 	cd cmd/keyva; go build
 
-PACKAGES=./cache/... ./appendlog/... ./lsm/... ./lsm/wal/...
+PACKAGES=./cache/... ./appendlog/... ./lsm/...
 
 .phony: clean
 
@@ -17,7 +17,7 @@ doc:
 
 fmt:
 	go fmt $(PACKAGES)
-	go fmt *.go
+	go fmt cmd/keyva/*.go
 
 bench:
 	go test $(PACKAGES) -bench=.

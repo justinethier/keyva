@@ -2,12 +2,12 @@ package wal
 
 import (
 	"bufio"
- "os"
- "encoding/json"
+	"encoding/json"
 	"github.com/justinethier/keyva/util"
- //"sync"
- "time"
- )
+	"os"
+	//"sync"
+	"time"
+)
 
 // TODO: write-ahead log
 
@@ -16,7 +16,6 @@ import (
 // WAL is a write-ahead log that is used to provide the durability of data during system failures, what it means is that when a request for write comes in, the data is first added to a WAL file (sometimes called journal) and flushed to the disk (using direct io) before updating the in-memory data structure.
 // This allows for systems to recover from the WAL if it crashes before persisting the in-memory data structure to disk.
 // Why not directly update the write to the disk instead of updating WAL? it’s because WAL updates are cheaper as it’s append-only and doesn’t require any restructuring of data on disk.
-
 
 // Other considerations:
 // - general background: https://martinfowler.com/articles/patterns-of-distributed-systems/wal.html
@@ -29,49 +28,48 @@ import (
 
 // TODO: no thread safety, for now we rely on the caller to hold the proper locks
 type WriteAheadLog struct {
-  nextId uint64
-  path string
-  file *os.File
-  Entries []Entry // Older entries in the log, loaded from disk
+	nextId  uint64
+	path    string
+	file    *os.File
+	Entries []Entry // Older entries in the log, loaded from disk
 }
 
 type Entry struct {
-  Id uint64
-  Key string
-  Value []byte
-  Deleted bool
-  Time int64
-
+	Id      uint64
+	Key     string
+	Value   []byte
+	Deleted bool
+	Time    int64
 }
 
 func New(path string) *WriteAheadLog {
-  filename := "wal.log"
-  entries, id := load(filename)
+	filename := "wal.log"
+	entries, id := load(filename)
 	f, err := os.OpenFile(filename, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
-  if err != nil {
-    panic(err)
-  }
-  //lock := sync.Mutex{}
-  wal := WriteAheadLog{id, path, f, entries}
-  return &wal
-}
-
-func (wal *WriteAheadLog) Sequence() uint64 {
-  return wal.nextId
-}
-
-func (wal *WriteAheadLog) Append(key string, value []byte, deleted bool) uint64 {
-  //wal.lock.Lock()
-  //defer wal.lock.Unlock()
-
-  wal.nextId++
-  id := wal.nextId
-  e := Entry{id, key, value, deleted, time.Now().Unix()}
-  b, err := json.Marshal(e)
 	if err != nil {
 		panic(err)
 	}
-  _, err = wal.file.Write(b)
+	//lock := sync.Mutex{}
+	wal := WriteAheadLog{id, path, f, entries}
+	return &wal
+}
+
+func (wal *WriteAheadLog) Sequence() uint64 {
+	return wal.nextId
+}
+
+func (wal *WriteAheadLog) Append(key string, value []byte, deleted bool) uint64 {
+	//wal.lock.Lock()
+	//defer wal.lock.Unlock()
+
+	wal.nextId++
+	id := wal.nextId
+	e := Entry{id, key, value, deleted, time.Now().Unix()}
+	b, err := json.Marshal(e)
+	if err != nil {
+		panic(err)
+	}
+	_, err = wal.file.Write(b)
 	if err != nil {
 		panic(err) // TODO: probably don't want to do this... ???
 	}
@@ -81,17 +79,17 @@ func (wal *WriteAheadLog) Append(key string, value []byte, deleted bool) uint64 
 		panic(err)
 	}
 
-  // Ensure data is written to file system (performance issue?)
-  err = wal.file.Sync()
+	// Ensure data is written to file system (performance issue?)
+	err = wal.file.Sync()
 	if err != nil {
 		panic(err)
 	}
 
-  // TODO: start a new log file if the current one is too large
-  //   maybe do this as a separate function, if we are using a channel then
-  //   we want to finish append, respond to caller, then switch logs without
-  //   explicitly blocking any callers
-  return id
+	// TODO: start a new log file if the current one is too large
+	//   maybe do this as a separate function, if we are using a channel then
+	//   we want to finish append, respond to caller, then switch logs without
+	//   explicitly blocking any callers
+	return id
 }
 
 // TODO: supply ID we need to read back to. ideally we have this so the entire log
@@ -99,31 +97,30 @@ func (wal *WriteAheadLog) Append(key string, value []byte, deleted bool) uint64 
 //       too large...
 //
 func load(filename string) ([]Entry, uint64) {
-  var buf []Entry
-  fp, err := os.Open(filename)
-  if os.IsNotExist(err) {
-    return buf, 0 // Empty log
-  } else if err != nil {
+	var buf []Entry
+	fp, err := os.Open(filename)
+	if os.IsNotExist(err) {
+		return buf, 0 // Empty log
+	} else if err != nil {
 		panic(err)
 	}
-  defer fp.Close()
+	defer fp.Close()
 
-  var i uint64 = 0
+	var i uint64 = 0
 	r := bufio.NewReader(fp)
 	str, e := util.Readln(r)
 	for e == nil {
 		var data Entry
 		err = json.Unmarshal([]byte(str), &data)
-    i = data.Id
+		i = data.Id
 		//fmt.Println(data)
 		buf = append(buf, data)
 		str, e = util.Readln(r)
 	}
 
-  return buf, i
+	return buf, i
 }
 
 func (wal *WriteAheadLog) Close() {
-  wal.file.Close()
+	wal.file.Close()
 }
-

@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-// CacheGcTimeout is the amount of time in seconds to keep a cached SST file in 
+// CacheGcTimeout is the amount of time in seconds to keep a cached SST file in
 // memory before it is eligble for collection.
 var CacheGcTimeout = 300.0
 
@@ -21,7 +21,7 @@ func (tree *LsmTree) CacheGC() {
 		if len(tree.files[i].cache) > 0 &&
 			time.Since(tree.files[i].cachedAt).Seconds() > CacheGcTimeout {
 			fmt.Println("Clear cache for file", tree.files[i].filename)
-		 tree.files[i].cache = empty
+			tree.files[i].cache = empty
 		}
 	}
 }

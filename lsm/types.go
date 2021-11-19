@@ -3,6 +3,6 @@ package lsm
 import ()
 
 type Value struct {
-	Data        []byte
+	Data []byte
 	//ContentType string
 }

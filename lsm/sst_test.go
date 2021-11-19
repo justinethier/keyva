@@ -1,19 +1,19 @@
 package lsm
 
 import (
-  "os"
 	"bytes"
+	"github.com/justinethier/keyva/lsm/wal"
 	"math/rand"
+	"os"
 	"strconv"
 	"testing"
-	"github.com/justinethier/keyva/lsm/wal"
 )
 
 var tbl *LsmTree
 
 func init() {
-  os.Remove("wal.log")
-  tbl = New(".", 5000)
+	os.Remove("wal.log")
+	tbl = New(".", 5000)
 }
 
 func BenchmarkSstKeyValueSet(b *testing.B) {
@@ -45,26 +45,26 @@ func BenchmarkSstKeyValueDelete(b *testing.B) {
 
 // Test loading data from the WAL
 func TestWal(t *testing.T) {
-  os.Remove("wal.log")
-  w := wal.New(".")
-  w.Append("a", []byte("1"), false)
-  w.Append("b", []byte("2"), false)
-  w.Append("c", []byte("3"), false)
-  w.Append("d", []byte("4"), false)
-  w.Append("e", []byte("5"), false)
-  w.Append("f", []byte("6"), false)
-  w.Append("g", []byte("7"), false)
-  w.Close()
+	os.Remove("wal.log")
+	w := wal.New(".")
+	w.Append("a", []byte("1"), false)
+	w.Append("b", []byte("2"), false)
+	w.Append("c", []byte("3"), false)
+	w.Append("d", []byte("4"), false)
+	w.Append("e", []byte("5"), false)
+	w.Append("f", []byte("6"), false)
+	w.Append("g", []byte("7"), false)
+	w.Close()
 
 	var tbl = New(".", 25)
-  tbl.Set("h", Value{[]byte("8")})
-  if v, found := tbl.Get("a"); found {
-			if bytes.Compare(v.Data, []byte("1")) != 0 {
-				t.Error("Unexpected value", v.Data, "for key", "a")
-			}
-  } else {
-    t.Error("Value not found for key a")
-  }
+	tbl.Set("h", Value{[]byte("8")})
+	if v, found := tbl.Get("a"); found {
+		if bytes.Compare(v.Data, []byte("1")) != 0 {
+			t.Error("Unexpected value", v.Data, "for key", "a")
+		}
+	} else {
+		t.Error("Value not found for key a")
+	}
 }
 
 // TODO: second WAL test case, setup wal and sst files, test
@@ -92,7 +92,7 @@ func TestSstKeyValue(t *testing.T) {
 
 	for i := N - 1; i >= 0; i-- {
 		// encode predictable value for i
-		tbl.Set(strconv.Itoa(i), Value{Data: []byte(strconv.Itoa(i)) /*, ContentType: "test content"*/ })
+		tbl.Set(strconv.Itoa(i), Value{Data: []byte(strconv.Itoa(i)) /*, ContentType: "test content"*/})
 	}
 
 	tbl.Delete(strconv.Itoa(100))

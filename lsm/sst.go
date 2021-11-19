@@ -24,10 +24,10 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
+	"github.com/huandu/skiplist"
 	"github.com/justinethier/keyva/bloom"
-	"github.com/justinethier/keyva/util"
 	"github.com/justinethier/keyva/lsm/wal"
-  "github.com/huandu/skiplist"
+	"github.com/justinethier/keyva/util"
 	"io/ioutil"
 	"log"
 	"os"
@@ -36,7 +36,7 @@ import (
 	"strconv"
 	"sync"
 	"time"
-//	"github.com/justinethier/keyva/lsm/wal"
+	//	"github.com/justinethier/keyva/lsm/wal"
 )
 
 type SstEntry struct {
@@ -46,7 +46,7 @@ type SstEntry struct {
 }
 
 type SstFileHeader struct {
-  Seq   uint64
+	Seq uint64
 }
 
 type SstFile struct {
@@ -64,36 +64,36 @@ type SstFile struct {
 }
 
 type LsmTree struct {
-	Path            string
+	Path string
 	// buffer AKA MemTable, used as initial in-memory store of new data
 	buffer          *skiplist.SkipList
 	maxBufferLength int
 	filter          *bloom.Filter
 	files           []SstFile
 	lock            sync.RWMutex
-  wal             *wal.WriteAheadLog
+	wal             *wal.WriteAheadLog
 }
 
 func New(path string, bufSize int) *LsmTree {
 	lock := sync.RWMutex{}
 	buf := skiplist.New(skiplist.String)
 	f := bloom.New(bufSize, 200)
-  wal := wal.New(path)
-//fmt.Println("DEBUG wal seq = ", wal.Sequence())
+	wal := wal.New(path)
+	//fmt.Println("DEBUG wal seq = ", wal.Sequence())
 	var files []SstFile
 	tree := LsmTree{path, buf, bufSize, f, files, lock, wal}
 	seq := tree.load() // Read all SST files on disk and generate bloom filters
 
-// if there are entries in wal that are not in SST files,
-// load them into memory
-if wal.Sequence() > seq {
-  for _, e := range wal.Entries {
-    if e.Id > seq {
-      //fmt.Println("DEBUG loading wal entry", e.Key)
-      tree.set(e.Key, Value{e.Value}, e.Deleted)
-    }
-  }
-}
+	// if there are entries in wal that are not in SST files,
+	// load them into memory
+	if wal.Sequence() > seq {
+		for _, e := range wal.Entries {
+			if e.Id > seq {
+				//fmt.Println("DEBUG loading wal entry", e.Key)
+				tree.set(e.Key, Value{e.Value}, e.Deleted)
+			}
+		}
+	}
 
 	return &tree
 }
@@ -173,14 +173,14 @@ func (tree *LsmTree) set(k string, value Value, deleted bool) {
 
 // Read all sst files from disk and load a bloom filter for each one into memory
 func (tree *LsmTree) load() uint64 {
-  var seq uint64
+	var seq uint64
 	sstFilenames := tree.getSstFilenames()
 	for _, filename := range sstFilenames {
 		//fmt.Println("DEBUG: loading bloom filter from file", filename)
 		entries, header := tree.loadEntriesFromSstFile(filename)
-    if header.Seq > seq {
-       seq = header.Seq
-    }
+		if header.Seq > seq {
+			seq = header.Seq
+		}
 		filter := bloom.New(tree.maxBufferLength, 200)
 		for _, entry := range entries {
 			filter.Add(entry.Key)
@@ -189,7 +189,7 @@ func (tree *LsmTree) load() uint64 {
 		tree.files = append(tree.files, sstfile)
 	}
 
-  return seq
+	return seq
 }
 
 func (tree *LsmTree) flush(seqNum uint64) {
@@ -197,8 +197,8 @@ func (tree *LsmTree) flush(seqNum uint64) {
 		return
 	}
 
-// TODO: write header to file with seqnum
-// TODO: convenient time to switch to new WAL file
+	// TODO: write header to file with seqnum
+	// TODO: convenient time to switch to new WAL file
 
 	// Remove duplicate entries
 	m := make(map[string]SstEntry)
@@ -240,10 +240,10 @@ func createSstFile(filename string, keys []string, m map[string]SstEntry, seqNum
 
 	defer f.Close()
 
-  header := SstFileHeader{seqNum}
-  b, err := json.Marshal(header)
+	header := SstFileHeader{seqNum}
+	b, err := json.Marshal(header)
 	check(err)
-  _, err = f.Write(b)
+	_, err = f.Write(b)
 	check(err)
 	_, err = f.Write([]byte("\n"))
 	check(err)
@@ -310,16 +310,16 @@ func (tree *LsmTree) findLatestBufferEntryValue(key string) (SstEntry, bool) {
 	}
 
 	elem := tree.buffer.Get(key)
-  if elem != nil {
-    return elem.Value.(SstEntry), true
-  }
+	if elem != nil {
+		return elem.Value.(SstEntry), true
+	}
 
 	return empty, false
 }
 
 func (tree *LsmTree) loadEntriesFromSstFile(filename string) ([]SstEntry, SstFileHeader) {
 	var buf []SstEntry
-  var header SstFileHeader
+	var header SstFileHeader
 
 	f, err := os.Open(filename)
 	if err != nil {
@@ -330,16 +330,16 @@ func (tree *LsmTree) loadEntriesFromSstFile(filename string) ([]SstEntry, SstFil
 
 	r := bufio.NewReader(f)
 	str, e := util.Readln(r)
-  check(e)
+	check(e)
 	err = json.Unmarshal([]byte(str), &header)
-  check(e)
+	check(e)
 	//fmt.Println("DEBUG SST header", header)
 
 	str, e = util.Readln(r)
 	for e == nil {
 		var data SstEntry
 		err = json.Unmarshal([]byte(str), &data)
-    check(err)
+		check(err)
 		//fmt.Println(data)
 		buf = append(buf, data)
 		str, e = util.Readln(r)
