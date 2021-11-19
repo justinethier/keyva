@@ -32,6 +32,7 @@ type WriteAheadLog struct {
   nextId uint64
   path string
   file *os.File
+  Entries []Entry // Older entries in the log, loaded from disk
 }
 
 type Entry struct {
@@ -45,13 +46,13 @@ type Entry struct {
 
 func New(path string) *WriteAheadLog {
   filename := "wal.log"
-  id := Load(filename)
+  entries, id := load(filename)
 	f, err := os.OpenFile(filename, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
   if err != nil {
     panic(err)
   }
   //lock := sync.Mutex{}
-  wal := WriteAheadLog{id, path, f}
+  wal := WriteAheadLog{id, path, f, entries}
   return &wal
 }
 
@@ -93,20 +94,15 @@ func (wal *WriteAheadLog) Append(key string, value []byte, deleted bool) uint64 
   return id
 }
 
-func (wal *WriteAheadLog) Entries() []Entry {
-  var e []Entry
-  // TODO: read from filesystem
-  return e
-}
-
 // TODO: supply ID we need to read back to. ideally we have this so the entire log
 //       does not have to be traversed all the time. eventually it will grow much
 //       too large...
 //
-func Load(filename string) uint64 {
+func load(filename string) ([]Entry, uint64) {
+  var buf []Entry
   fp, err := os.Open(filename)
   if os.IsNotExist(err) {
-    return 0 // Empty log
+    return buf, 0 // Empty log
   } else if err != nil {
 		panic(err)
 	}
@@ -120,11 +116,11 @@ func Load(filename string) uint64 {
 		err = json.Unmarshal([]byte(str), &data)
     i = data.Id
 		//fmt.Println(data)
-		//buf = append(buf, data)
+		buf = append(buf, data)
 		str, e = util.Readln(r)
 	}
 
-  return i
+  return buf, i
 }
 
 func (wal *WriteAheadLog) Close() {

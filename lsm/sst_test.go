@@ -9,7 +9,12 @@ import (
 	"github.com/justinethier/keyva/lsm/wal"
 )
 
-var tbl = New(".", 5000)
+var tbl *LsmTree
+
+func init() {
+  os.Remove("wal.log")
+  tbl = New(".", 5000)
+}
 
 func BenchmarkSstKeyValueSet(b *testing.B) {
 	//tbl = New(".", 5000)

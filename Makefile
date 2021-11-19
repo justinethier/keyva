@@ -1,7 +1,7 @@
 all: 
 	cd cmd/keyva; go build
 
-PACKAGES=./cache/... ./appendlog/... ./lsm/...
+PACKAGES=./cache/... ./appendlog/... ./lsm/... ./lsm/wal/...
 
 .phony: clean
 

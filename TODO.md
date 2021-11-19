@@ -3,17 +3,17 @@
 - Repeated writes to a single key will create an SST file with only one entry (see seq bench example)
 
 # Robustness
-- Use a skiplist for the memtable, EG: https://github.com/sean-public/fast-skiplist
-- Thread safe LSB operations and/or use a dedicated thread with a buffered channel for other threads to send (and load??) data to the LSB. This is very important before we cut web over to the SST solution. OK for now if locking is not optimal as long as it works.
+- Add a write-ahead-log (WAL) to handle crashes. otherwise un-flushed data might be lost
+  do we need direct I/O? - https://stackoverflow.com/questions/33095053/how-do-i-skip-the-filesystem-cache-when-reading-a-file-in-golang
+
+    kind of works, need to flush wal when sst is flushed, so wal doesn't get too big
+
 - instead of flushing immediately, replace the memtable with a new one and keep the old memtable as an immutable table in memory (we just read from it, never write) while it is being flushed.
 - random links with some interesting ideas:
   https://dev.to/creativcoder/what-is-a-lsm-tree-3d75
   https://titanwolf.org/Network/Articles/Article?AID=0e39c4d6-f59b-409f-b3e4-259285d5a9b0
   https://george24601.github.io/2019/12/27/lsm.html
   https://stackoverflow.com/questions/256511/skip-list-vs-binary-search-tree/28270537
-
-- Add a write-ahead-log (WAL) to handle crashes. otherwise un-flushed data might be lost
-  do we need direct I/O? - https://stackoverflow.com/questions/33095053/how-do-i-skip-the-filesystem-cache-when-reading-a-file-in-golang
 
 - Add GC for cached content
 - Add a compaction thread/phase

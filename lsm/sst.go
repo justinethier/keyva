@@ -79,17 +79,21 @@ func New(path string, bufSize int) *LsmTree {
 	buf := skiplist.New(skiplist.String)
 	f := bloom.New(bufSize, 200)
   wal := wal.New(path)
-fmt.Println("DEBUG wal seq = ", wal.Sequence())
+//fmt.Println("DEBUG wal seq = ", wal.Sequence())
 	var files []SstFile
 	tree := LsmTree{path, buf, bufSize, f, files, lock, wal}
-	tree.load() // Read all SST files on disk and generate bloom filters
-	//seq := tree.load() // Read all SST files on disk and generate bloom filters
+	seq := tree.load() // Read all SST files on disk and generate bloom filters
 
-
-// TODO: if there are entries in wal that are not in SST files,
-//  eg: wal.Sequence() > seq, then load them into memory
-fmt.Println("DEBUG check and load extra wal entries")
-
+// if there are entries in wal that are not in SST files,
+// load them into memory
+if wal.Sequence() > seq {
+  for _, e := range wal.Entries {
+    if e.Id > seq {
+      //fmt.Println("DEBUG loading wal entry", e.Key)
+      tree.set(e.Key, Value{e.Value}, e.Deleted)
+    }
+  }
+}
 
 	return &tree
 }
@@ -172,7 +176,7 @@ func (tree *LsmTree) load() uint64 {
   var seq uint64
 	sstFilenames := tree.getSstFilenames()
 	for _, filename := range sstFilenames {
-		fmt.Println("DEBUG: loading bloom filter from file", filename)
+		//fmt.Println("DEBUG: loading bloom filter from file", filename)
 		entries, header := tree.loadEntriesFromSstFile(filename)
     if header.Seq > seq {
        seq = header.Seq
@@ -329,7 +333,7 @@ func (tree *LsmTree) loadEntriesFromSstFile(filename string) ([]SstEntry, SstFil
   check(e)
 	err = json.Unmarshal([]byte(str), &header)
   check(e)
-	fmt.Println("DEBUG SST header", header)
+	//fmt.Println("DEBUG SST header", header)
 
 	str, e = util.Readln(r)
 	for e == nil {
