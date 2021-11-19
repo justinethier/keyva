@@ -1,6 +1,5 @@
 # Basic
 - Proper header comments for packages, review package exports, etc
-- Repeated writes to a single key will create an SST file with only one entry (see seq bench example)
 
 # Robustness
 - Add a write-ahead-log (WAL) to handle crashes. otherwise un-flushed data might be lost
@@ -21,12 +20,13 @@
 - other optimizations? optimal locking? sparse indexes?
 
 # Web 
-- Hook SST implementation up to web interface when ready
-- Have a static web page that makes it easy to perform RUD operations. EG: post entered data to a key, or update/delete that key
+- Have a static web page that makes it easy to perform CRUD operations. EG: post entered data to a key, or update/delete that key
 - Use http.DetectContentType if content type is not supplied (EG: empty string)
+- API function to see all keys??
+- Store content-type as separate key (key/content-type ??)
 
 # Deployment
-- Prior to making any releases, consider using `cmd` and `internal` directories for project layout - https://eli.thegreenplace.net/2019/simple-go-project-layout-with-modules/
+- Prior to making any releases, consider using `internal` directory for project layout - https://eli.thegreenplace.net/2019/simple-go-project-layout-with-modules/
 - Fix bloom filter layout, maybe remove entirely and just use the remote module how go is intended to work
 
 # Roadmap
