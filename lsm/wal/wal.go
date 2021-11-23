@@ -52,6 +52,14 @@ type Entry struct {
 func New(path string, capacity int) (*WriteAheadLog, []Entry) {
 	wal := WriteAheadLog{0, path, nil}
   entries := wal.entries()
+
+TODO: this is broken because SST might have a capacity of, say, 50 but that could correspond to thousands of wal records if there are updates, deletes, etc.
+maybe a better solution is to not pass an arg at all and just keep appending to the same log. Then when sst calls flush it can switch to a new wal at that time.
+everything still works because we track ID's, so partial data can be read from the wal and applied to the memtable as needed. it is OK if the wal contains entries
+that span sst files (or at least, that needs to be OK). also it is extremely unlikely that new would ever cause us to start a new log unless there are no entries
+at all. otherwise it is much more likely we would append from existing log. and if we append on a full log that is fine, because we will make everything robust enough
+ to still work in that case.
+
   if len(entries) >= capacity {
     // Start new log
     wal.Next()
