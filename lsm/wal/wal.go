@@ -3,10 +3,15 @@ package wal
 import (
 	"bufio"
 	"encoding/json"
+  "fmt"
 	"github.com/justinethier/keyva/util"
+  "log"
 	"os"
 	//"sync"
+  "regexp"
+  "strconv"
 	"time"
+  "io/ioutil"
 )
 
 // TODO: write-ahead log
@@ -31,7 +36,6 @@ type WriteAheadLog struct {
 	nextId  uint64
 	path    string
 	file    *os.File
-	Entries []Entry // Older entries in the log, loaded from disk
 }
 
 type Entry struct {
@@ -43,19 +47,26 @@ type Entry struct {
 }
 
 func New(path string) *WriteAheadLog {
-	filename := "wal.log"
-	entries, id := load(filename)
+	wal := WriteAheadLog{0, path, nil}
+	return &wal
+}
+
+func (wal *WriteAheadLog) Init() {
+	filename := wal.nextFilename()
 	f, err := os.OpenFile(filename, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
 	if err != nil {
 		panic(err)
 	}
-	//lock := sync.Mutex{}
-	wal := WriteAheadLog{id, path, f, entries}
-	return &wal
+  wal.file = f
 }
 
-func (wal *WriteAheadLog) Sequence() uint64 {
-	return wal.nextId
+// Entries retrives all entries from the most recent write ahead log file.
+// It is presumed older entries are already written to an SST file.
+func (wal *WriteAheadLog) Entries() []Entry{
+  filename := wal.currentFilename()
+  entries, id := load(filename)
+  wal.nextId = id
+  return entries
 }
 
 func (wal *WriteAheadLog) Append(key string, value []byte, deleted bool) uint64 {
@@ -80,10 +91,10 @@ func (wal *WriteAheadLog) Append(key string, value []byte, deleted bool) uint64 
 	}
 
 	// Ensure data is written to file system (performance issue?)
-	err = wal.file.Sync()
-	if err != nil {
-		panic(err)
-	}
+//	err = wal.file.Sync()
+//	if err != nil {
+//		panic(err)
+//	}
 
 	// TODO: start a new log file if the current one is too large
 	//   maybe do this as a separate function, if we are using a channel then
@@ -92,9 +103,6 @@ func (wal *WriteAheadLog) Append(key string, value []byte, deleted bool) uint64 
 	return id
 }
 
-// TODO: supply ID we need to read back to. ideally we have this so the entire log
-//       does not have to be traversed all the time. eventually it will grow much
-//       too large...
 //
 func load(filename string) ([]Entry, uint64) {
 	var buf []Entry
@@ -123,4 +131,62 @@ func load(filename string) ([]Entry, uint64) {
 
 func (wal *WriteAheadLog) Close() {
 	wal.file.Close()
+}
+
+func (wal *WriteAheadLog) nextFilename() string {
+	n := wal.latestFileId()
+	return fmt.Sprintf("write-ahead-log-%04d.json", n+1)
+}
+
+func (wal *WriteAheadLog) currentFilename() string {
+	n := wal.latestFileId()
+  if n < 0 {
+    n = 0
+  }
+	return fmt.Sprintf("write-ahead-log-%04d.json", n)
+}
+
+func (wal *WriteAheadLog) id2Filename(id int) string {
+	return fmt.Sprintf("write-ahead-log-%04d.json", id)
+}
+
+func (wal *WriteAheadLog) latestFileId() int {
+	files, err := ioutil.ReadDir(wal.path)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var walFiles []string
+	for _, file := range files {
+		matched, _ := regexp.Match(`^write-ahead-log-[0-9]*\.json`, []byte(file.Name()))
+		if matched && !file.IsDir() {
+			//fmt.Println(file.Name(), file.IsDir())
+			walFiles = append(walFiles, file.Name())
+		}
+	}
+
+	if len(walFiles) > 0 {
+		var latest = walFiles[len(walFiles)-1][16:20]
+		n, _ := strconv.Atoi(latest)
+		return n
+	}
+
+	return -1 // No WAL yet
+}
+
+func (wal *WriteAheadLog) getFilenames() []string {
+	files, err := ioutil.ReadDir(wal.path)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var walFiles []string
+	for _, file := range files {
+		matched, _ := regexp.Match(`^write-ahead-log-[0-9]*\.json`, []byte(file.Name()))
+		if matched && !file.IsDir() {
+			walFiles = append(walFiles, file.Name())
+		}
+	}
+
+	return walFiles
 }

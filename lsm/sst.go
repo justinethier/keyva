@@ -385,7 +385,7 @@ func (tree *LsmTree) get(k string) (Value, bool) {
 	// Not found, search the sst files
 	// Search in reverse order, newest file to oldest
 	for i := len(tree.files) - 1; i >= 0; i-- {
-		//fmt.Println("DEBUG loading entries from file", sstFilenames[i])
+		//fmt.Println("DEBUG loading entries from file", tree.files[i].filename)
 		if tree.files[i].filter.Test(k) {
 			// Only read from disk if key is in the filter
 			var entries []SstEntry
