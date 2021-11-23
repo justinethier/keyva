@@ -1,13 +1,16 @@
 package wal
 
 import (
-	"os"
 	"testing"
 )
 
 func TestBasic(t *testing.T) {
-	os.Remove("wal.log")
 	wal := New(".")
+	//wal.Reset()
+	wal.Init()
+
+TODO: how does wal know whether to start a new WAL log or append to current one???
+
 	wal.Append("a", []byte("a string"), false)
 	wal.Append("b", []byte("a string"), false)
 	wal.Append("c", []byte("a string"), false)

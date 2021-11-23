@@ -190,3 +190,13 @@ func (wal *WriteAheadLog) getFilenames() []string {
 
 	return walFiles
 }
+
+func (wal *WriteAheadLog) Reset() {
+	// tree.lock.Lock()
+	// defer tree.lock.Unlock()
+
+	filenames := wal.getFilenames()
+	for _, filename := range filenames {
+		os.Remove(filename) // ... and remove from disk
+	}
+}
