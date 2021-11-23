@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"github.com/justinethier/keyva/lsm/wal"
 	"math/rand"
-	"os"
+	//"os"
 	"strconv"
 	"testing"
 )
@@ -12,7 +12,7 @@ import (
 var tbl *LsmTree
 
 func init() {
-	os.Remove("wal.log")
+	//os.Remove("wal.log")
 	tbl = New(".", 5000)
 }
 
@@ -45,8 +45,8 @@ func BenchmarkSstKeyValueDelete(b *testing.B) {
 
 // Test loading data from the WAL
 func TestWal(t *testing.T) {
-	os.Remove("wal.log")
-	w := wal.New(".")
+	//os.Remove("wal.log")
+	w, _ := wal.New(".", 25)
 	w.Append("a", []byte("1"), false)
 	w.Append("b", []byte("2"), false)
 	w.Append("c", []byte("3"), false)

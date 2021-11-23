@@ -36,7 +36,6 @@ import (
 	"strconv"
 	"sync"
 	"time"
-	//	"github.com/justinethier/keyva/lsm/wal"
 )
 
 type SstEntry struct {
@@ -78,7 +77,7 @@ func New(path string, bufSize int) *LsmTree {
 	lock := sync.RWMutex{}
 	buf := skiplist.New(skiplist.String)
 	f := bloom.New(bufSize, 200)
-	wal := wal.New(path)
+	wal, entries := wal.New(path, bufSize)
 	//fmt.Println("DEBUG wal seq = ", wal.Sequence())
 	var files []SstFile
 	tree := LsmTree{path, buf, bufSize, f, files, lock, wal}
@@ -86,10 +85,10 @@ func New(path string, bufSize int) *LsmTree {
 
 	// if there are entries in wal that are not in SST files,
 	// load them into memory
-	if wal.Sequence() > seq {
-		for _, e := range wal.Entries {
+	if entries != nil {
+		for _, e := range entries {
 			if e.Id > seq {
-				//fmt.Println("DEBUG loading wal entry", e.Key)
+				fmt.Println("DEBUG loading wal entry", e.Key)
 				tree.set(e.Key, Value{e.Value}, e.Deleted)
 			}
 		}
@@ -226,6 +225,9 @@ func (tree *LsmTree) flush(seqNum uint64) {
 
 	// Clear buffer
 	tree.buffer = skiplist.New(skiplist.String)
+
+  // Switch to new wal
+  tree.wal.Next()
 }
 
 func check(e error) {

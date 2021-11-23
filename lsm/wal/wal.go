@@ -68,6 +68,10 @@ func (wal *WriteAheadLog) Next() {
   wal.openLog(wal.nextFilename())
 }
 
+func (wal *WriteAheadLog) Sequence() uint64 {
+  return wal.nextId
+}
+
 // Reset deletes all wal files from disk
 func (wal *WriteAheadLog) Reset() {
 	// tree.lock.Lock()
