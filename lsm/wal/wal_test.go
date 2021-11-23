@@ -5,12 +5,7 @@ import (
 )
 
 func TestBasic(t *testing.T) {
-	wal := New(".")
-	//wal.Reset()
-	wal.Init()
-
-TODO: how does wal know whether to start a new WAL log or append to current one???
-
+	wal, _ := New(".", 2)
 	wal.Append("a", []byte("a string"), false)
 	wal.Append("b", []byte("a string"), false)
 	wal.Append("c", []byte("a string"), false)

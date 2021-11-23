@@ -46,13 +46,43 @@ type Entry struct {
 	Time    int64
 }
 
-func New(path string) *WriteAheadLog {
+// New creates a new instance of WriteAheadLog. It also checks to
+// see if there are entries on disk from the current log, and if so
+// it returns them so those entries can be loaded into memory.
+func New(path string, capacity int) (*WriteAheadLog, []Entry) {
 	wal := WriteAheadLog{0, path, nil}
-	return &wal
+  entries := wal.entries()
+  if len(entries) >= capacity {
+    // Start new log
+    wal.Next()
+    return &wal, nil
+  }
+
+  // Append to existing
+  wal.openLog(wal.currentFilename())
+	return &wal, entries
 }
 
-func (wal *WriteAheadLog) Init() {
-	filename := wal.nextFilename()
+// Next closes the current log on disk and opens the next one for writing.
+func (wal *WriteAheadLog) Next() {
+  wal.openLog(wal.nextFilename())
+}
+
+// Reset deletes all wal files from disk
+func (wal *WriteAheadLog) Reset() {
+	// tree.lock.Lock()
+	// defer tree.lock.Unlock()
+
+	filenames := wal.getFilenames()
+	for _, filename := range filenames {
+		os.Remove(filename) // ... and remove from disk
+	}
+}
+
+// openLog opens the given file as the current write-ahead-log
+func (wal *WriteAheadLog) openLog(filename string) {
+  wal.Close()
+
 	f, err := os.OpenFile(filename, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
 	if err != nil {
 		panic(err)
@@ -62,7 +92,7 @@ func (wal *WriteAheadLog) Init() {
 
 // Entries retrives all entries from the most recent write ahead log file.
 // It is presumed older entries are already written to an SST file.
-func (wal *WriteAheadLog) Entries() []Entry{
+func (wal *WriteAheadLog) entries() []Entry{
   filename := wal.currentFilename()
   entries, id := load(filename)
   wal.nextId = id
@@ -130,7 +160,9 @@ func load(filename string) ([]Entry, uint64) {
 }
 
 func (wal *WriteAheadLog) Close() {
-	wal.file.Close()
+  if wal.file != nil {
+    wal.file.Close()
+  }
 }
 
 func (wal *WriteAheadLog) nextFilename() string {
@@ -191,12 +223,3 @@ func (wal *WriteAheadLog) getFilenames() []string {
 	return walFiles
 }
 
-func (wal *WriteAheadLog) Reset() {
-	// tree.lock.Lock()
-	// defer tree.lock.Unlock()
-
-	filenames := wal.getFilenames()
-	for _, filename := range filenames {
-		os.Remove(filename) // ... and remove from disk
-	}
-}
