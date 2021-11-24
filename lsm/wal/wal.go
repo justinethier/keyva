@@ -49,27 +49,21 @@ type Entry struct {
 // New creates a new instance of WriteAheadLog. It also checks to
 // see if there are entries on disk from the current log, and if so
 // it returns them so those entries can be loaded into memory.
-func New(path string, capacity int) (*WriteAheadLog, []Entry) {
+func New(path string) (*WriteAheadLog, []Entry) {
 	wal := WriteAheadLog{0, path, nil}
   entries := wal.entries()
 
-TODO: this is broken because SST might have a capacity of, say, 50 but that could correspond to thousands of wal records if there are updates, deletes, etc.
-maybe a better solution is to not pass an arg at all and just keep appending to the same log. Then when sst calls flush it can switch to a new wal at that time.
-everything still works because we track ID's, so partial data can be read from the wal and applied to the memtable as needed. it is OK if the wal contains entries
-that span sst files (or at least, that needs to be OK). also it is extremely unlikely that new would ever cause us to start a new log unless there are no entries
-at all. otherwise it is much more likely we would append from existing log. and if we append on a full log that is fine, because we will make everything robust enough
- to still work in that case.
-
-  if len(entries) >= capacity {
-    // Start new log
-    wal.Next()
-    return &wal, nil
-  }
-
-  // Append to existing
+  // Append to existing log
   wal.openLog(wal.currentFilename())
 	return &wal, entries
 }
+
+// TODO: this is broken because SST might have a capacity of, say, 50 but that could correspond to thousands of wal records if there are updates, deletes, etc.
+// maybe a better solution is to not pass an arg at all and just keep appending to the same log. Then when sst calls flush it can switch to a new wal at that time.
+// everything still works because we track ID's, so partial data can be read from the wal and applied to the memtable as needed. it is OK if the wal contains entries
+// that span sst files (or at least, that needs to be OK). also it is extremely unlikely that new would ever cause us to start a new log unless there are no entries
+// at all. otherwise it is much more likely we would append from existing log. and if we append on a full log that is fine, because we will make everything robust enough
+//  to still work in that case.
 
 // Next closes the current log on disk and opens the next one for writing.
 func (wal *WriteAheadLog) Next() {
@@ -133,15 +127,11 @@ func (wal *WriteAheadLog) Append(key string, value []byte, deleted bool) uint64 
 	}
 
 	// Ensure data is written to file system (performance issue?)
-//	err = wal.file.Sync()
-//	if err != nil {
-//		panic(err)
-//	}
+	err = wal.file.Sync()
+	if err != nil {
+		panic(err)
+	}
 
-	// TODO: start a new log file if the current one is too large
-	//   maybe do this as a separate function, if we are using a channel then
-	//   we want to finish append, respond to caller, then switch logs without
-	//   explicitly blocking any callers
 	return id
 }
 

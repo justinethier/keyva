@@ -77,7 +77,7 @@ func New(path string, bufSize int) *LsmTree {
 	lock := sync.RWMutex{}
 	buf := skiplist.New(skiplist.String)
 	f := bloom.New(bufSize, 200)
-	wal, entries := wal.New(path, bufSize)
+	wal, entries := wal.New(path)
 	//fmt.Println("DEBUG wal seq = ", wal.Sequence())
 	var files []SstFile
 	tree := LsmTree{path, buf, bufSize, f, files, lock, wal}
@@ -196,8 +196,7 @@ func (tree *LsmTree) flush(seqNum uint64) {
 		return
 	}
 
-	// TODO: write header to file with seqnum
-	// TODO: convenient time to switch to new WAL file
+	//fmt.Println("DEBUG called flush()")
 
 	// Remove duplicate entries
 	m := make(map[string]SstEntry)
@@ -218,6 +217,8 @@ func (tree *LsmTree) flush(seqNum uint64) {
 	// Flush buffer to disk
 	var filename = tree.nextSstFilename()
 	createSstFile(filename, keys, m, seqNum)
+
+	//fmt.Println("DEBUG wrote new sst file", filename)
 
 	// Add information to memory
 	var sstfile = SstFile{filename, filter, []SstEntry{}, time.Now()}

@@ -5,7 +5,7 @@ import (
 )
 
 func TestBasic(t *testing.T) {
-	wal, _ := New(".", 2)
+	wal, _ := New(".")
 	wal.Append("a", []byte("a string"), false)
 	wal.Append("b", []byte("a string"), false)
 	wal.Append("c", []byte("a string"), false)

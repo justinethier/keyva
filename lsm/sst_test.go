@@ -46,7 +46,7 @@ func BenchmarkSstKeyValueDelete(b *testing.B) {
 // Test loading data from the WAL
 func TestWal(t *testing.T) {
 	//os.Remove("wal.log")
-	w, _ := wal.New(".", 25)
+	w, _ := wal.New(".")
 	w.Append("a", []byte("1"), false)
 	w.Append("b", []byte("2"), false)
 	w.Append("c", []byte("3"), false)
