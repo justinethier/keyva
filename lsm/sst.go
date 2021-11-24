@@ -71,6 +71,7 @@ type LsmTree struct {
 	files           []SstFile
 	lock            sync.RWMutex
 	wal             *wal.WriteAheadLog
+  walChan          chan *SstEntry
 }
 
 func New(path string, bufSize int) *LsmTree {
@@ -80,7 +81,8 @@ func New(path string, bufSize int) *LsmTree {
 	wal, entries := wal.New(path)
 	//fmt.Println("DEBUG wal seq = ", wal.Sequence())
 	var files []SstFile
-	tree := LsmTree{path, buf, bufSize, f, files, lock, wal}
+  chn := make (chan *SstEntry, 100)
+	tree := LsmTree{path, buf, bufSize, f, files, lock, wal, chn}
 	seq := tree.load() // Read all SST files on disk and generate bloom filters
 
 	// if there are entries in wal that are not in SST files,
@@ -229,6 +231,19 @@ func (tree *LsmTree) flush(seqNum uint64) {
 
   // Switch to new wal
   tree.wal.Next()
+}
+
+func (tree *LsmTree) walJob() {
+  for {
+    v := <- tree.walChan
+
+    tree.wal.Append(v.Key, v.Value.Data, v.Deleted)
+    // TODO: pass special value to initiate a flush??
+    //seq := tree.wal.Append(v.Key, v.Value.Data, v.Deleted)
+    // if ?? {
+    //   tree.flush(seq)
+    // }
+  }
 }
 
 func check(e error) {
