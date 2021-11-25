@@ -126,13 +126,15 @@ func (wal *WriteAheadLog) Append(key string, value []byte, deleted bool) uint64 
 		panic(err)
 	}
 
+	return id
+}
+
+func (wal *WriteAheadLog) Sync() {
 	// Ensure data is written to file system (performance issue?)
-	err = wal.file.Sync()
+	err := wal.file.Sync()
 	if err != nil {
 		panic(err)
 	}
-
-	return id
 }
 
 //

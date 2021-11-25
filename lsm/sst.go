@@ -96,6 +96,8 @@ func New(path string, bufSize int) *LsmTree {
 		}
 	}
 
+  go tree.walJob()
+
 	return &tree
 }
 
@@ -144,11 +146,11 @@ func (tree *LsmTree) Increment(k string) uint32 {
 	return result
 }
 
-func (tree *LsmTree) Flush() {
-	tree.lock.Lock()
-	defer tree.lock.Unlock()
-	tree.flush(tree.wal.Sequence())
-}
+//func (tree *LsmTree) Flush() {
+//	tree.lock.Lock()
+//	defer tree.lock.Unlock()
+//	tree.flush(tree.wal.Sequence())
+//}
 
 func (tree *LsmTree) Get(k string) (Value, bool) {
 	tree.lock.Lock()
@@ -162,14 +164,16 @@ func (tree *LsmTree) set(k string, value Value, deleted bool) {
 	tree.buffer.Set(k, entry)
 
 	tree.filter.Add(k)
-	seq := tree.wal.Append(k, value.Data, deleted)
+	//seq := tree.wal.Append(k, value.Data, deleted)
+  tree.walChan <- &entry
 
 	if tree.buffer.Len() < tree.maxBufferLength {
 		// Buffer is not full yet, we're good
 		return
 	}
 
-	tree.flush(seq)
+	//tree.flush(seq)
+  tree.walChan <- nil
 }
 
 // Read all sst files from disk and load a bloom filter for each one into memory
@@ -237,12 +241,14 @@ func (tree *LsmTree) walJob() {
   for {
     v := <- tree.walChan
 
-    tree.wal.Append(v.Key, v.Value.Data, v.Deleted)
-    // TODO: pass special value to initiate a flush??
-    //seq := tree.wal.Append(v.Key, v.Value.Data, v.Deleted)
-    // if ?? {
-    //   tree.flush(seq)
-    // }
+    if v == nil {
+      tree.lock.Lock()
+      tree.flush(tree.wal.Sequence())
+      tree.lock.Unlock()
+    } else {
+      tree.wal.Append(v.Key, v.Value.Data, v.Deleted)
+      //tree.wal.Sync()
+    }
   }
 }
 

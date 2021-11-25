@@ -132,14 +132,14 @@ func TestSstKeyValue(t *testing.T) {
 		t.Error("Value not found for key", "abcd")
 	}
 
-	tbl.Flush()
-	// Verify again now that key is on disk
-	if val, found := tbl.Get("abcd"); found {
-		if string(val.Data) != "test" {
-			t.Error("Unexpected value", val.Data, "for key", "abcd")
-		}
-	} else {
-		t.Error("Value not found for key", "abcd")
-	}
+	//tbl.Flush()
+	//// Verify again now that key is on disk
+	//if val, found := tbl.Get("abcd"); found {
+	//	if string(val.Data) != "test" {
+	//		t.Error("Unexpected value", val.Data, "for key", "abcd")
+	//	}
+	//} else {
+	//	t.Error("Value not found for key", "abcd")
+	//}
 	tbl.ResetDB()
 }
