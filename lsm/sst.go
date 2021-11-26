@@ -81,11 +81,11 @@ func New(path string, bufSize int) *LsmTree {
 	wal, entries := wal.New(path)
 	//fmt.Println("DEBUG wal seq = ", wal.Sequence())
 	var files []SstFile
-  chn := make (chan *SstEntry, 100)
+  chn := make (chan *SstEntry, 1000)
 	tree := LsmTree{path, buf, bufSize, f, files, lock, wal, chn}
 	seq := tree.load() // Read all SST files on disk and generate bloom filters
 
-fmt.Println("loaded LSM tree seq =", seq)
+//fmt.Println("loaded LSM tree seq =", seq)
 
 	// if there are entries in wal that are not in SST files,
 	// load them into memory
@@ -93,14 +93,17 @@ fmt.Println("loaded LSM tree seq =", seq)
 		for _, e := range entries {
 			if e.Id > seq {
 				fmt.Println("DEBUG loading wal id", e.Id, "entry", e.Key)
-				tree.set(e.Key, Value{e.Value}, e.Deleted)
+				tree.setInMemtbl(e.Key, Value{e.Value}, e.Deleted)
 			}
 		}
 	}
 
-TODO: tree.set is broken above because this job empties it. but do we really
-want to call tree.set when loading from WAL?
   go tree.walJob()
+
+  // Flush SST to disk if necessary
+  if tree.buffer.Len() < tree.maxBufferLength {
+    tree.walChan <- nil
+  }
 
 	return &tree
 }
@@ -117,15 +120,11 @@ func (tree *LsmTree) ResetDB() {
 }
 
 func (tree *LsmTree) Set(k string, value Value) {
-	tree.lock.Lock()
-	defer tree.lock.Unlock()
 	tree.set(k, value, false)
 }
 
 func (tree *LsmTree) Delete(k string) {
 	var val Value
-	tree.lock.Lock()
-	defer tree.lock.Unlock()
 	tree.set(k, val, true)
 }
 
@@ -163,21 +162,35 @@ func (tree *LsmTree) Get(k string) (Value, bool) {
 	return val, ok
 }
 
-func (tree *LsmTree) set(k string, value Value, deleted bool) {
+// Only set in memory do not update WAL or SST, useful for loading data at startup
+func (tree *LsmTree) setInMemtbl(k string, value Value, deleted bool) {
 	entry := SstEntry{k, value, deleted}
 	tree.buffer.Set(k, entry)
 
 	tree.filter.Add(k)
-	//seq := tree.wal.Append(k, value.Data, deleted)
-  tree.walChan <- &entry
+}
 
-	if tree.buffer.Len() < tree.maxBufferLength {
-		// Buffer is not full yet, we're good
-		return
+func (tree *LsmTree) set(k string, value Value, deleted bool) {
+	entry := SstEntry{k, value, deleted}
+  readyToFlushSst := false
+  // Set flag indicating we are ready to dump SST to disk.
+  // Only send when equal to threshold to avoid spamming nil if the goroutine
+  // takes awhile to process the flush
+	if tree.buffer.Len() == tree.maxBufferLength {
+    readyToFlushSst = true
 	}
 
-	//tree.flush(seq)
+	tree.lock.Lock()
+	tree.buffer.Set(k, entry)
+	tree.filter.Add(k)
+	tree.lock.Unlock()
+
+  // Add entry to Wal, flush SST if ready
+  // Release locks before we do this to avoid possibility of deadlock
+  tree.walChan <- &entry
+	if readyToFlushSst {
   tree.walChan <- nil
+	}
 }
 
 // Read all sst files from disk and load a bloom filter for each one into memory
@@ -245,14 +258,16 @@ func (tree *LsmTree) walJob() {
   for {
     v := <- tree.walChan
 
-fmt.Println("walJob received", v)
+//fmt.Println("walJob received", v)
     if v == nil {
       tree.lock.Lock()
       tree.flush(tree.wal.Sequence())
       tree.lock.Unlock()
     } else {
       tree.wal.Append(v.Key, v.Value.Data, v.Deleted)
-      //tree.wal.Sync()
+      if len(tree.walChan) == 0 {
+        tree.wal.Sync()
+      }
     }
   }
 }
