@@ -85,17 +85,21 @@ func New(path string, bufSize int) *LsmTree {
 	tree := LsmTree{path, buf, bufSize, f, files, lock, wal, chn}
 	seq := tree.load() // Read all SST files on disk and generate bloom filters
 
+fmt.Println("loaded LSM tree seq =", seq)
+
 	// if there are entries in wal that are not in SST files,
 	// load them into memory
 	if entries != nil {
 		for _, e := range entries {
 			if e.Id > seq {
-				fmt.Println("DEBUG loading wal entry", e.Key)
+				fmt.Println("DEBUG loading wal id", e.Id, "entry", e.Key)
 				tree.set(e.Key, Value{e.Value}, e.Deleted)
 			}
 		}
 	}
 
+TODO: tree.set is broken above because this job empties it. but do we really
+want to call tree.set when loading from WAL?
   go tree.walJob()
 
 	return &tree
@@ -241,6 +245,7 @@ func (tree *LsmTree) walJob() {
   for {
     v := <- tree.walChan
 
+fmt.Println("walJob received", v)
     if v == nil {
       tree.lock.Lock()
       tree.flush(tree.wal.Sequence())
