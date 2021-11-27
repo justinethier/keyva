@@ -21,3 +21,11 @@ func Readln(r *bufio.Reader) (string, error) {
   }
   return string(ln),err
 }
+
+//  TODO: debug trace() -
+// func trace(str …interface{}) {
+// if DEBUG{
+// fmt.Println(str…)
+// return
+// }
+// }
