@@ -71,7 +71,7 @@ type LsmTree struct {
 	files           []SstFile
 	lock            sync.RWMutex
 	wal             *wal.WriteAheadLog
-  walChan          chan *SstEntry
+	walChan         chan *SstEntry
 }
 
 func New(path string, bufSize int) *LsmTree {
@@ -81,11 +81,11 @@ func New(path string, bufSize int) *LsmTree {
 	wal, entries := wal.New(path)
 	//fmt.Println("DEBUG wal seq = ", wal.Sequence())
 	var files []SstFile
-  chn := make (chan *SstEntry, 1000)
+	chn := make(chan *SstEntry, 1000)
 	tree := LsmTree{path, buf, bufSize, f, files, lock, wal, chn}
 	seq := tree.load() // Read all SST files on disk and generate bloom filters
 
-//fmt.Println("loaded LSM tree seq =", seq)
+	//fmt.Println("loaded LSM tree seq =", seq)
 
 	// if there are entries in wal that are not in SST files,
 	// load them into memory
@@ -98,12 +98,12 @@ func New(path string, bufSize int) *LsmTree {
 		}
 	}
 
-  go tree.walJob()
+	go tree.walJob()
 
-  // Flush SST to disk if necessary
-  if tree.buffer.Len() < tree.maxBufferLength {
-    tree.walChan <- nil
-  }
+	// Flush SST to disk if necessary
+	if tree.buffer.Len() < tree.maxBufferLength {
+		tree.walChan <- nil
+	}
 
 	return &tree
 }
@@ -172,12 +172,12 @@ func (tree *LsmTree) setInMemtbl(k string, value Value, deleted bool) {
 
 func (tree *LsmTree) set(k string, value Value, deleted bool) {
 	entry := SstEntry{k, value, deleted}
-  readyToFlushSst := false
-  // Set flag indicating we are ready to dump SST to disk.
-  // Only send when equal to threshold to avoid spamming nil if the goroutine
-  // takes awhile to process the flush
+	readyToFlushSst := false
+	// Set flag indicating we are ready to dump SST to disk.
+	// Only send when equal to threshold to avoid spamming nil if the goroutine
+	// takes awhile to process the flush
 	if tree.buffer.Len() == tree.maxBufferLength {
-    readyToFlushSst = true
+		readyToFlushSst = true
 	}
 
 	tree.lock.Lock()
@@ -185,11 +185,11 @@ func (tree *LsmTree) set(k string, value Value, deleted bool) {
 	tree.filter.Add(k)
 	tree.lock.Unlock()
 
-  // Add entry to Wal, flush SST if ready
-  // Release locks before we do this to avoid possibility of deadlock
-  tree.walChan <- &entry
+	// Add entry to Wal, flush SST if ready
+	// Release locks before we do this to avoid possibility of deadlock
+	tree.walChan <- &entry
 	if readyToFlushSst {
-  tree.walChan <- nil
+		tree.walChan <- nil
 	}
 }
 
@@ -250,26 +250,26 @@ func (tree *LsmTree) flush(seqNum uint64) {
 	// Clear buffer
 	tree.buffer = skiplist.New(skiplist.String)
 
-  // Switch to new wal
-  tree.wal.Next()
+	// Switch to new wal
+	tree.wal.Next()
 }
 
 func (tree *LsmTree) walJob() {
-  for {
-    v := <- tree.walChan
+	for {
+		v := <-tree.walChan
 
-//fmt.Println("walJob received", v)
-    if v == nil {
-      tree.lock.Lock()
-      tree.flush(tree.wal.Sequence())
-      tree.lock.Unlock()
-    } else {
-      tree.wal.Append(v.Key, v.Value.Data, v.Deleted)
-      if len(tree.walChan) == 0 {
-        tree.wal.Sync()
-      }
-    }
-  }
+		//fmt.Println("walJob received", v)
+		if v == nil {
+			tree.lock.Lock()
+			tree.flush(tree.wal.Sequence())
+			tree.lock.Unlock()
+		} else {
+			tree.wal.Append(v.Key, v.Value.Data, v.Deleted)
+			if len(tree.walChan) == 0 {
+				tree.wal.Sync()
+			}
+		}
+	}
 }
 
 func check(e error) {

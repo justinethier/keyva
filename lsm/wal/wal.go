@@ -3,15 +3,15 @@ package wal
 import (
 	"bufio"
 	"encoding/json"
-  "fmt"
+	"fmt"
 	"github.com/justinethier/keyva/util"
-  "log"
+	"log"
 	"os"
 	//"sync"
-  "regexp"
-  "strconv"
+	"io/ioutil"
+	"regexp"
+	"strconv"
 	"time"
-  "io/ioutil"
 )
 
 // TODO: write-ahead log
@@ -33,9 +33,9 @@ import (
 
 // TODO: no thread safety, for now we rely on the caller to hold the proper locks
 type WriteAheadLog struct {
-	nextId  uint64
-	path    string
-	file    *os.File
+	nextId uint64
+	path   string
+	file   *os.File
 }
 
 type Entry struct {
@@ -51,10 +51,10 @@ type Entry struct {
 // it returns them so those entries can be loaded into memory.
 func New(path string) (*WriteAheadLog, []Entry) {
 	wal := WriteAheadLog{0, path, nil}
-  entries := wal.entries()
+	entries := wal.entries()
 
-  // Append to existing log
-  wal.openLog(wal.currentFilename())
+	// Append to existing log
+	wal.openLog(wal.currentFilename())
 	return &wal, entries
 }
 
@@ -67,11 +67,11 @@ func New(path string) (*WriteAheadLog, []Entry) {
 
 // Next closes the current log on disk and opens the next one for writing.
 func (wal *WriteAheadLog) Next() {
-  wal.openLog(wal.nextFilename())
+	wal.openLog(wal.nextFilename())
 }
 
 func (wal *WriteAheadLog) Sequence() uint64 {
-  return wal.nextId
+	return wal.nextId
 }
 
 // Reset deletes all wal files from disk
@@ -87,22 +87,22 @@ func (wal *WriteAheadLog) Reset() {
 
 // openLog opens the given file as the current write-ahead-log
 func (wal *WriteAheadLog) openLog(filename string) {
-  wal.Close()
+	wal.Close()
 
 	f, err := os.OpenFile(filename, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
 	if err != nil {
 		panic(err)
 	}
-  wal.file = f
+	wal.file = f
 }
 
 // Entries retrives all entries from the most recent write ahead log file.
 // It is presumed older entries are already written to an SST file.
-func (wal *WriteAheadLog) entries() []Entry{
-  filename := wal.currentFilename()
-  entries, id := load(filename)
-  wal.nextId = id
-  return entries
+func (wal *WriteAheadLog) entries() []Entry {
+	filename := wal.currentFilename()
+	entries, id := load(filename)
+	wal.nextId = id
+	return entries
 }
 
 func (wal *WriteAheadLog) Append(key string, value []byte, deleted bool) uint64 {
@@ -164,9 +164,9 @@ func load(filename string) ([]Entry, uint64) {
 }
 
 func (wal *WriteAheadLog) Close() {
-  if wal.file != nil {
-    wal.file.Close()
-  }
+	if wal.file != nil {
+		wal.file.Close()
+	}
 }
 
 func (wal *WriteAheadLog) nextFilename() string {
@@ -176,9 +176,9 @@ func (wal *WriteAheadLog) nextFilename() string {
 
 func (wal *WriteAheadLog) currentFilename() string {
 	n := wal.latestFileId()
-  if n < 0 {
-    n = 0
-  }
+	if n < 0 {
+		n = 0
+	}
 	return fmt.Sprintf("write-ahead-log-%04d.json", n)
 }
 
@@ -226,4 +226,3 @@ func (wal *WriteAheadLog) getFilenames() []string {
 
 	return walFiles
 }
-
