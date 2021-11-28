@@ -2,6 +2,7 @@ package util
 
 import (
   "bufio"
+  "fmt"
 )
 
 // Readln returns a single line (without the ending \n)
@@ -22,10 +23,13 @@ func Readln(r *bufio.Reader) (string, error) {
   return string(ln),err
 }
 
-//  TODO: debug trace() -
-// func trace(str …interface{}) {
-// if DEBUG{
-// fmt.Println(str…)
-// return
-// }
-// }
+// debug controls whether debug information is logged to stdout
+var debug bool = true
+
+// Trace writes the given parameters to stdout if debug output is enabled
+func Trace(str ...interface{}) {
+ if debug {
+   fmt.Println(str...)
+   return
+ }
+}

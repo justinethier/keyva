@@ -92,7 +92,7 @@ func New(path string, bufSize int) *LsmTree {
 	if entries != nil {
 		for _, e := range entries {
 			if e.Id > seq {
-				fmt.Println("DEBUG loading wal id", e.Id, "entry", e.Key)
+				util.Trace("DEBUG loading wal id", e.Id, "entry", e.Key)
 				tree.setInMemtbl(e.Key, Value{e.Value}, e.Deleted)
 			}
 		}
