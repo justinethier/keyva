@@ -130,20 +130,39 @@ func (tree *LsmTree) Delete(k string) {
 
 func (tree *LsmTree) Increment(k string) uint32 {
 	var result uint32
-	tree.lock.Lock()
-	defer tree.lock.Unlock()
+	readyToFlushSst := false
+	// Set flag indicating we are ready to dump SST to disk.
+	// Only send when equal to threshold to avoid spamming nil if the goroutine
+	// takes awhile to process the flush
+	if tree.buffer.Len() == tree.maxBufferLength {
+		readyToFlushSst = true
+	}
+
+// get/set operations are synchronized to guarantee the next number is always returned
+tree.lock.Lock()
+	var entry SstEntry
 	val, ok := tree.get(k)
 	if ok {
 		n := binary.LittleEndian.Uint32(val.Data)
 		n++
 		binary.LittleEndian.PutUint32(val.Data, n)
-		tree.set(k, val, false)
+		tree.setInMemtbl(k, val, false)
+		entry = SstEntry{k, val, false}
 		result = n
 	} else {
 		bs := make([]byte, 4)
 		binary.LittleEndian.PutUint32(bs, 0)
-		tree.set(k, Value{bs}, false)
+		tree.setInMemtbl(k, Value{bs}, false)
+		entry = SstEntry{k, Value{bs}, false}
 		result = 0
+	}
+tree.lock.Unlock()
+
+	// Add entry to Wal, flush SST if ready
+	// Release locks before we do this to avoid possibility of deadlock
+	tree.walChan <- &entry
+	if readyToFlushSst {
+		tree.walChan <- nil
 	}
 
 	return result
@@ -166,7 +185,6 @@ func (tree *LsmTree) Get(k string) (Value, bool) {
 func (tree *LsmTree) setInMemtbl(k string, value Value, deleted bool) {
 	entry := SstEntry{k, value, deleted}
 	tree.buffer.Set(k, entry)
-
 	tree.filter.Add(k)
 }
 
@@ -215,7 +233,7 @@ func (tree *LsmTree) load() uint64 {
 }
 
 func (tree *LsmTree) flush(seqNum uint64) {
-	if tree.buffer.Len() == 0 {
+	if tree.buffer.Len() == 0 || tree.buffer.Len() < tree.maxBufferLength {
 		return
 	}
 
