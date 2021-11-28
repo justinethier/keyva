@@ -2,10 +2,6 @@
 - Proper header comments for packages, review package exports, etc
 
 # Robustness
-- Add a write-ahead-log (WAL) to handle crashes. otherwise un-flushed data might be lost
-  do we need direct I/O? - https://stackoverflow.com/questions/33095053/how-do-i-skip-the-filesystem-cache-when-reading-a-file-in-golang
-
-    kind of works, need to flush wal when sst is flushed, so wal doesn't get too big
 
 - instead of flushing immediately, replace the memtable with a new one and keep the old memtable as an immutable table in memory (we just read from it, never write) while it is being flushed.
 - random links with some interesting ideas:
@@ -14,6 +10,8 @@
   https://george24601.github.io/2019/12/27/lsm.html
   https://stackoverflow.com/questions/256511/skip-list-vs-binary-search-tree/28270537
 
+- Expand testing to better handle below cases
+  - consider chaos monkey that adds random keys over fast/slow time intervals
 - Add GC for cached content
 - Add a compaction thread/phase
 - Key will be preserving functionality and speed while adding these "real-world" features
