@@ -29,7 +29,7 @@ func ArgServer(w http.ResponseWriter, req *http.Request) {
 
 func main() {
 	mux := http.NewServeMux()
-	m := lsm.New(".", 5) // TODO: optionally, make these parameters configurable
+	m := lsm.New(".", 5000) // TODO: optionally, make these parameters configurable
 	// TODO: use a larger default (5000?). This is small for testing purposes
 
 	// Background on http handlers -
