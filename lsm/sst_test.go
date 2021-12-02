@@ -24,7 +24,7 @@ func BenchmarkSstKeyValueSet(b *testing.B) {
 		token := make([]byte, 8)
 		rand.Read(token)
 		j := rand.Intn(b.N)
-		tbl.Set(strconv.Itoa(j), Value{Data: token /*, ContentType: "test content"*/})
+		tbl.Set(strconv.Itoa(j), token)
 	}
 }
 
@@ -57,10 +57,10 @@ func TestWal(t *testing.T) {
 	w.Close()
 
 	var tbl = New(".", 25)
-	tbl.Set("h", Value{[]byte("8")})
+	tbl.Set("h", []byte("8"))
 	if v, found := tbl.Get("a"); found {
-		if bytes.Compare(v.Data, []byte("1")) != 0 {
-			t.Error("Unexpected value", v.Data, "for key", "a")
+		if bytes.Compare(v, []byte("1")) != 0 {
+			t.Error("Unexpected value", v, "for key", "a")
 		}
 	} else {
 		t.Error("Value not found for key a")
@@ -76,10 +76,10 @@ func TestSstInternals(t *testing.T) {
 
 	tbl.ResetDB()
 
-	tbl.Set("test value", Value{[]byte("1")})
+	tbl.Set("test value", []byte("1"))
 	val, ok := tbl.findLatestBufferEntryValue("test value")
 
-	if !ok || bytes.Compare(val.Value.Data, []byte("1")) != 0 {
+	if !ok || bytes.Compare(val.Value, []byte("1")) != 0 {
 		t.Error("Unexpected test value", val, ok)
 	}
 }
@@ -92,7 +92,7 @@ func TestSstKeyValue(t *testing.T) {
 
 	for i := N - 1; i >= 0; i-- {
 		// encode predictable value for i
-		tbl.Set(strconv.Itoa(i), Value{Data: []byte(strconv.Itoa(i)) /*, ContentType: "test content"*/})
+		tbl.Set(strconv.Itoa(i), []byte(strconv.Itoa(i)))
 	}
 
 	tbl.Delete(strconv.Itoa(100))
@@ -101,8 +101,8 @@ func TestSstKeyValue(t *testing.T) {
 	// verify i contains expected value
 	for i := 0; i < N; i++ {
 		if v, found := tbl.Get(strconv.Itoa(i)); found {
-			if bytes.Compare(v.Data, []byte(strconv.Itoa(i))) != 0 {
-				t.Error("Unexpected value", v.Data, "for key", i)
+			if bytes.Compare(v, []byte(strconv.Itoa(i))) != 0 {
+				t.Error("Unexpected value", v, "for key", i)
 			}
 		} else {
 			t.Error("Value not found for key", i)
@@ -116,17 +116,17 @@ func TestSstKeyValue(t *testing.T) {
 	// verify key does not exist for i
 	for i := 0; i < N; i++ {
 		if val, found := tbl.Get(strconv.Itoa(i)); found {
-			t.Error("Unexpected value", val.Data, "for deleted key", i)
+			t.Error("Unexpected value", val, "for deleted key", i)
 		}
 	}
 
 	// add a key back
-	tbl.Set("abcd", Value{[]byte("test")})
+	tbl.Set("abcd", []byte("test"))
 
 	// verify that key exists now
 	if val, found := tbl.Get("abcd"); found {
-		if string(val.Data) != "test" {
-			t.Error("Unexpected value", val.Data, "for key", "abcd")
+		if string(val) != "test" {
+			t.Error("Unexpected value", val, "for key", "abcd")
 		}
 	} else {
 		t.Error("Value not found for key", "abcd")
@@ -135,8 +135,8 @@ func TestSstKeyValue(t *testing.T) {
 	//tbl.Flush()
 	//// Verify again now that key is on disk
 	//if val, found := tbl.Get("abcd"); found {
-	//	if string(val.Data) != "test" {
-	//		t.Error("Unexpected value", val.Data, "for key", "abcd")
+	//	if string(val) != "test" {
+	//		t.Error("Unexpected value", val, "for key", "abcd")
 	//	}
 	//} else {
 	//	t.Error("Value not found for key", "abcd")

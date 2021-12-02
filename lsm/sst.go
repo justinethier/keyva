@@ -40,7 +40,7 @@ import (
 
 type SstEntry struct {
 	Key     string
-	Value   Value
+	Value   []byte
 	Deleted bool
 }
 
@@ -93,7 +93,7 @@ func New(path string, bufSize int) *LsmTree {
 		for _, e := range entries {
 			if e.Id > seq {
 				util.Trace("DEBUG loading wal id", e.Id, "entry", e.Key)
-				tree.setInMemtbl(e.Key, Value{e.Value}, e.Deleted)
+				tree.setInMemtbl(e.Key, e.Value, e.Deleted)
 			}
 		}
 	}
@@ -119,12 +119,12 @@ func (tree *LsmTree) ResetDB() {
 	}
 }
 
-func (tree *LsmTree) Set(k string, value Value) {
+func (tree *LsmTree) Set(k string, value []byte) {
 	tree.set(k, value, false)
 }
 
 func (tree *LsmTree) Delete(k string) {
-	var val Value
+	var val []byte
 	tree.set(k, val, true)
 }
 
@@ -143,17 +143,17 @@ tree.lock.Lock()
 	var entry SstEntry
 	val, ok := tree.get(k)
 	if ok {
-		n := binary.LittleEndian.Uint32(val.Data)
+		n := binary.LittleEndian.Uint32(val)
 		n++
-		binary.LittleEndian.PutUint32(val.Data, n)
+		binary.LittleEndian.PutUint32(val, n)
 		tree.setInMemtbl(k, val, false)
 		entry = SstEntry{k, val, false}
 		result = n
 	} else {
 		bs := make([]byte, 4)
 		binary.LittleEndian.PutUint32(bs, 0)
-		tree.setInMemtbl(k, Value{bs}, false)
-		entry = SstEntry{k, Value{bs}, false}
+		tree.setInMemtbl(k, bs, false)
+		entry = SstEntry{k, bs, false}
 		result = 0
 	}
 tree.lock.Unlock()
@@ -174,7 +174,7 @@ tree.lock.Unlock()
 //	tree.flush(tree.wal.Sequence())
 //}
 
-func (tree *LsmTree) Get(k string) (Value, bool) {
+func (tree *LsmTree) Get(k string) ([]byte, bool) {
 	tree.lock.Lock()
 	defer tree.lock.Unlock()
 	val, ok := tree.get(k)
@@ -182,13 +182,13 @@ func (tree *LsmTree) Get(k string) (Value, bool) {
 }
 
 // Only set in memory do not update WAL or SST, useful for loading data at startup
-func (tree *LsmTree) setInMemtbl(k string, value Value, deleted bool) {
+func (tree *LsmTree) setInMemtbl(k string, value []byte, deleted bool) {
 	entry := SstEntry{k, value, deleted}
 	tree.buffer.Set(k, entry)
 	tree.filter.Add(k)
 }
 
-func (tree *LsmTree) set(k string, value Value, deleted bool) {
+func (tree *LsmTree) set(k string, value []byte, deleted bool) {
 	entry := SstEntry{k, value, deleted}
 	readyToFlushSst := false
 	// Set flag indicating we are ready to dump SST to disk.
@@ -282,7 +282,7 @@ func (tree *LsmTree) walJob() {
 			tree.flush(tree.wal.Sequence())
 			tree.lock.Unlock()
 		} else {
-			tree.wal.Append(v.Key, v.Value.Data, v.Deleted)
+			tree.wal.Append(v.Key, v.Value, v.Deleted)
 			if len(tree.walChan) == 0 {
 				tree.wal.Sync()
 			}
@@ -434,7 +434,7 @@ func (tree *LsmTree) findEntryValue(key string, entries []SstEntry) (SstEntry, b
 	return entry, false
 }
 
-func (tree *LsmTree) get(k string) (Value, bool) {
+func (tree *LsmTree) get(k string) ([]byte, bool) {
 	// Check in-memory buffer
 	if latestBufEntry, ok := tree.findLatestBufferEntryValue(k); ok {
 		if latestBufEntry.Deleted {
@@ -473,6 +473,6 @@ func (tree *LsmTree) get(k string) (Value, bool) {
 	}
 
 	// Key not found
-	var val Value
+	var val []byte
 	return val, false
 }

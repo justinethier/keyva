@@ -18,6 +18,6 @@ func main() {
     key := fmt.Sprintf("%d", i)
     doc := fmt.Sprintf("%d", time.Now().UnixNano())
 	  //set(key, "text/plain", []byte(doc))
-    tbl.Set(key, lsm.Value{[]byte(doc)})
+    tbl.Set(key, []byte(doc))
   }
 }

@@ -24,7 +24,7 @@ func (m *LsmTree) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	case "GET":
 		if val, ok := m.Get(req.URL.Path); ok {
 			// TODO: w.Header().Set("Content-Type", val.ContentType)
-			w.Write(val.Data)
+			w.Write(val)
 		} else {
 			w.WriteHeader(http.StatusNotFound)
 			fmt.Fprintln(w, "Resource not found")
@@ -34,9 +34,9 @@ func (m *LsmTree) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		if err != nil {
 			log.Fatalln(err)
 		}
-		var val Value
+		var val []byte
 		// TODO: val.ContentType = req.Header.Get("Content-Type")
-		val.Data = b //string(b)
+		val = b //string(b)
 
 		m.Set(req.URL.Path, val)
 		fmt.Fprintln(w, "Stored value")
