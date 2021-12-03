@@ -1,4 +1,6 @@
 # Basic
+- Change New if needed such that all database files are placed in given directory. If dir does not exist, it will be created
+- Allow passing directory optionally from keyva executable
 - Proper header comments for packages, review package exports, etc
 
 # Robustness
