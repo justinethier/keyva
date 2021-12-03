@@ -1,6 +1,7 @@
 # Basic
 - Change New if needed such that all database files are placed in given directory. If dir does not exist, it will be created
 - Allow passing directory optionally from keyva executable
+- This is from rocks - can we do this? - "Once a memtable is full, it becomes immutable and replaced by a new memtable. A background thread will flush the content of the memtable into a SST file, after which the memtable can be destroyed."
 - Proper header comments for packages, review package exports, etc
 
 # Robustness
