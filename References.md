@@ -31,6 +31,11 @@ We now understand how a basic LSM tree storage engine works:
 
 ## Other
 
+* What is a LSM Tree? - https://dev.to/creativcoder/what-is-a-lsm-tree-3d75
+ 
+  Lots of useful high-level information at this link.
+
 * LSM tree paper - https://www.cs.umb.edu/~poneil/lsmtree.pdf
 * https://www.igvita.com/2012/02/06/sstable-and-log-structured-storage-leveldb/
 * https://medium.com/swlh/log-structured-merge-trees-9c8e2bea89e8
+
