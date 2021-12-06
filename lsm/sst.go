@@ -63,7 +63,7 @@ type SstFile struct {
 }
 
 type LsmTree struct {
-	Path string
+	path string
 	// buffer AKA MemTable, used as initial in-memory store of new data
 	buffer          *skiplist.SkipList
 	maxBufferLength int
@@ -75,11 +75,20 @@ type LsmTree struct {
 }
 
 func New(path string, bufSize int) *LsmTree {
+	// Create data directory if it does not exist
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		err := os.Mkdir(path, 0755)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+
 	lock := sync.RWMutex{}
 	buf := skiplist.New(skiplist.String)
 	f := bloom.New(bufSize, 200)
 	wal, entries := wal.New(path)
 	//fmt.Println("DEBUG wal seq = ", wal.Sequence())
+	//fmt.Println("DEBUG wal = ", entries)
 	var files []SstFile
 	chn := make(chan *SstEntry, 1000)
 	tree := LsmTree{path, buf, bufSize, f, files, lock, wal, chn}
@@ -323,7 +332,7 @@ func createSstFile(filename string, keys []string, m map[string]SstEntry, seqNum
 }
 
 func (tree *LsmTree) nextSstFilename() string {
-	files, err := ioutil.ReadDir(tree.Path)
+	files, err := ioutil.ReadDir(tree.path)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -347,7 +356,7 @@ func (tree *LsmTree) nextSstFilename() string {
 }
 
 func (tree *LsmTree) getSstFilenames() []string {
-	files, err := ioutil.ReadDir(tree.Path)
+	files, err := ioutil.ReadDir(tree.path)
 	if err != nil {
 		log.Fatal(err)
 	}

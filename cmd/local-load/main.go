@@ -11,7 +11,7 @@ import (
 )
 
 func main() {
-	tbl := lsm.New(".", 5000)
+	tbl := lsm.New("data", 5000)
   tbl.ResetDB()
 
   for i := 0; i < 100000; i++ {

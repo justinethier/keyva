@@ -13,11 +13,11 @@ var tbl *LsmTree
 
 func init() {
 	//os.Remove("wal.log")
-	tbl = New(".", 5000)
+	tbl = New("testdb", 5000)
 }
 
 func BenchmarkSstKeyValueSet(b *testing.B) {
-	//tbl = New(".", 5000)
+	//tbl = New("testdb", 5000)
 	tbl.ResetDB()
 
 	for i := 0; i < b.N; i++ {
@@ -46,7 +46,7 @@ func BenchmarkSstKeyValueDelete(b *testing.B) {
 // Test loading data from the WAL
 func TestWal(t *testing.T) {
 	//os.Remove("wal.log")
-	w, _ := wal.New(".")
+	w, _ := wal.New("testdb")
 	w.Append("a", []byte("1"), false)
 	w.Append("b", []byte("2"), false)
 	w.Append("c", []byte("3"), false)
@@ -56,7 +56,7 @@ func TestWal(t *testing.T) {
 	w.Append("g", []byte("7"), false)
 	w.Close()
 
-	var tbl = New(".", 25)
+	var tbl = New("testdb", 25)
 	tbl.Set("h", []byte("8"))
 	if v, found := tbl.Get("a"); found {
 		if bytes.Compare(v, []byte("1")) != 0 {
@@ -72,7 +72,7 @@ func TestWal(t *testing.T) {
 // sst files
 
 func TestSstInternals(t *testing.T) {
-	var tbl = New(".", 25)
+	var tbl = New("testdb", 25)
 
 	tbl.ResetDB()
 
@@ -86,7 +86,7 @@ func TestSstInternals(t *testing.T) {
 
 func TestSstKeyValue(t *testing.T) {
 	var N = 100
-	var tbl = New(".", 25)
+	var tbl = New("testdb", 25)
 
 	tbl.ResetDB()
 

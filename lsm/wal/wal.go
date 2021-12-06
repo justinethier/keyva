@@ -51,6 +51,15 @@ type Entry struct {
 // it returns them so those entries can be loaded into memory.
 func New(path string) (*WriteAheadLog, []Entry) {
 	wal := WriteAheadLog{0, path, nil}
+
+	// Create data directory if it does not exist
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		err := os.Mkdir(path, 0755)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+
 	entries := wal.entries()
 
 	// Append to existing log
@@ -89,7 +98,7 @@ func (wal *WriteAheadLog) Reset() {
 func (wal *WriteAheadLog) openLog(filename string) {
 	wal.Close()
 
-	f, err := os.OpenFile(filename, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
+	f, err := os.OpenFile(wal.path+"/"+filename, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
 	if err != nil {
 		panic(err)
 	}
@@ -100,7 +109,7 @@ func (wal *WriteAheadLog) openLog(filename string) {
 // It is presumed older entries are already written to an SST file.
 func (wal *WriteAheadLog) entries() []Entry {
 	filename := wal.currentFilename()
-	entries, id := load(filename)
+	entries, id := load(wal.path + "/" + filename)
 	wal.nextId = id
 	return entries
 }
