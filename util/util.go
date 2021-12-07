@@ -24,7 +24,7 @@ func Readln(r *bufio.Reader) (string, error) {
 }
 
 // debug controls whether debug information is logged to stdout
-var debug bool = false
+var debug bool = true
 
 // Trace writes the given parameters to stdout if debug output is enabled
 func Trace(str ...interface{}) {

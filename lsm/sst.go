@@ -87,14 +87,14 @@ func New(path string, bufSize int) *LsmTree {
 	buf := skiplist.New(skiplist.String)
 	f := bloom.New(bufSize, 200)
 	wal, entries := wal.New(path)
-	//fmt.Println("DEBUG wal seq = ", wal.Sequence())
-	//fmt.Println("DEBUG wal = ", entries)
+	fmt.Println("DEBUG wal seq = ", wal.Sequence())
+	fmt.Println("DEBUG wal = ", entries)
 	var files []SstFile
 	chn := make(chan *SstEntry, 1000)
 	tree := LsmTree{path, buf, bufSize, f, files, lock, wal, chn}
 	seq := tree.load() // Read all SST files on disk and generate bloom filters
 
-	//fmt.Println("loaded LSM tree seq =", seq)
+	fmt.Println("loaded LSM tree seq =", seq)
 
 	// if there are entries in wal that are not in SST files,
 	// load them into memory
@@ -109,8 +109,10 @@ func New(path string, bufSize int) *LsmTree {
 
 	go tree.walJob()
 
+  util.Trace("DEBUG tree buffer len", tree.buffer.Len(), "max buf len", tree.maxBufferLength)
 	// Flush SST to disk if necessary
-	if tree.buffer.Len() < tree.maxBufferLength {
+	if tree.buffer.Len() >= tree.maxBufferLength {
+    util.Trace("DEBUG initiating WAL flush")
 		tree.walChan <- nil
 	}
 
@@ -171,6 +173,7 @@ tree.lock.Unlock()
 	// Release locks before we do this to avoid possibility of deadlock
 	tree.walChan <- &entry
 	if readyToFlushSst {
+		util.Trace("DEBUG ready to flush SST")
 		tree.walChan <- nil
 	}
 
@@ -286,6 +289,7 @@ func (tree *LsmTree) walJob() {
 		v := <-tree.walChan
 
 		//fmt.Println("walJob received", v)
+		util.Trace("walJob received", v)
 		if v == nil {
 			tree.lock.Lock()
 			tree.flush(tree.wal.Sequence())
@@ -297,6 +301,10 @@ func (tree *LsmTree) walJob() {
 			}
 		}
 	}
+}
+
+func (tree *LsmTree) HaveBufferedChanges() bool {
+  return len(tree.walChan) > 0
 }
 
 func check(e error) {
