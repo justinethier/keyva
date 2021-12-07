@@ -1,5 +1,6 @@
 all: 
 	cd cmd/keyva; go build
+	cd cmd/datagen; go build
 
 PACKAGES=./cache/... ./appendlog/... ./lsm/...
 
