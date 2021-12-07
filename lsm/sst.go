@@ -108,14 +108,6 @@ func New(path string, bufSize int) *LsmTree {
 	}
 
 	go tree.walJob()
-
-  util.Trace("DEBUG tree buffer len", tree.buffer.Len(), "max buf len", tree.maxBufferLength)
-	// Flush SST to disk if necessary
-	if tree.buffer.Len() >= tree.maxBufferLength {
-    util.Trace("DEBUG initiating WAL flush")
-		tree.walChan <- nil
-	}
-
 	return &tree
 }
 
@@ -141,13 +133,6 @@ func (tree *LsmTree) Delete(k string) {
 
 func (tree *LsmTree) Increment(k string) uint32 {
 	var result uint32
-	readyToFlushSst := false
-	// Set flag indicating we are ready to dump SST to disk.
-	// Only send when equal to threshold to avoid spamming nil if the goroutine
-	// takes awhile to process the flush
-	if tree.buffer.Len() == tree.maxBufferLength {
-		readyToFlushSst = true
-	}
 
 // get/set operations are synchronized to guarantee the next number is always returned
 tree.lock.Lock()
@@ -172,11 +157,6 @@ tree.lock.Unlock()
 	// Add entry to Wal, flush SST if ready
 	// Release locks before we do this to avoid possibility of deadlock
 	tree.walChan <- &entry
-	if readyToFlushSst {
-		util.Trace("DEBUG ready to flush SST")
-		tree.walChan <- nil
-	}
-
 	return result
 }
 
@@ -202,13 +182,6 @@ func (tree *LsmTree) setInMemtbl(k string, value []byte, deleted bool) {
 
 func (tree *LsmTree) set(k string, value []byte, deleted bool) {
 	entry := SstEntry{k, value, deleted}
-	readyToFlushSst := false
-	// Set flag indicating we are ready to dump SST to disk.
-	// Only send when equal to threshold to avoid spamming nil if the goroutine
-	// takes awhile to process the flush
-	if tree.buffer.Len() == tree.maxBufferLength {
-		readyToFlushSst = true
-	}
 
 	tree.lock.Lock()
 	tree.buffer.Set(k, entry)
@@ -218,9 +191,6 @@ func (tree *LsmTree) set(k string, value []byte, deleted bool) {
 	// Add entry to Wal, flush SST if ready
 	// Release locks before we do this to avoid possibility of deadlock
 	tree.walChan <- &entry
-	if readyToFlushSst {
-		tree.walChan <- nil
-	}
 }
 
 // Read all sst files from disk and load a bloom filter for each one into memory
@@ -290,15 +260,21 @@ func (tree *LsmTree) walJob() {
 
 		//fmt.Println("walJob received", v)
 		util.Trace("walJob received", v)
-		if v == nil {
-			tree.lock.Lock()
+
+    // Flush SST to disk if ready
+    // TODO: "right" way to do this is to make it immutable now and fire a goroutine
+    //       or have a background job that does the actual flushing
+		tree.lock.Lock()
+		if (tree.buffer.Len() >= tree.maxBufferLength) {
 			tree.flush(tree.wal.Sequence())
+		}
 			tree.lock.Unlock()
-		} else {
-			tree.wal.Append(v.Key, v.Value, v.Deleted)
-			if len(tree.walChan) == 0 {
-				tree.wal.Sync()
-			}
+
+		//if v == nil {
+
+		tree.wal.Append(v.Key, v.Value, v.Deleted)
+		if len(tree.walChan) == 0 {
+			tree.wal.Sync()
 		}
 	}
 }
