@@ -13,7 +13,7 @@ import (
 
 func main() {
 	tbl := lsm.New("data", 5)
-  tbl.ResetDB()
+  //tbl.ResetDB()
 
   for i := 0; i < 25; i++ {
     key := fmt.Sprintf("%d", rand.Intn(100))

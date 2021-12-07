@@ -126,7 +126,7 @@ func (tree *LsmTree) ResetDB() {
 	tree.files = make([]SstFile, 0) // Clear from memory
 	sstFilenames := tree.getSstFilenames()
 	for _, filename := range sstFilenames {
-		os.Remove(filename) // ... and remove from disk
+		os.Remove(tree.path + "/" + filename) // ... and remove from disk
 	}
 }
 
@@ -269,7 +269,7 @@ func (tree *LsmTree) flush(seqNum uint64) {
 
 	// Flush buffer to disk
 	var filename = tree.nextSstFilename()
-	createSstFile(filename, keys, m, seqNum)
+	createSstFile(tree.path + "/" + filename, keys, m, seqNum)
 
 	//fmt.Println("DEBUG wrote new sst file", filename)
 
@@ -400,7 +400,7 @@ func (tree *LsmTree) loadEntriesFromSstFile(filename string) ([]SstEntry, SstFil
 	var buf []SstEntry
 	var header SstFileHeader
 
-	f, err := os.Open(filename)
+	f, err := os.Open(tree.path + "/" + filename)
 	if err != nil {
 		return buf, header
 	}
