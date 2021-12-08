@@ -2,7 +2,7 @@
 // Ttypically used when dealing with write-heavy workloads, the write path is
 // optimized by only performing sequential writes.
 //
-// Records are initially inserted into an in-memory buffer.
+// Records are initially inserted into an in-memory buffer (mem table).
 //
 // Once too many records are written, all of the records are sorted and
 // flushed to a new sorted string table (SST) file on disk.
@@ -65,13 +65,14 @@ type SstFile struct {
 type LsmTree struct {
 	path string
 	// buffer AKA MemTable, used as initial in-memory store of new data
-	buffer          *skiplist.SkipList
-	maxBufferLength int
+	memtbl          *skiplist.SkipList
+	memtblMaxSize int
 	filter          *bloom.Filter
 	files           []SstFile
 	lock            sync.RWMutex
 	wal             *wal.WriteAheadLog
 	walChan         chan *SstEntry
+	wg              sync.WaitGroup
 }
 
 func New(path string, bufSize int) *LsmTree {
@@ -91,7 +92,8 @@ func New(path string, bufSize int) *LsmTree {
 	fmt.Println("DEBUG wal = ", entries)
 	var files []SstFile
 	chn := make(chan *SstEntry, 1000)
-	tree := LsmTree{path, buf, bufSize, f, files, lock, wal, chn}
+	tree := LsmTree{path: path, memtbl: buf, memtblMaxSize: bufSize, 
+                  filter: f, files: files, lock: lock, wal: wal, walChan: chn}
 	seq := tree.load() // Read all SST files on disk and generate bloom filters
 
 	fmt.Println("loaded LSM tree seq =", seq)
@@ -176,7 +178,7 @@ func (tree *LsmTree) Get(k string) ([]byte, bool) {
 // Only set in memory do not update WAL or SST, useful for loading data at startup
 func (tree *LsmTree) setInMemtbl(k string, value []byte, deleted bool) {
 	entry := SstEntry{k, value, deleted}
-	tree.buffer.Set(k, entry)
+	tree.memtbl.Set(k, entry)
 	tree.filter.Add(k)
 }
 
@@ -184,7 +186,7 @@ func (tree *LsmTree) set(k string, value []byte, deleted bool) {
 	entry := SstEntry{k, value, deleted}
 
 	tree.lock.Lock()
-	tree.buffer.Set(k, entry)
+	tree.memtbl.Set(k, entry)
 	tree.filter.Add(k)
 	tree.lock.Unlock()
 
@@ -203,7 +205,7 @@ func (tree *LsmTree) load() uint64 {
 		if header.Seq > seq {
 			seq = header.Seq
 		}
-		filter := bloom.New(tree.maxBufferLength, 200)
+		filter := bloom.New(tree.memtblMaxSize, 200)
 		for _, entry := range entries {
 			filter.Add(entry.Key)
 		}
@@ -215,7 +217,7 @@ func (tree *LsmTree) load() uint64 {
 }
 
 func (tree *LsmTree) flush(seqNum uint64) {
-	if tree.buffer.Len() == 0 || tree.buffer.Len() < tree.maxBufferLength {
+	if tree.memtbl.Len() == 0 || tree.memtbl.Len() < tree.memtblMaxSize {
 		return
 	}
 
@@ -223,13 +225,13 @@ func (tree *LsmTree) flush(seqNum uint64) {
 
 	// Remove duplicate entries
 	m := make(map[string]SstEntry)
-	for elem := tree.buffer.Front(); elem != nil; elem = elem.Next() {
+	for elem := tree.memtbl.Front(); elem != nil; elem = elem.Next() {
 		e := elem.Value
 		m[elem.Key().(string)] = e.(SstEntry)
 	}
 
 	// sort list of keys and setup bloom filter
-	filter := bloom.New(tree.maxBufferLength, 200)
+	filter := bloom.New(tree.memtblMaxSize, 200)
 	keys := make([]string, 0, len(m))
 	for k := range m {
 		filter.Add(k)
@@ -237,7 +239,7 @@ func (tree *LsmTree) flush(seqNum uint64) {
 	}
 	sort.Strings(keys)
 
-	// Flush buffer to disk
+	// Flush memtbl to disk
 	var filename = tree.nextSstFilename()
 	createSstFile(tree.path + "/" + filename, keys, m, seqNum)
 
@@ -247,8 +249,8 @@ func (tree *LsmTree) flush(seqNum uint64) {
 	var sstfile = SstFile{filename, filter, []SstEntry{}, time.Now()}
 	tree.files = append(tree.files, sstfile)
 
-	// Clear buffer
-	tree.buffer = skiplist.New(skiplist.String)
+	// Clear memtbl
+	tree.memtbl = skiplist.New(skiplist.String)
 
 	// Switch to new wal
 	tree.wal.Next()
@@ -265,12 +267,16 @@ func (tree *LsmTree) walJob() {
     // TODO: "right" way to do this is to make it immutable now and fire a goroutine
     //       or have a background job that does the actual flushing
 		tree.lock.Lock()
-		if (tree.buffer.Len() >= tree.maxBufferLength) {
+		if (tree.memtbl.Len() >= tree.memtblMaxSize) {
+		  util.Trace("flushing memtable to SST", tree.wal.Sequence())
 			tree.flush(tree.wal.Sequence())
 		}
 			tree.lock.Unlock()
 
-		//if v == nil {
+		if v == nil {
+      tree.wg.Done()
+      break;
+    }
 
 		tree.wal.Append(v.Key, v.Value, v.Deleted)
 		if len(tree.walChan) == 0 {
@@ -279,8 +285,10 @@ func (tree *LsmTree) walJob() {
 	}
 }
 
-func (tree *LsmTree) HaveBufferedChanges() bool {
-  return len(tree.walChan) > 0
+func (tree *LsmTree) WaitForJobsToFinish() {
+  tree.wg.Add(1)
+  tree.walChan <- nil
+  tree.wg.Wait()
 }
 
 func check(e error) {
@@ -364,7 +372,7 @@ func (tree *LsmTree) findLatestBufferEntryValue(key string) (SstEntry, bool) {
 		return empty, false
 	}
 
-	elem := tree.buffer.Get(key)
+	elem := tree.memtbl.Get(key)
 	if elem != nil {
 		return elem.Value.(SstEntry), true
 	}

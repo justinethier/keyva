@@ -22,8 +22,5 @@ func main() {
     tbl.Set(key, []byte(doc))
   }
 
-  // Poor man's wait
-  for tbl.HaveBufferedChanges() {
-    time.Sleep(1 * time.Second)
-  }
+  tbl.WaitForJobsToFinish()
 }
