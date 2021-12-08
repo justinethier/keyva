@@ -91,7 +91,7 @@ func New(path string, bufSize int) *LsmTree {
 	fmt.Println("DEBUG wal seq = ", wal.Sequence())
 	fmt.Println("DEBUG wal = ", entries)
 	var files []SstFile
-	chn := make(chan *SstEntry, 1000)
+	chn := make(chan *SstEntry) //, 1000)
 	tree := LsmTree{path: path, memtbl: buf, memtblMaxSize: bufSize, 
                   filter: f, files: files, lock: lock, wal: wal, walChan: chn}
 	seq := tree.load() // Read all SST files on disk and generate bloom filters
@@ -154,11 +154,10 @@ tree.lock.Lock()
 		entry = SstEntry{k, bs, false}
 		result = 0
 	}
+	// Add entry to Wal, flush SST if ready
+	tree.walChan <- &entry
 tree.lock.Unlock()
 
-	// Add entry to Wal, flush SST if ready
-	// Release locks before we do this to avoid possibility of deadlock
-	tree.walChan <- &entry
 	return result
 }
 
@@ -188,11 +187,10 @@ func (tree *LsmTree) set(k string, value []byte, deleted bool) {
 	tree.lock.Lock()
 	tree.memtbl.Set(k, entry)
 	tree.filter.Add(k)
-	tree.lock.Unlock()
 
 	// Add entry to Wal, flush SST if ready
-	// Release locks before we do this to avoid possibility of deadlock
 	tree.walChan <- &entry
+	tree.lock.Unlock()
 }
 
 // Read all sst files from disk and load a bloom filter for each one into memory
@@ -263,32 +261,32 @@ func (tree *LsmTree) walJob() {
 		//fmt.Println("walJob received", v)
 		util.Trace("walJob received", v)
 
-    // Flush SST to disk if ready
-    // TODO: "right" way to do this is to make it immutable now and fire a goroutine
-    //       or have a background job that does the actual flushing
-		tree.lock.Lock()
-		if (tree.memtbl.Len() >= tree.memtblMaxSize) {
-		  util.Trace("flushing memtable to SST", tree.wal.Sequence())
-			tree.flush(tree.wal.Sequence())
-		}
-			tree.lock.Unlock()
-
 		if v == nil {
       tree.wg.Done()
       break;
     }
 
 		tree.wal.Append(v.Key, v.Value, v.Deleted)
-		if len(tree.walChan) == 0 {
-			tree.wal.Sync()
+		//if len(tree.walChan) == 0 {
+		//	tree.wal.Sync()
+		//}
+
+    // Flush SST to disk if ready
+    // TODO: "right" way to do this is to make it immutable now and fire a goroutine
+    //       or have a background job that does the actual flushing
+		//tree.lock.Lock()
+		if (tree.memtbl.Len() > tree.memtblMaxSize) {
+		  util.Trace("flushing memtable to SST", tree.wal.Sequence())
+			tree.flush(tree.wal.Sequence())
 		}
+			//tree.lock.Unlock()
 	}
 }
 
 func (tree *LsmTree) WaitForJobsToFinish() {
-  tree.wg.Add(1)
-  tree.walChan <- nil
-  tree.wg.Wait()
+  //tree.wg.Add(1)
+  //tree.walChan <- nil
+  //tree.wg.Wait()
 }
 
 func check(e error) {
