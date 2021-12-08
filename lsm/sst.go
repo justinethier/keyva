@@ -185,11 +185,10 @@ func (tree *LsmTree) set(k string, value []byte, deleted bool) {
 	entry := SstEntry{k, value, deleted}
 
 	tree.lock.Lock()
-	tree.memtbl.Set(k, entry)
-	tree.filter.Add(k)
-
 	// Add entry to Wal, flush SST if ready
 	tree.walChan <- &entry
+	tree.memtbl.Set(k, entry)
+	tree.filter.Add(k)
 	tree.lock.Unlock()
 }
 
@@ -219,7 +218,7 @@ func (tree *LsmTree) flush(seqNum uint64) {
 		return
 	}
 
-	//fmt.Println("DEBUG called flush()")
+	util.Trace("DEBUG called flush()")
 
 	// Remove duplicate entries
 	m := make(map[string]SstEntry)
