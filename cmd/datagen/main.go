@@ -15,7 +15,7 @@ func main() {
 	tbl := lsm.New("data", 5)
   //tbl.ResetDB()
 
-  for i := 0; i < 25; i++ {
+  for i := 0; i < 125; i++ {
     key := fmt.Sprintf("%d", rand.Intn(100))
     doc := fmt.Sprintf("%d", time.Now().UnixNano())
 	  //set(key, "text/plain", []byte(doc))
