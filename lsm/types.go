@@ -1,6 +1,7 @@
 package lsm
 
 import (
+	//"container/heap"
 	"github.com/huandu/skiplist"
 	"github.com/justinethier/keyva/bloom"
 	"github.com/justinethier/keyva/lsm/wal"
@@ -8,10 +9,17 @@ import (
 	"time"
 )
 
-type SstEntry struct {
-	Key     string
-	Value   []byte
-	Deleted bool
+type LsmTree struct {
+	path string
+	// buffer AKA MemTable, used as initial in-memory store of new data
+	memtbl          *skiplist.SkipList
+	memtblMaxSize int
+	filter          *bloom.Filter
+	files           []SstFile
+	lock            sync.RWMutex
+	wal             *wal.WriteAheadLog
+	walChan         chan *SstEntry
+	wg              sync.WaitGroup
 }
 
 type SstFileHeader struct {
@@ -32,16 +40,41 @@ type SstFile struct {
 	//       maybe it will be a member of LsmTree
 }
 
-type LsmTree struct {
-	path string
-	// buffer AKA MemTable, used as initial in-memory store of new data
-	memtbl          *skiplist.SkipList
-	memtblMaxSize int
-	filter          *bloom.Filter
-	files           []SstFile
-	lock            sync.RWMutex
-	wal             *wal.WriteAheadLog
-	walChan         chan *SstEntry
-	wg              sync.WaitGroup
+type SstEntry struct {
+	Key     string
+	Value   []byte
+	Deleted bool
 }
 
+// An min-heap of SST entries
+// Provides an easy way to sort large numbers of entries
+type SstEntryHeap []SstEntry
+
+func (h SstEntryHeap) Len() int           { return len(h) }
+func (h SstEntryHeap) Less(i, j int) bool { return h[i].Key < h[j].Key }
+func (h SstEntryHeap) Swap(i, j int)      { h[i], h[j] = h[j], h[i] }
+
+func (h *SstEntryHeap) Push(x interface{}) {
+	// Push and Pop use pointer receivers because they modify the slice's length,
+	// not just its contents.
+	*h = append(*h, x.(SstEntry))
+}
+
+func (h *SstEntryHeap) Pop() interface{} {
+	old := *h
+	n := len(old)
+	x := old[n-1]
+	*h = old[0 : n-1]
+	return x
+}
+
+// This example inserts several ints into an IntHeap, checks the minimum,
+// and removes them in order of priority.
+//func main() {
+//	h := &IntHeap{2, 1, 5}
+//	heap.Init(h)
+//	heap.Push(h, 3)
+//	fmt.Printf("minimum: %d\n", (*h)[0])
+//	for h.Len() > 0 {
+//		fmt.Printf("%d ", heap.Pop(h))
+//	}
