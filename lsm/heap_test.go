@@ -34,29 +34,3 @@ func TestMinHeap(t *testing.T) {
 		//fmt.Println(heap.Pop(h))
 	}
 }
-
-/*
-// Test loading data from the WAL
-func TestWal(t *testing.T) {
-	//os.Remove("wal.log")
-	w, _ := wal.New("testdb")
-	w.Append("a", []byte("1"), false)
-	w.Append("b", []byte("2"), false)
-	w.Append("c", []byte("3"), false)
-	w.Append("d", []byte("4"), false)
-	w.Append("e", []byte("5"), false)
-	w.Append("f", []byte("6"), false)
-	w.Append("g", []byte("7"), false)
-	w.Close()
-
-	var tbl = New("testdb", 25)
-	tbl.Set("h", []byte("8"))
-	if v, found := tbl.Get("a"); found {
-		if bytes.Compare(v, []byte("1")) != 0 {
-			t.Error("Unexpected value", v, "for key", "a")
-		}
-	} else {
-		t.Error("Value not found for key a")
-	}
-}
-*/

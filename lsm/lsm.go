@@ -308,7 +308,11 @@ func (tree *LsmTree) nextSstFilename() string {
 }
 
 func (tree *LsmTree) getSstFilenames() []string {
-	files, err := ioutil.ReadDir(tree.path)
+  return getSstFilenames(tree.path)
+}
+
+func getSstFilenames(path string) []string {
+	files, err := ioutil.ReadDir(path)
 	if err != nil {
 		log.Fatal(err)
 	}
