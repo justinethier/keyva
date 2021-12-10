@@ -2,7 +2,7 @@
 package lsm
 
 import (
-  "container/heap"
+//  "container/heap"
   "fmt"
 )
 
@@ -31,8 +31,8 @@ func compactSstFiles(path string) {
   // }
 
   // load all data into min heap
-	h := &SstEntryHeap{b, a, c}
-	heap.Init(h)
+	//h := &SstEntryHeap{b, a, c}
+	//heap.Init(h)
   // after data load, take data out of the heap one row at a time and write to file
 }
 
