@@ -1,3 +1,4 @@
+// TODO: code to compact sst files on disk.
 package lsm
 
 import (
@@ -5,13 +6,21 @@ import (
   "fmt"
 )
 
-// TODO: code to compact sst files on disk.
+// Algorithm to compact large SST files using streams of data:
+// Goal here is to compact without having to keep everything in memory at once
+//
+// - Read at least one entry from each Sst
+// - Put all into the heap
+// - Take first one and write to new sst
+// - Read at least one more entry from the stream that the heap entry was from
+// - Loop
+//
+// TODO: func compactSstFileStreams (){}
 
+// TODO: implementing both above streaming algorithm and a basic algorithm that 
+// loads all file contents into memory. Then we have both and can benchmark / compare 
+// them against different data sets.
 
-
-// consideration - any way to stream this, to handle large datasets? maybe not easily, this will be a secondary concern
-
-// TODO: could we use min heap to flush a single SST?
 
 func compactSstFiles(path string) {
   filenames := getSstFilenames(path)
