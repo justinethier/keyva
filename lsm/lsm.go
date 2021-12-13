@@ -345,10 +345,14 @@ func (tree *LsmTree) findLatestBufferEntryValue(key string) (SstEntry, bool) {
 }
 
 func (tree *LsmTree) loadEntriesFromSstFile(filename string) ([]SstEntry, SstFileHeader) {
+  return loadEntriesFromSstFile(filename, tree.path)
+}
+
+func  loadEntriesFromSstFile(filename string, path string) ([]SstEntry, SstFileHeader) {
 	var buf []SstEntry
 	var header SstFileHeader
 
-	f, err := os.Open(tree.path + "/" + filename)
+	f, err := os.Open(path + "/" + filename)
 	if err != nil {
 		return buf, header
 	}

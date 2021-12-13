@@ -2,7 +2,7 @@
 package lsm
 
 import (
-//  "container/heap"
+  "container/heap"
   "fmt"
 )
 
@@ -15,6 +15,7 @@ import (
 // - Read at least one more entry from the stream that the heap entry was from
 // - Loop
 //
+// TODO: how to handle same entry in multiple SST files. only most recent is the "live" one
 // TODO: func compactSstFileStreams (){}
 
 // TODO: implementing both above streaming algorithm and a basic algorithm that 
@@ -27,12 +28,25 @@ func compactSstFiles(path string) {
   fmt.Println(filenames)
   // TODO: start with X sst files
 
-  // for ?? {
-  // }
-
   // load all data into min heap
-	//h := &SstEntryHeap{b, a, c}
-	//heap.Init(h)
+	h := &SstEntryHeap{}
+	heap.Init(h)
+
+	for _, filename := range filenames {
+		entries, _ := loadEntriesFromSstFile(filename, path)
+		for _, entry := range entries {
+      var e SstEntry = entry
+      fmt.Println(e)
+      h.Push(e)
+    }
+	}
+
+fmt.Println("Unloading heap")
+
+  for h.Len() > 0 {
+    entry := h.Pop().(SstEntry)
+    fmt.Println(entry.Key)
+  }
   // after data load, take data out of the heap one row at a time and write to file
 }
 

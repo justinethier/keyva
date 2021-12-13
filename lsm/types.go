@@ -2,6 +2,7 @@ package lsm
 
 import (
 	//"container/heap"
+  "fmt"
 	"github.com/huandu/skiplist"
 	"github.com/justinethier/keyva/bloom"
 	"github.com/justinethier/keyva/lsm/wal"
@@ -51,7 +52,9 @@ type SstEntry struct {
 type SstEntryHeap []SstEntry
 
 func (h SstEntryHeap) Len() int           { return len(h) }
-func (h SstEntryHeap) Less(i, j int) bool { return h[i].Key < h[j].Key }
+func (h SstEntryHeap) Less(i, j int) bool { 
+  fmt.Println("DEBUG", i, j, h[i], h[j], h[i].Key < h[j].Key)
+  return (h[i].Key) < (h[j].Key) }
 func (h SstEntryHeap) Swap(i, j int)      { h[i], h[j] = h[j], h[i] }
 
 func (h *SstEntryHeap) Push(x interface{}) {
