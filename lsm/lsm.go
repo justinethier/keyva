@@ -55,8 +55,8 @@ func New(path string, bufSize int) *LsmTree {
 	fmt.Println("DEBUG wal = ", entries)
 	var files []SstFile
 	chn := make(chan *SstEntry) //, 1000)
-	tree := LsmTree{path: path, memtbl: buf, memtblMaxSize: bufSize, 
-                  filter: f, files: files, lock: lock, wal: wal, walChan: chn}
+	tree := LsmTree{path: path, memtbl: buf, memtblMaxSize: bufSize,
+		filter: f, files: files, lock: lock, wal: wal, walChan: chn}
 	seq := tree.load() // Read all SST files on disk and generate bloom filters
 
 	fmt.Println("loaded LSM tree seq =", seq)
@@ -99,8 +99,8 @@ func (tree *LsmTree) Delete(k string) {
 func (tree *LsmTree) Increment(k string) uint32 {
 	var result uint32
 
-// get/set operations are synchronized to guarantee the next number is always returned
-tree.lock.Lock()
+	// get/set operations are synchronized to guarantee the next number is always returned
+	tree.lock.Lock()
 	var entry SstEntry
 	val, ok := tree.get(k)
 	if ok {
@@ -119,7 +119,7 @@ tree.lock.Lock()
 	}
 	// Add entry to Wal, flush SST if ready
 	tree.walChan <- &entry
-tree.lock.Unlock()
+	tree.lock.Unlock()
 
 	return result
 }
@@ -201,7 +201,7 @@ func (tree *LsmTree) flush(seqNum uint64) {
 
 	// Flush memtbl to disk
 	var filename = tree.nextSstFilename()
-	createSstFile(tree.path + "/" + filename, keys, m, seqNum)
+	createSstFile(tree.path+"/"+filename, keys, m, seqNum)
 
 	//fmt.Println("DEBUG wrote new sst file", filename)
 
@@ -224,31 +224,31 @@ func (tree *LsmTree) walJob() {
 		util.Trace("walJob received", v)
 
 		if v == nil {
-      tree.wg.Done()
-      break;
-    }
+			tree.wg.Done()
+			break
+		}
 
 		tree.wal.Append(v.Key, v.Value, v.Deleted)
 		//if len(tree.walChan) == 0 {
 		//	tree.wal.Sync()
 		//}
 
-    // Flush SST to disk if ready
-    // TODO: "right" way to do this is to make it immutable now and fire a goroutine
-    //       or have a background job that does the actual flushing
+		// Flush SST to disk if ready
+		// TODO: "right" way to do this is to make it immutable now and fire a goroutine
+		//       or have a background job that does the actual flushing
 		//tree.lock.Lock()
-		if (tree.memtbl.Len() > tree.memtblMaxSize) {
-		  util.Trace("flushing memtable to SST", tree.wal.Sequence())
+		if tree.memtbl.Len() > tree.memtblMaxSize {
+			util.Trace("flushing memtable to SST", tree.wal.Sequence())
 			tree.flush(tree.wal.Sequence())
 		}
-			//tree.lock.Unlock()
+		//tree.lock.Unlock()
 	}
 }
 
 func (tree *LsmTree) WaitForJobsToFinish() {
-  //tree.wg.Add(1)
-  //tree.walChan <- nil
-  //tree.wg.Wait()
+	//tree.wg.Add(1)
+	//tree.walChan <- nil
+	//tree.wg.Wait()
 }
 
 func check(e error) {
@@ -308,7 +308,7 @@ func (tree *LsmTree) nextSstFilename() string {
 }
 
 func (tree *LsmTree) getSstFilenames() []string {
-  return getSstFilenames(tree.path)
+	return getSstFilenames(tree.path)
 }
 
 func getSstFilenames(path string) []string {
@@ -345,10 +345,10 @@ func (tree *LsmTree) findLatestBufferEntryValue(key string) (SstEntry, bool) {
 }
 
 func (tree *LsmTree) loadEntriesFromSstFile(filename string) ([]SstEntry, SstFileHeader) {
-  return loadEntriesFromSstFile(filename, tree.path)
+	return loadEntriesFromSstFile(filename, tree.path)
 }
 
-func  loadEntriesFromSstFile(filename string, path string) ([]SstEntry, SstFileHeader) {
+func loadEntriesFromSstFile(filename string, path string) ([]SstEntry, SstFileHeader) {
 	var buf []SstEntry
 	var header SstFileHeader
 

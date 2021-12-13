@@ -2,7 +2,6 @@ package lsm
 
 import (
 	//"container/heap"
-  "fmt"
 	"github.com/huandu/skiplist"
 	"github.com/justinethier/keyva/bloom"
 	"github.com/justinethier/keyva/lsm/wal"
@@ -13,14 +12,14 @@ import (
 type LsmTree struct {
 	path string
 	// buffer AKA MemTable, used as initial in-memory store of new data
-	memtbl          *skiplist.SkipList
+	memtbl        *skiplist.SkipList
 	memtblMaxSize int
-	filter          *bloom.Filter
-	files           []SstFile
-	lock            sync.RWMutex
-	wal             *wal.WriteAheadLog
-	walChan         chan *SstEntry
-	wg              sync.WaitGroup
+	filter        *bloom.Filter
+	files         []SstFile
+	lock          sync.RWMutex
+	wal           *wal.WriteAheadLog
+	walChan       chan *SstEntry
+	wg            sync.WaitGroup
 }
 
 type SstFileHeader struct {
@@ -50,27 +49,15 @@ type SstEntry struct {
 // An min-heap of SST entries
 // Provides an easy way to sort large numbers of entries
 type SstEntryHeap []*SstEntry
-TODO: see priorityQ example: https://pkg.go.dev/container/heap#example-package-PriorityQueue
 
 func (h SstEntryHeap) Len() int           { return len(h) }
-func (h SstEntryHeap) Less(i, j int) bool {
-  fmt.Println("DEBUG", i, j, h[i], h[j], h[i].Key < h[j].Key)
-  //return (h[i].Key) < (h[j].Key)
-  if (h[i].Key) < (h[j].Key) {
-    return true
-  } else {
-    return false
-  }
-}
-
-func (h SstEntryHeap) Swap(i, j int)      { 
-  fmt.Println("DEBUG swap")
-  h[i], h[j] = h[j], h[i] }
+func (h SstEntryHeap) Less(i, j int) bool { return h[i].Key < h[j].Key }
+func (h SstEntryHeap) Swap(i, j int)      { h[i], h[j] = h[j], h[i] }
 
 func (h *SstEntryHeap) Push(x interface{}) {
 	// Push and Pop use pointer receivers because they modify the slice's length,
 	// not just its contents.
-	*h = append(*h, x.(SstEntry))
+	*h = append(*h, x.(*SstEntry))
 }
 
 func (h *SstEntryHeap) Pop() interface{} {
