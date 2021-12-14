@@ -28,23 +28,23 @@ func compactSstFiles(path string) {
 	// TODO: start with X sst files
 
 	// load all data into min heap
-	h := &SstEntryHeap{}
+	h := &SstHeap{}
 	heap.Init(h)
 
 	for _, filename := range filenames {
-		entries, _ := loadEntriesFromSstFile(filename, path)
+		entries, header := loadEntriesFromSstFile(filename, path)
 		for _, entry := range entries {
 			var e SstEntry = entry
 			fmt.Println(e)
-			h.Push(e)
+			h.Push(&SstHeapNode{header.Seq, &e})
 		}
 	}
 
 	fmt.Println("Unloading heap")
 
 	for h.Len() > 0 {
-		entry := h.Pop().(SstEntry)
-		fmt.Println(entry.Key)
+		entry := h.Pop().(SstHeapNode)
+		fmt.Println(entry.Entry.Key)
 	}
 	// after data load, take data out of the heap one row at a time and write to file
 }

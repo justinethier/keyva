@@ -46,21 +46,26 @@ type SstEntry struct {
 	Deleted bool
 }
 
-// An min-heap of SST entries
-// Provides an easy way to sort large numbers of entries
-type SstEntryHeap []*SstEntry
-
-func (h SstEntryHeap) Len() int           { return len(h) }
-func (h SstEntryHeap) Less(i, j int) bool { return h[i].Key < h[j].Key }
-func (h SstEntryHeap) Swap(i, j int)      { h[i], h[j] = h[j], h[i] }
-
-func (h *SstEntryHeap) Push(x interface{}) {
-	// Push and Pop use pointer receivers because they modify the slice's length,
-	// not just its contents.
-	*h = append(*h, x.(*SstEntry))
+type SstHeapNode struct {
+  Seq uint64
+  Entry *SstEntry
 }
 
-func (h *SstEntryHeap) Pop() interface{} {
+// An min-heap of SST entries
+// Provides an easy way to sort large numbers of entries
+type SstHeap []*SstHeapNode
+
+func (h SstHeap) Len() int           { return len(h) }
+func (h SstHeap) Less(i, j int) bool { return h[i].Entry.Key < h[j].Entry.Key }
+func (h SstHeap) Swap(i, j int)      { h[i], h[j] = h[j], h[i] }
+
+func (h *SstHeap) Push(x interface{}) {
+	// Push and Pop use pointer receivers because they modify the slice's length,
+	// not just its contents.
+	*h = append(*h, x.(*SstHeapNode))
+}
+
+func (h *SstHeap) Pop() interface{} {
 	old := *h
 	n := len(old)
 	x := old[n-1]
