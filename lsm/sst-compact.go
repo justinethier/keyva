@@ -36,14 +36,15 @@ func compactSstFiles(path string) {
 		for _, entry := range entries {
 			var e SstEntry = entry
 			fmt.Println(e)
-			h.Push(&SstHeapNode{header.Seq, &e})
+			heap.Push(h, &SstHeapNode{header.Seq, &e})
 		}
 	}
 
 	fmt.Println("Unloading heap")
 
 	for h.Len() > 0 {
-		entry := h.Pop().(SstHeapNode)
+		entry := heap.Pop(h).(*SstHeapNode)
+    // TODO: account for duplicate keys, need entry.Seq to resolve
 		fmt.Println(entry.Entry.Key)
 	}
 	// after data load, take data out of the heap one row at a time and write to file
