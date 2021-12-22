@@ -20,7 +20,7 @@ package lsm
 
 import (
 	"bufio"
-	"container/heap"
+	//"container/heap"
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
@@ -273,33 +273,6 @@ func createSstFile(filename string, keys []string, m map[string]SstEntry, seqNum
 
 	for _, k := range keys {
 		b, err := json.Marshal(m[k])
-		check(err)
-
-		_, err = f.Write(b)
-		check(err)
-
-		_, err = f.Write([]byte("\n"))
-		check(err)
-	}
-}
-
-func createSstFileFromHeap(filename string, h *SstHeap, seqNum uint64) {
-	f, err := os.Create(filename)
-	check(err)
-
-	defer f.Close()
-
-	header := SstFileHeader{seqNum}
-	b, err := json.Marshal(header)
-	check(err)
-	_, err = f.Write(b)
-	check(err)
-	_, err = f.Write([]byte("\n"))
-	check(err)
-
-	for h.Len() > 0 {
-		entry := heap.Pop(h).(*SstHeapNode)
-		b, err := json.Marshal(&entry.Entry)
 		check(err)
 
 		_, err = f.Write(b)

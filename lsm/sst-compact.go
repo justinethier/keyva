@@ -3,7 +3,9 @@ package lsm
 
 import (
 	"container/heap"
+	"encoding/json"
 	"fmt"
+	"os"
 )
 
 // Algorithm to compact large SST files using streams of data:
@@ -22,10 +24,9 @@ import (
 // loads all file contents into memory. Then we have both and can benchmark / compare
 // them against different data sets.
 
-func compactSstFiles(path string) {
+func compactSstFiles(path string, filename string) {
 	filenames := getSstFilenames(path)
 	fmt.Println(filenames)
-	// TODO: start with X sst files
 
 	// load all data into min heap
 	h := &SstHeap{}
@@ -39,26 +40,64 @@ func compactSstFiles(path string) {
 		}
 		for _, entry := range entries {
 			var e SstEntry = entry
-			fmt.Println(e)
+			//fmt.Println(e)
 			heap.Push(h, &SstHeapNode{header.Seq, &e})
 		}
 	}
 
-//TODO: createSstFileFromHeap(filename string, h SstHeap, seqNum uint64) {
+  createSstFileFromHeap(filename, h, seqNum)
+}
+
+func createSstFileFromHeap(filename string, h *SstHeap, seqNum uint64) {
+	f, err := os.Create(filename)
+	check(err)
+
+	defer f.Close()
+
+	header := SstFileHeader{seqNum}
+	b, err := json.Marshal(header)
+	check(err)
+	_, err = f.Write(b)
+	check(err)
+	_, err = f.Write([]byte("\n"))
+	check(err)
 
 	var cur, next *SstHeapNode
+  if h.Len() > 0 {
+    cur = heap.Pop(h).(*SstHeapNode)
+  }
 	for h.Len() > 0 {
-		entry := heap.Pop(h).(*SstHeapNode)
-    // TODO: account for duplicate keys, need entry.Seq to resolve
-    // need to read next key and current key
-    // if keys are equal, keep reading next until keys are not
-    //   keep key with largest seq number
-    // write key we find,
-    // repeat process with next key
-
-    //if prev == nil || entry.Entry.Key != prev.Entry.Key || 
-    //  fmt.Println(entry.Entry.Key)
-    //}
+		next := heap.Pop(h).(*SstHeapNode)
+    // Account for duplicate keys
+    if next.Entry.Key == cur.Entry.Key {
+      if next.Seq > cur.Seq {
+        cur = next
+      }
+      continue
+    }
+    writeSstHeapEntry(cur, f)
+    cur = next
 	}
-	// after data load, take data out of the heap one row at a time and write to file
+  
+  // Special case, only one SST entry
+  if next == nil {
+    writeSstHeapEntry(cur, f)
+  } else {
+    writeSstHeapEntry(next, f)
+  }
+}
+
+func writeSstHeapEntry(e *SstHeapNode, f *os.File) {
+  if e.Entry.Deleted {
+    return
+  }
+
+	b, err := json.Marshal(&e.Entry)
+	check(err)
+
+	_, err = f.Write(b)
+	check(err)
+
+	_, err = f.Write([]byte("\n"))
+	check(err)
 }
