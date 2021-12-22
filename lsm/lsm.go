@@ -16,11 +16,11 @@
 // Other optimizations TBD including write-ahead log, sparse indexes, GC
 // of cached files, compaction of SST files, etc.
 
-// TODO: not thread safe!
 package lsm
 
 import (
 	"bufio"
+	"container/heap"
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
@@ -283,8 +283,39 @@ func createSstFile(filename string, keys []string, m map[string]SstEntry, seqNum
 	}
 }
 
+func createSstFileFromHeap(filename string, h *SstHeap, seqNum uint64) {
+	f, err := os.Create(filename)
+	check(err)
+
+	defer f.Close()
+
+	header := SstFileHeader{seqNum}
+	b, err := json.Marshal(header)
+	check(err)
+	_, err = f.Write(b)
+	check(err)
+	_, err = f.Write([]byte("\n"))
+	check(err)
+
+	for h.Len() > 0 {
+		entry := heap.Pop(h).(*SstHeapNode)
+		b, err := json.Marshal(&entry.Entry)
+		check(err)
+
+		_, err = f.Write(b)
+		check(err)
+
+		_, err = f.Write([]byte("\n"))
+		check(err)
+	}
+}
+
 func (tree *LsmTree) nextSstFilename() string {
-	files, err := ioutil.ReadDir(tree.path)
+  return nextSstFilename(tree.path)
+}
+
+func nextSstFilename(path string) string {
+	files, err := ioutil.ReadDir(path)
 	if err != nil {
 		log.Fatal(err)
 	}

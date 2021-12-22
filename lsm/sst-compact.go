@@ -31,8 +31,12 @@ func compactSstFiles(path string) {
 	h := &SstHeap{}
 	heap.Init(h)
 
+  var seqNum uint64 = 0
 	for _, filename := range filenames {
 		entries, header := loadEntriesFromSstFile(filename, path)
+		if header.Seq > seqNum {
+		  seqNum = header.Seq
+		}
 		for _, entry := range entries {
 			var e SstEntry = entry
 			fmt.Println(e)
@@ -40,12 +44,21 @@ func compactSstFiles(path string) {
 		}
 	}
 
-	fmt.Println("Unloading heap")
+//TODO: createSstFileFromHeap(filename string, h SstHeap, seqNum uint64) {
 
+	var cur, next *SstHeapNode
 	for h.Len() > 0 {
 		entry := heap.Pop(h).(*SstHeapNode)
     // TODO: account for duplicate keys, need entry.Seq to resolve
-		fmt.Println(entry.Entry.Key)
+    // need to read next key and current key
+    // if keys are equal, keep reading next until keys are not
+    //   keep key with largest seq number
+    // write key we find,
+    // repeat process with next key
+
+    //if prev == nil || entry.Entry.Key != prev.Entry.Key || 
+    //  fmt.Println(entry.Entry.Key)
+    //}
 	}
 	// after data load, take data out of the heap one row at a time and write to file
 }
