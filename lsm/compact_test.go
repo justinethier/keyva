@@ -6,8 +6,8 @@ import (
 )
 
 func TestSstCompact(t *testing.T) {
-	compactSstFiles("testdb", "newsst")
- if !util.DeepCompare("newsst", "testdb/compacted.sst") {
+	compactSstFiles("test-data", "newsst")
+ if !util.DeepCompare("newsst", "test-data/compacted.sst") {
 		t.Error("Compacted SST file does not contain expected contents", "newsst")
  }
 }
