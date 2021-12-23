@@ -20,10 +20,42 @@ How we ideally want this to work:
 
 ## Get
 
-TODO
+* check memtable(s)
+  - could be more than one if we support immutable memtables
+* check SST files
+  - right now assumes one level
+  - ideally want N levels of trees. but which level to check in that case??
+
+## SST
+
+### Caching
+ 
+ * right now an SST file is cached in memory when read. need a GC job for this
+
+### Levels
+
+* if we have multiple levels, what happens if a key is in more than one level?
+* once a level is compacted do we replace SST files with compacted version?
+  * A very simple algorithm would hold off SST flushes and simply swap out files after compaction. Might be feasible for an MVP
+  * how to do this concurrently?
+* do we consider generalizing the code to support multiple sst levels, either now or in the future?
+
+### Indexing
+
+* need a way to index into the files
+
+### binary encoding
+
+* would probably be more efficient to write SST files in binary format instead of JSON
+* might make it easier to index into a file
 
 ## Other stuff
 
 * GC cached data
+* optional TTL for keys?
 * compact the SST
+  when to do this? 
+   * background job? 
+   * time threshold?
+   * have an optional on-demand way to do it
   how do we do this concurrently? How do we know which level of the SST to read data from?
