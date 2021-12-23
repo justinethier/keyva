@@ -47,8 +47,8 @@ type SstEntry struct {
 }
 
 type SstHeapNode struct {
-  Seq uint64
-  Entry *SstEntry
+	Seq   uint64
+	Entry *SstEntry
 }
 
 // An min-heap of SST entries

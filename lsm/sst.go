@@ -98,4 +98,3 @@ func loadEntriesFromSstFile(filename string, path string) ([]SstEntry, SstFileHe
 
 	return buf, header
 }
-

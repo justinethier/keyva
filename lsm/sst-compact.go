@@ -32,11 +32,11 @@ func compactSstFiles(path string, filename string) {
 	h := &SstHeap{}
 	heap.Init(h)
 
-  var seqNum uint64 = 0
+	var seqNum uint64 = 0
 	for _, filename := range filenames {
 		entries, header := loadEntriesFromSstFile(filename, path)
 		if header.Seq > seqNum {
-		  seqNum = header.Seq
+			seqNum = header.Seq
 		}
 		for _, entry := range entries {
 			var e SstEntry = entry
@@ -45,7 +45,7 @@ func compactSstFiles(path string, filename string) {
 		}
 	}
 
-  createSstFileFromHeap(filename, h, seqNum)
+	createSstFileFromHeap(filename, h, seqNum)
 }
 
 func createSstFileFromHeap(filename string, h *SstHeap, seqNum uint64) {
@@ -63,34 +63,34 @@ func createSstFileFromHeap(filename string, h *SstHeap, seqNum uint64) {
 	check(err)
 
 	var cur, next *SstHeapNode
-  if h.Len() > 0 {
-    cur = heap.Pop(h).(*SstHeapNode)
-  }
+	if h.Len() > 0 {
+		cur = heap.Pop(h).(*SstHeapNode)
+	}
 	for h.Len() > 0 {
 		next := heap.Pop(h).(*SstHeapNode)
-    // Account for duplicate keys
-    if next.Entry.Key == cur.Entry.Key {
-      if next.Seq > cur.Seq {
-        cur = next
-      }
-      continue
-    }
-    writeSstHeapEntry(cur, f)
-    cur = next
+		// Account for duplicate keys
+		if next.Entry.Key == cur.Entry.Key {
+			if next.Seq > cur.Seq {
+				cur = next
+			}
+			continue
+		}
+		writeSstHeapEntry(cur, f)
+		cur = next
 	}
-  
-  // Special case, only one SST entry
-  if next == nil {
-    writeSstHeapEntry(cur, f)
-  } else {
-    writeSstHeapEntry(next, f)
-  }
+
+	// Special case, only one SST entry
+	if next == nil {
+		writeSstHeapEntry(cur, f)
+	} else {
+		writeSstHeapEntry(next, f)
+	}
 }
 
 func writeSstHeapEntry(e *SstHeapNode, f *os.File) {
-  if e.Entry.Deleted {
-    return
-  }
+	if e.Entry.Deleted {
+		return
+	}
 
 	b, err := json.Marshal(&e.Entry)
 	check(err)

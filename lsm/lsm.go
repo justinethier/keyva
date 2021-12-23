@@ -248,7 +248,7 @@ func (tree *LsmTree) WaitForJobsToFinish() {
 }
 
 func (tree *LsmTree) nextSstFilename() string {
-  return nextSstFilename(tree.path)
+	return nextSstFilename(tree.path)
 }
 
 func (tree *LsmTree) getSstFilenames() []string {
