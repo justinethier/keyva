@@ -241,12 +241,6 @@ func (tree *LsmTree) walJob() {
 	}
 }
 
-func (tree *LsmTree) WaitForJobsToFinish() {
-	//tree.wg.Add(1)
-	//tree.walChan <- nil
-	//tree.wg.Wait()
-}
-
 func (tree *LsmTree) nextSstFilename() string {
 	return nextSstFilename(tree.path)
 }

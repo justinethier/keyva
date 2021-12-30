@@ -21,6 +21,4 @@ func main() {
 	  //set(key, "text/plain", []byte(doc))
     tbl.Set(key, []byte(doc))
   }
-
-  tbl.WaitForJobsToFinish()
 }
