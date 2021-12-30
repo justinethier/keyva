@@ -50,6 +50,8 @@ func compactSstFiles(path string, filename string) {
 	createSstFileFromHeap(filename, h, seqNum)
 
  // TODO: delete old files? or provide a separate function to do that
+ //       might be cleanest to return list of files from above, that we can then
+ //       have a caller delete, perhaps while holding the appropriate locks
 }
 
 // createSstFileFromHeap writes the contents of the given heap to a new file specified by filename.
