@@ -24,6 +24,7 @@ import (
 // loads all file contents into memory. Then we have both and can benchmark / compare
 // them against different data sets.
 
+// compactSstFileStreams implements a simple algorithm to load all SST files at the given path into memory, compact their contents, and write the contents back out to filename.
 func compactSstFiles(path string, filename string) {
 	filenames := getSstFilenames(path)
 	fmt.Println(filenames)
@@ -48,6 +49,7 @@ func compactSstFiles(path string, filename string) {
 	createSstFileFromHeap(filename, h, seqNum)
 }
 
+// createSstFileFromHeap writes the contents of the given heap to a new file specified by filename.
 func createSstFileFromHeap(filename string, h *SstHeap, seqNum uint64) {
 	f, err := os.Create(filename)
 	check(err)

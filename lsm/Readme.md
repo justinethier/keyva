@@ -35,6 +35,7 @@ How we ideally want this to work:
 ### Levels
 
 * if we have multiple levels, what happens if a key is in more than one level?
+  * check level 0, level 1, etc
 * once a level is compacted do we replace SST files with compacted version?
   * A very simple algorithm would hold off SST flushes and simply swap out files after compaction. Might be feasible for an MVP
   * how to do this concurrently?
