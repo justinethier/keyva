@@ -46,7 +46,10 @@ func compactSstFiles(path string, filename string) {
 		}
 	}
 
+  // write data out to new file(s)
 	createSstFileFromHeap(filename, h, seqNum)
+
+ // TODO: delete old files? or provide a separate function to do that
 }
 
 // createSstFileFromHeap writes the contents of the given heap to a new file specified by filename.
