@@ -10,10 +10,10 @@ type SstFileHeader struct {
 }
 
 type SstFile struct {
-	filename string
-	filter   *bloom.Filter
-	cache    []SstEntry // cached file contents
-	cachedAt time.Time  // timestamp when cache was last accessed
+	Filename string
+	Filter   *bloom.Filter
+	Cache    []SstEntry // cached file contents
+	CachedAt time.Time  // timestamp when cache was last accessed
 	// may convert to seconds (best way to compare???) using -
 	//now := time.Now()      // current local time
 	//sec := now.Unix()      // number of seconds since January 1, 1970 UTC

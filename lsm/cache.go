@@ -18,10 +18,10 @@ func (tree *LsmTree) CacheGC() {
 
 	var empty []sst.SstEntry
 	for i := 0; i < len(tree.files); i++ {
-		fmt.Println("File", tree.files[i].Filename, "cached", len(tree.files[i].cache))
+		fmt.Println("File", tree.files[i].Filename, "cached", len(tree.files[i].Cache))
 		if len(tree.files[i].Cache) > 0 &&
 			time.Since(tree.files[i].CachedAt).Seconds() > CacheGcTimeout {
-			fmt.Println("Clear cache for file", tree.files[i].filename)
+			fmt.Println("Clear cache for file", tree.files[i].Filename)
 			tree.files[i].Cache = empty
 		}
 	}
