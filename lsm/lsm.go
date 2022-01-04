@@ -249,23 +249,6 @@ func (tree *LsmTree) getSstFilenames() []string {
 	return getSstFilenames(tree.path)
 }
 
-func getSstFilenames(path string) []string {
-	files, err := ioutil.ReadDir(path)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	var sstFiles []string
-	for _, file := range files {
-		matched, _ := regexp.Match(`^sorted-string-table-[0-9]*\.json`, []byte(file.Name()))
-		if matched && !file.IsDir() {
-			sstFiles = append(sstFiles, file.Name())
-		}
-	}
-
-	return sstFiles
-}
-
 func (tree *LsmTree) findLatestBufferEntryValue(key string) (SstEntry, bool) {
 	var empty SstEntry
 

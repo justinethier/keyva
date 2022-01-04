@@ -1,4 +1,4 @@
-package lsm
+package sst
 
 import (
 	"github.com/justinethier/keyva/util"

@@ -1,4 +1,4 @@
-package lsm
+package sst
 
 import (
 	"bufio"
@@ -12,7 +12,8 @@ import (
 	"strconv"
 )
 
-func createSstFile(filename string, keys []string, m map[string]SstEntry, seqNum uint64) {
+// createFile creates a new SST file from given data
+func createFile(filename string, keys []string, m map[string]SstEntry, seqNum uint64) {
 	f, err := os.Create(filename)
 	check(err)
 
@@ -44,7 +45,25 @@ func check(e error) {
 	}
 }
 
-func nextSstFilename(path string) string {
+func getSstFilenames(path string) []string {
+	files, err := ioutil.ReadDir(path)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var sstFiles []string
+	for _, file := range files {
+		matched, _ := regexp.Match(`^sorted-string-table-[0-9]*\.json`, []byte(file.Name()))
+		if matched && !file.IsDir() {
+			sstFiles = append(sstFiles, file.Name())
+		}
+	}
+
+	return sstFiles
+}
+
+// nextFilename returns the name of the next SST file in given directory
+func nextFilename(path string) string {
 	files, err := ioutil.ReadDir(path)
 	if err != nil {
 		log.Fatal(err)
@@ -68,6 +87,7 @@ func nextSstFilename(path string) string {
 	return "sorted-string-table-0000.json"
 }
 
+//
 func loadEntriesFromSstFile(filename string, path string) ([]SstEntry, SstFileHeader) {
 	var buf []SstEntry
 	var header SstFileHeader

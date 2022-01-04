@@ -1,5 +1,4 @@
-// TODO: code to compact sst files on disk.
-package lsm
+package sst
 
 import (
 	"container/heap"
