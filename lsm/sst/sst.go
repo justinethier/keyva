@@ -12,8 +12,8 @@ import (
 	"strconv"
 )
 
-// createFile creates a new SST file from given data
-func createFile(filename string, keys []string, m map[string]SstEntry, seqNum uint64) {
+// Create creates a new SST file from given data
+func Create(filename string, keys []string, m map[string]SstEntry, seqNum uint64) {
 	f, err := os.Create(filename)
 	check(err)
 
@@ -45,7 +45,8 @@ func check(e error) {
 	}
 }
 
-func getSstFilenames(path string) []string {
+// Filenames returns names of the SST files under path
+func Filenames(path string) []string {
 	files, err := ioutil.ReadDir(path)
 	if err != nil {
 		log.Fatal(err)
@@ -62,8 +63,8 @@ func getSstFilenames(path string) []string {
 	return sstFiles
 }
 
-// nextFilename returns the name of the next SST file in given directory
-func nextFilename(path string) string {
+// NextFilename returns the name of the next SST file in given directory
+func NextFilename(path string) string {
 	files, err := ioutil.ReadDir(path)
 	if err != nil {
 		log.Fatal(err)
@@ -88,7 +89,7 @@ func nextFilename(path string) string {
 }
 
 //
-func loadEntriesFromSstFile(filename string, path string) ([]SstEntry, SstFileHeader) {
+func Load(filename string, path string) ([]SstEntry, SstFileHeader) {
 	var buf []SstEntry
 	var header SstFileHeader
 

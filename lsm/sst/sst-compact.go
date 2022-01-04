@@ -25,7 +25,7 @@ import (
 
 // compactSstFileStreams implements a simple algorithm to load all SST files at the given path into memory, compact their contents, and write the contents back out to filename.
 func compactSstFiles(path string, filename string) {
-	filenames := getSstFilenames(path)
+	filenames := Filenames(path)
 	fmt.Println(filenames)
 
 	// load all data into min heap
@@ -34,7 +34,7 @@ func compactSstFiles(path string, filename string) {
 
 	var seqNum uint64 = 0
 	for _, filename := range filenames {
-		entries, header := loadEntriesFromSstFile(filename, path)
+		entries, header := Load(filename, path)
 		if header.Seq > seqNum {
 			seqNum = header.Seq
 		}

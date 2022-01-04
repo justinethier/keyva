@@ -6,7 +6,6 @@ import (
 	"github.com/justinethier/keyva/lsm/sst"
 	"github.com/justinethier/keyva/lsm/wal"
 	"sync"
-	"time"
 )
 
 type LsmTree struct {
@@ -18,7 +17,7 @@ type LsmTree struct {
 	files         []sst.SstFile
 	lock          sync.RWMutex
 	wal           *wal.WriteAheadLog
-	walChan       chan *SstEntry
+	walChan       chan *sst.SstEntry
 	wg            sync.WaitGroup
 }
 

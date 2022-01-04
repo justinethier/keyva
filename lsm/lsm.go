@@ -23,12 +23,13 @@ import (
 	"fmt"
 	"github.com/huandu/skiplist"
 	"github.com/justinethier/keyva/bloom"
+	"github.com/justinethier/keyva/lsm/sst"
 	"github.com/justinethier/keyva/lsm/wal"
 	"github.com/justinethier/keyva/util"
-	"io/ioutil"
+	//"io/ioutil"
 	"log"
 	"os"
-	"regexp"
+	//"regexp"
 	"sort"
 	"sync"
 	"time"
@@ -49,8 +50,8 @@ func New(path string, bufSize int) *LsmTree {
 	wal, entries := wal.New(path)
 	fmt.Println("DEBUG wal seq = ", wal.Sequence())
 	fmt.Println("DEBUG wal = ", entries)
-	var files []SstFile
-	chn := make(chan *SstEntry) //, 1000)
+	var files []sst.SstFile
+	chn := make(chan *sst.SstEntry) //, 1000)
 	tree := LsmTree{path: path, memtbl: buf, memtblMaxSize: bufSize,
 		filter: f, files: files, lock: lock, wal: wal, walChan: chn}
 	seq := tree.load() // Read all SST files on disk and generate bloom filters
@@ -76,7 +77,7 @@ func (tree *LsmTree) ResetDB() {
 	tree.lock.Lock()
 	defer tree.lock.Unlock()
 
-	tree.files = make([]SstFile, 0) // Clear from memory
+	tree.files = make([]sst.SstFile, 0) // Clear from memory
 	sstFilenames := tree.getSstFilenames()
 	for _, filename := range sstFilenames {
 		os.Remove(tree.path + "/" + filename) // ... and remove from disk
@@ -97,20 +98,20 @@ func (tree *LsmTree) Increment(k string) uint32 {
 
 	// get/set operations are synchronized to guarantee the next number is always returned
 	tree.lock.Lock()
-	var entry SstEntry
+	var entry sst.SstEntry
 	val, ok := tree.get(k)
 	if ok {
 		n := binary.LittleEndian.Uint32(val)
 		n++
 		binary.LittleEndian.PutUint32(val, n)
 		tree.setInMemtbl(k, val, false)
-		entry = SstEntry{k, val, false}
+		entry = sst.SstEntry{k, val, false}
 		result = n
 	} else {
 		bs := make([]byte, 4)
 		binary.LittleEndian.PutUint32(bs, 0)
 		tree.setInMemtbl(k, bs, false)
-		entry = SstEntry{k, bs, false}
+		entry = sst.SstEntry{k, bs, false}
 		result = 0
 	}
 	// Add entry to Wal, flush SST if ready
@@ -135,13 +136,13 @@ func (tree *LsmTree) Get(k string) ([]byte, bool) {
 
 // Only set in memory do not update WAL or SST, useful for loading data at startup
 func (tree *LsmTree) setInMemtbl(k string, value []byte, deleted bool) {
-	entry := SstEntry{k, value, deleted}
+	entry := sst.SstEntry{k, value, deleted}
 	tree.memtbl.Set(k, entry)
 	tree.filter.Add(k)
 }
 
 func (tree *LsmTree) set(k string, value []byte, deleted bool) {
-	entry := SstEntry{k, value, deleted}
+	entry := sst.SstEntry{k, value, deleted}
 
 	tree.lock.Lock()
 	// Add entry to Wal, flush SST if ready
@@ -165,7 +166,7 @@ func (tree *LsmTree) load() uint64 {
 		for _, entry := range entries {
 			filter.Add(entry.Key)
 		}
-		var sstfile = SstFile{filename, filter, []SstEntry{}, time.Now()}
+		var sstfile = sst.SstFile{filename, filter, []sst.SstEntry{}, time.Now()}
 		tree.files = append(tree.files, sstfile)
 	}
 
@@ -180,10 +181,10 @@ func (tree *LsmTree) flush(seqNum uint64) {
 	util.Trace("DEBUG called flush()")
 
 	// Remove duplicate entries
-	m := make(map[string]SstEntry)
+	m := make(map[string]sst.SstEntry)
 	for elem := tree.memtbl.Front(); elem != nil; elem = elem.Next() {
 		e := elem.Value
-		m[elem.Key().(string)] = e.(SstEntry)
+		m[elem.Key().(string)] = e.(sst.SstEntry)
 	}
 
 	// sort list of keys and setup bloom filter
@@ -197,12 +198,12 @@ func (tree *LsmTree) flush(seqNum uint64) {
 
 	// Flush memtbl to disk
 	var filename = tree.nextSstFilename()
-	createSstFile(tree.path+"/"+filename, keys, m, seqNum)
+	sst.Create(tree.path+"/"+filename, keys, m, seqNum)
 
 	//fmt.Println("DEBUG wrote new sst file", filename)
 
 	// Add information to memory
-	var sstfile = SstFile{filename, filter, []SstEntry{}, time.Now()}
+	var sstfile = sst.SstFile{filename, filter, []sst.SstEntry{}, time.Now()}
 	tree.files = append(tree.files, sstfile)
 
 	// Clear memtbl
@@ -242,15 +243,15 @@ func (tree *LsmTree) walJob() {
 }
 
 func (tree *LsmTree) nextSstFilename() string {
-	return nextSstFilename(tree.path)
+	return sst.NextFilename(tree.path)
 }
 
 func (tree *LsmTree) getSstFilenames() []string {
-	return getSstFilenames(tree.path)
+	return sst.Filenames(tree.path)
 }
 
-func (tree *LsmTree) findLatestBufferEntryValue(key string) (SstEntry, bool) {
-	var empty SstEntry
+func (tree *LsmTree) findLatestBufferEntryValue(key string) (sst.SstEntry, bool) {
+	var empty sst.SstEntry
 
 	// Early exit if we have never seen this key
 	if !tree.filter.Test(key) {
@@ -259,18 +260,18 @@ func (tree *LsmTree) findLatestBufferEntryValue(key string) (SstEntry, bool) {
 
 	elem := tree.memtbl.Get(key)
 	if elem != nil {
-		return elem.Value.(SstEntry), true
+		return elem.Value.(sst.SstEntry), true
 	}
 
 	return empty, false
 }
 
-func (tree *LsmTree) loadEntriesFromSstFile(filename string) ([]SstEntry, SstFileHeader) {
-	return loadEntriesFromSstFile(filename, tree.path)
+func (tree *LsmTree) loadEntriesFromSstFile(filename string) ([]sst.SstEntry, sst.SstFileHeader) {
+	return sst.Load(filename, tree.path)
 }
 
-func (tree *LsmTree) findEntryValue(key string, entries []SstEntry) (SstEntry, bool) {
-	var entry SstEntry
+func (tree *LsmTree) findEntryValue(key string, entries []sst.SstEntry) (sst.SstEntry, bool) {
+	var entry sst.SstEntry
 	var left = 0
 	var right = len(entries) - 1
 
@@ -306,19 +307,19 @@ func (tree *LsmTree) get(k string) ([]byte, bool) {
 	// Not found, search the sst files
 	// Search in reverse order, newest file to oldest
 	for i := len(tree.files) - 1; i >= 0; i-- {
-		//fmt.Println("DEBUG loading entries from file", tree.files[i].filename)
-		if tree.files[i].filter.Test(k) {
+		//fmt.Println("DEBUG loading entries from file", tree.files[i].Filename)
+		if tree.files[i].Filter.Test(k) {
 			// Only read from disk if key is in the filter
-			var entries []SstEntry
+			var entries []sst.SstEntry
 
-			if len(tree.files[i].cache) == 0 {
+			if len(tree.files[i].Cache) == 0 {
 				// No cache, read file from disk and cache entries
-				entries, _ = tree.loadEntriesFromSstFile(tree.files[i].filename)
-				tree.files[i].cache = entries
+				entries, _ = tree.loadEntriesFromSstFile(tree.files[i].Filename)
+				tree.files[i].Cache = entries
 			} else {
-				entries = tree.files[i].cache
+				entries = tree.files[i].Cache
 			}
-			tree.files[i].cachedAt = time.Now() // Update cached time
+			tree.files[i].CachedAt = time.Now() // Update cached time
 
 			// Search for key in the file's entries
 			if entry, found := tree.findEntryValue(k, entries); found {

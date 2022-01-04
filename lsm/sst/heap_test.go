@@ -1,4 +1,4 @@
-package lsm
+package sst
 
 import (
 	"container/heap"
