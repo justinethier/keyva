@@ -56,13 +56,3 @@ func (h *SstHeap) Pop() interface{} {
 	return x
 }
 
-// This example inserts several ints into an IntHeap, checks the minimum,
-// and removes them in order of priority.
-//func main() {
-//	h := &IntHeap{2, 1, 5}
-//	heap.Init(h)
-//	heap.Push(h, 3)
-//	fmt.Printf("minimum: %d\n", (*h)[0])
-//	for h.Len() > 0 {
-//		fmt.Printf("%d ", heap.Pop(h))
-//	}
