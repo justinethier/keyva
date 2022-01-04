@@ -23,8 +23,8 @@ import (
 // loads all file contents into memory. Then we have both and can benchmark / compare
 // them against different data sets.
 
-// compactSstFileStreams implements a simple algorithm to load all SST files at the given path into memory, compact their contents, and write the contents back out to filename.
-func compactSstFiles(path string, filename string) {
+// Compact implements a simple algorithm to load all SST files at the given path into memory, compact their contents, and write the contents back out to filename.
+func Compact(path string, filename string) {
 	filenames := Filenames(path)
 	fmt.Println(filenames)
 
