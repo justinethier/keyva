@@ -25,6 +25,18 @@ import (
 
 // Compact implements a simple algorithm to load all SST files at the given path into memory, compact their contents, and write the contents back out to filename.
 func Compact(path string, filename string) {
+
+  // TODO: modify to -
+  // - accept directory of lower-level-path (EG: L0), directory of higher-level path (previous L + 1)
+  // - higher-level dir may not exist
+  // - ... but if it does exist, need to merge those files in too
+  // - generate multiple new files of size n
+  // - deleting old files
+  //   - do with the appropriate locks
+  //   - replace all files in l+1 ?
+  //   - delete all files from l that were compacted with higher level. may still be files remaining in l if a flush was performed while compaction was running
+
+
 	filenames := Filenames(path)
 	fmt.Println(filenames)
 
