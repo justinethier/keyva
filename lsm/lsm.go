@@ -20,12 +20,12 @@ package lsm
 
 import (
 	"encoding/binary"
-	"fmt"
+	//"fmt"
 	"github.com/huandu/skiplist"
 	"github.com/justinethier/keyva/bloom"
 	"github.com/justinethier/keyva/lsm/sst"
 	"github.com/justinethier/keyva/lsm/wal"
-	"github.com/justinethier/keyva/util"
+	//"github.com/justinethier/keyva/util"
 	//"io/ioutil"
 	"log"
 	"os"
@@ -48,22 +48,22 @@ func New(path string, bufSize int) *LsmTree {
 	buf := skiplist.New(skiplist.String)
 	f := bloom.New(bufSize, 200)
 	wal, entries := wal.New(path)
-	fmt.Println("DEBUG wal seq = ", wal.Sequence())
-	fmt.Println("DEBUG wal = ", entries)
+	log.Println("DEBUG wal seq = ", wal.Sequence())
+	log.Println("DEBUG wal = ", entries)
 	var files []sst.SstFile
 	chn := make(chan *sst.SstEntry)
 	tree := LsmTree{path: path, memtbl: buf, bufferSize: bufSize,
 		filter: f, files: files, lock: lock, wal: wal, walChan: chn}
 	seq := tree.load() // Read all SST files on disk and generate bloom filters
 
-	fmt.Println("loaded LSM tree seq =", seq)
+	log.Println("loaded LSM tree seq =", seq)
 
 	// if there are entries in wal that are not in SST files,
 	// load them into memory
 	if entries != nil {
 		for _, e := range entries {
 			if e.Id > seq {
-				util.Trace("DEBUG loading wal id", e.Id, "entry", e.Key)
+				log.Println("DEBUG loading wal id", e.Id, "entry", e.Key)
 				tree.setInMemtbl(e.Key, e.Value, e.Deleted)
 			}
 		}
@@ -157,7 +157,7 @@ func (tree *LsmTree) load() uint64 {
 	var seq uint64
 	sstFilenames := tree.getSstFilenames()
 	for _, filename := range sstFilenames {
-		//fmt.Println("DEBUG: loading bloom filter from file", filename)
+		//log.Println("DEBUG: loading bloom filter from file", filename)
 		entries, header := tree.loadEntriesFromSstFile(filename)
 		if header.Seq > seq {
 			seq = header.Seq
@@ -178,7 +178,7 @@ func (tree *LsmTree) flush(seqNum uint64) {
 		return
 	}
 
-	util.Trace("DEBUG called flush()")
+	log.Println("DEBUG called flush()")
 
 	// Remove duplicate entries
 	m := make(map[string]sst.SstEntry)
@@ -200,7 +200,7 @@ func (tree *LsmTree) flush(seqNum uint64) {
 	var filename = tree.nextSstFilename()
 	sst.Create(tree.path+"/"+filename, keys, m, seqNum)
 
-	//fmt.Println("DEBUG wrote new sst file", filename)
+	//log.Println("DEBUG wrote new sst file", filename)
 
 	// Add information to memory
 	var sstfile = sst.SstFile{filename, filter, []sst.SstEntry{}, time.Now()}
@@ -217,8 +217,8 @@ func (tree *LsmTree) walJob() {
 	for {
 		v := <-tree.walChan
 
-		//fmt.Println("walJob received", v)
-		util.Trace("walJob received", v)
+		//log.Println("walJob received", v)
+		log.Println("walJob received", v)
 
 		if v == nil {
 			tree.wg.Done()
@@ -235,7 +235,7 @@ func (tree *LsmTree) walJob() {
 		//       or have a background job that does the actual flushing
 		//tree.lock.Lock()
 		if tree.memtbl.Len() > tree.bufferSize {
-			util.Trace("flushing memtable to SST", tree.wal.Sequence())
+			log.Println("flushing memtable to SST", tree.wal.Sequence())
 			tree.flush(tree.wal.Sequence())
 		}
 		//tree.lock.Unlock()
@@ -277,7 +277,7 @@ func (tree *LsmTree) findEntryValue(key string, entries []sst.SstEntry) (sst.Sst
 
 	for left <= right {
 		mid := left + int((right-left)/2)
-		//fmt.Println("DEBUG FEV", key, left, right, mid, entries[mid])
+		//log.Println("DEBUG FEV", key, left, right, mid, entries[mid])
 
 		// Found the key
 		if entries[mid].Key == key {
@@ -307,7 +307,7 @@ func (tree *LsmTree) get(k string) ([]byte, bool) {
 	// Not found, search the sst files
 	// Search in reverse order, newest file to oldest
 	for i := len(tree.files) - 1; i >= 0; i-- {
-		//fmt.Println("DEBUG loading entries from file", tree.files[i].Filename)
+		//log.Println("DEBUG loading entries from file", tree.files[i].Filename)
 		if tree.files[i].Filter.Test(k) {
 			// Only read from disk if key is in the filter
 			var entries []sst.SstEntry

@@ -17,6 +17,7 @@ package main
 import (
 	"fmt"
 	"github.com/justinethier/keyva/lsm"
+	"github.com/justinethier/keyva/util"
 	"log"
 	"net/http"
 	"os"
@@ -28,6 +29,7 @@ func ArgServer(w http.ResponseWriter, req *http.Request) {
 }
 
 func main() {
+	util.OpenSyslog()
 	mux := http.NewServeMux()
 	m := lsm.New("data", 5000) // TODO: optionally, make these parameters configurable
 	// TODO: use a larger default (5000?). This is small for testing purposes

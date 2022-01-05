@@ -3,9 +3,10 @@ package util
 import (
   "bufio"
   "bytes"
-  "fmt"
+  //"fmt"
   "io"
   "log"
+  "log/syslog"
   "os"
 )
 
@@ -27,15 +28,23 @@ func Readln(r *bufio.Reader) (string, error) {
   return string(ln),err
 }
 
-// debug controls whether debug information is logged to stdout
-var debug bool = false
+// Use log and OpenSyslog instead...
+// // debug controls whether debug information is logged to stdout
+// var debug bool = false
+// 
+// // Trace writes the given parameters to stdout if debug output is enabled
+// func Trace(str ...interface{}) {
+//  if debug {
+//    fmt.Println(str...)
+//    return
+//  }
+// }
 
-// Trace writes the given parameters to stdout if debug output is enabled
-func Trace(str ...interface{}) {
- if debug {
-   fmt.Println(str...)
-   return
- }
+func OpenSyslog() {
+  logwriter, e := syslog.New(syslog.LOG_NOTICE, "keyva")
+  if e == nil {
+    log.SetOutput(logwriter)
+  }
 }
 
 // Compare two files for equality
