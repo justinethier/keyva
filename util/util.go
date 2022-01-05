@@ -40,6 +40,7 @@ func Readln(r *bufio.Reader) (string, error) {
 //  }
 // }
 
+// OpenSyslog opens a writer to the local syslog and redirects log output to that writer
 func OpenSyslog() {
   logwriter, e := syslog.New(syslog.LOG_NOTICE, "keyva")
   if e == nil {
