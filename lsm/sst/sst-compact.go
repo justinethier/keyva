@@ -35,6 +35,7 @@ func Compact(path string, filename string) {
   //   - do with the appropriate locks
   //   - replace all files in l+1 ?
   //   - delete all files from l that were compacted with higher level. may still be files remaining in l if a flush was performed while compaction was running
+  //   - delete (or some portions) may need to be done by LSM because it caches SST file contents
 
 
 	filenames := Filenames(path)

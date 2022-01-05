@@ -51,8 +51,8 @@ func New(path string, bufSize int) *LsmTree {
 	fmt.Println("DEBUG wal seq = ", wal.Sequence())
 	fmt.Println("DEBUG wal = ", entries)
 	var files []sst.SstFile
-	chn := make(chan *sst.SstEntry) //, 1000)
-	tree := LsmTree{path: path, memtbl: buf, memtblMaxSize: bufSize,
+	chn := make(chan *sst.SstEntry)
+	tree := LsmTree{path: path, memtbl: buf, bufferSize: bufSize,
 		filter: f, files: files, lock: lock, wal: wal, walChan: chn}
 	seq := tree.load() // Read all SST files on disk and generate bloom filters
 
@@ -162,7 +162,7 @@ func (tree *LsmTree) load() uint64 {
 		if header.Seq > seq {
 			seq = header.Seq
 		}
-		filter := bloom.New(tree.memtblMaxSize, 200)
+		filter := bloom.New(tree.bufferSize, 200)
 		for _, entry := range entries {
 			filter.Add(entry.Key)
 		}
@@ -174,7 +174,7 @@ func (tree *LsmTree) load() uint64 {
 }
 
 func (tree *LsmTree) flush(seqNum uint64) {
-	if tree.memtbl.Len() == 0 || tree.memtbl.Len() < tree.memtblMaxSize {
+	if tree.memtbl.Len() == 0 || tree.memtbl.Len() < tree.bufferSize {
 		return
 	}
 
@@ -188,7 +188,7 @@ func (tree *LsmTree) flush(seqNum uint64) {
 	}
 
 	// sort list of keys and setup bloom filter
-	filter := bloom.New(tree.memtblMaxSize, 200)
+	filter := bloom.New(tree.bufferSize, 200)
 	keys := make([]string, 0, len(m))
 	for k := range m {
 		filter.Add(k)
@@ -234,7 +234,7 @@ func (tree *LsmTree) walJob() {
 		// TODO: "right" way to do this is to make it immutable now and fire a goroutine
 		//       or have a background job that does the actual flushing
 		//tree.lock.Lock()
-		if tree.memtbl.Len() > tree.memtblMaxSize {
+		if tree.memtbl.Len() > tree.bufferSize {
 			util.Trace("flushing memtable to SST", tree.wal.Sequence())
 			tree.flush(tree.wal.Sequence())
 		}

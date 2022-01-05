@@ -12,7 +12,7 @@ type LsmTree struct {
 	path string
 	// buffer AKA MemTable, used as initial in-memory store of new data
 	memtbl        *skiplist.SkipList
-	memtblMaxSize int
+	bufferSize    int
 	filter        *bloom.Filter
 	files         []sst.SstFile
 	lock          sync.RWMutex

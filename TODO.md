@@ -34,3 +34,15 @@
 - Build prototype (here or elsewhere) with a b-tree
 - Consider original LSM paper and newer literature
 - How to make everything more robust / scalable?
+
+# Datasets
+
+Need to build some examples using datasets on the Internet.
+
+Some ideas:
+
+- Take snapshots of IOT data. Ideally would be a time series oriented DB
+- Snapshots of Asmodee data. Could be time series, though some data might not be (EG: dump of all players, etc)
+- Finance applications? historic prices? could be time series oriented
+- What else?
+
