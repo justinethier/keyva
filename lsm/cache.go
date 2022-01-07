@@ -1,8 +1,8 @@
 package lsm
 
 import (
-	"github.com/justinethier/keyva/lsm/sst"
 	"fmt"
+	"github.com/justinethier/keyva/lsm/sst"
 	"time"
 )
 

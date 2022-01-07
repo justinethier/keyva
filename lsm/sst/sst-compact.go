@@ -26,17 +26,16 @@ import (
 // Compact implements a simple algorithm to load all SST files at the given path into memory, compact their contents, and write the contents back out to filename.
 func Compact(path string, filename string) {
 
-  // TODO: modify to -
-  // - accept directory of lower-level-path (EG: L0), directory of higher-level path (previous L + 1)
-  // - higher-level dir may not exist
-  // - ... but if it does exist, need to merge those files in too
-  // - generate multiple new files of size n
-  // - deleting old files
-  //   - do with the appropriate locks
-  //   - replace all files in l+1 ?
-  //   - delete all files from l that were compacted with higher level. may still be files remaining in l if a flush was performed while compaction was running
-  //   - delete (or some portions) may need to be done by LSM because it caches SST file contents
-
+	// TODO: modify to -
+	// - accept directory of lower-level-path (EG: L0), directory of higher-level path (previous L + 1)
+	// - higher-level dir may not exist
+	// - ... but if it does exist, need to merge those files in too
+	// - generate multiple new files of size n
+	// - deleting old files
+	//   - do with the appropriate locks
+	//   - replace all files in l+1 ?
+	//   - delete all files from l that were compacted with higher level. may still be files remaining in l if a flush was performed while compaction was running
+	//   - delete (or some portions) may need to be done by LSM because it caches SST file contents
 
 	filenames := Filenames(path)
 	fmt.Println(filenames)
@@ -58,12 +57,12 @@ func Compact(path string, filename string) {
 		}
 	}
 
-  // write data out to new file(s)
+	// write data out to new file(s)
 	createSstFileFromHeap(filename, h, seqNum)
 
- // TODO: delete old files? or provide a separate function to do that
- //       might be cleanest to return list of files from above, that we can then
- //       have a caller delete, perhaps while holding the appropriate locks
+	// TODO: delete old files? or provide a separate function to do that
+	//       might be cleanest to return list of files from above, that we can then
+	//       have a caller delete, perhaps while holding the appropriate locks
 }
 
 // createSstFileFromHeap writes the contents of the given heap to a new file specified by filename.

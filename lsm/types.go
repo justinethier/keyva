@@ -11,13 +11,12 @@ import (
 type LsmTree struct {
 	path string
 	// buffer AKA MemTable, used as initial in-memory store of new data
-	memtbl        *skiplist.SkipList
-	bufferSize    int
-	filter        *bloom.Filter
-	files         []sst.SstFile
-	lock          sync.RWMutex
-	wal           *wal.WriteAheadLog
-	walChan       chan *sst.SstEntry
-	wg            sync.WaitGroup
+	memtbl     *skiplist.SkipList
+	bufferSize int
+	filter     *bloom.Filter
+	files      []sst.SstFile
+	lock       sync.RWMutex
+	wal        *wal.WriteAheadLog
+	walChan    chan *sst.SstEntry
+	wg         sync.WaitGroup
 }
-

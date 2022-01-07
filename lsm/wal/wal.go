@@ -79,10 +79,10 @@ func (wal *WriteAheadLog) Next() {
 	current := wal.currentFilename()
 	next := wal.nextFilename()
 	wal.openLog(next)
-  // Clean up old file, assumes old one no longer needed (EG: flushed to SST)
-  if current != next {
-    os.Remove(wal.path + "/" + current)
-  }
+	// Clean up old file, assumes old one no longer needed (EG: flushed to SST)
+	if current != next {
+		os.Remove(wal.path + "/" + current)
+	}
 }
 
 func (wal *WriteAheadLog) Sequence() uint64 {
