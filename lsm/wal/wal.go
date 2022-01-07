@@ -76,7 +76,13 @@ func New(path string) (*WriteAheadLog, []Entry) {
 
 // Next closes the current log on disk and opens the next one for writing.
 func (wal *WriteAheadLog) Next() {
-	wal.openLog(wal.nextFilename())
+	current := wal.currentFilename()
+	next := wal.nextFilename()
+	wal.openLog(next)
+  // Clean up old file, assumes old one no longer needed (EG: flushed to SST)
+  if current != next {
+    os.Remove(wal.path + "/" + current)
+  }
 }
 
 func (wal *WriteAheadLog) Sequence() uint64 {

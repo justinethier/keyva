@@ -218,7 +218,6 @@ func (tree *LsmTree) walJob() {
 		v := <-tree.walChan
 
 		//log.Println("walJob received", v)
-		log.Println("walJob received", v)
 
 		if v == nil {
 			tree.wg.Done()
