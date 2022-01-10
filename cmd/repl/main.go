@@ -29,8 +29,18 @@ func printInvalidCmd(text string) {
 	defer recoverExp(text)
 	// \n Will be ignored
 	t := strings.TrimSuffix(text, "\n")
-	if t != "" {
-			fmt.Println("go-repl> unknown command " + t)
+	if t[:4] == "get " {
+		key := t[4:]
+		dbGet(key)
+	} else if t[:4] == "set " {
+		key := t[4:]
+		value := "TODO"
+		dbSet(key, value)
+	} else if t[:4] == "del " {
+		key := t[4:]
+		dbDelete(key)
+	} else if t != "" {
+		fmt.Println("go-repl> unknown command " + t)
 		//expression, errExp := govaluate.NewEvaluableExpression(text)
 		//result, errEval := expression.Evaluate(nil)
 		//// Before we need to know if is not a Math expr
@@ -76,25 +86,21 @@ func now() {
 	fmt.Println("go-repl> ", time.Now().Format(time.RFC850))
 }
 
-func dbGet() {
-  key := "test" // TODO: receive from stdin
-  val, found := db.Get(key)
-  if found {
-    fmt.Println(string(val))
-  } else {
-    fmt.Println("Key not found")
-  }
+func dbGet(key string) {
+	val, found := db.Get(key)
+	if found {
+		fmt.Println(string(val))
+	} else {
+		fmt.Println("Key not found")
+	}
 }
 
-func dbSet() {
-  key := "test" // TODO: receive from stdin
-  tmp := "test value" // TODO: receive from stdin
-  db.Set(key, []byte(tmp))
+func dbSet(key string, value string) {
+	db.Set(key, []byte(value))
 }
 
-func dbDelete() {
-  key := "test" // TODO: receive from stdin
-  db.Delete(key)
+func dbDelete(key string) {
+	db.Delete(key)
 }
 
 func main() {
@@ -102,9 +108,6 @@ func main() {
 		"help": help,
 		"cls":  cls,
 		"time": now,
-		"get": dbGet,
-		"set": dbSet,
-		"del": dbDelete,
 	}
 	reader := bufio.NewReader(os.Stdin)
 	help()
