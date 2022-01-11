@@ -24,7 +24,7 @@ func recoverExp(text string) {
 	}
 }
 
-func printInvalidCmd(text string) {
+func printInvalidCmd(text string, reader *bufio.Reader) {
 	// We might have a panic here we so need DEFER + RECOVER
 	defer recoverExp(text)
 	// \n Will be ignored
@@ -34,8 +34,7 @@ func printInvalidCmd(text string) {
 		dbGet(key)
 	} else if t[:4] == "set " {
 		key := t[4:]
-		value := "TODO"
-		dbSet(key, value)
+		dbSet(key, reader)
 	} else if t[:4] == "del " {
 		key := t[4:]
 		dbDelete(key)
@@ -95,7 +94,9 @@ func dbGet(key string) {
 	}
 }
 
-func dbSet(key string, value string) {
+func dbSet(key string, reader *bufio.Reader) {
+  fmt.Println("Value to set: ")
+  value := get(reader)
 	db.Set(key, []byte(value))
 }
 
@@ -117,7 +118,7 @@ func main() {
 		if value, exists := commands[text]; exists {
 			value.(func())()
 		} else {
-			printInvalidCmd(text)
+			printInvalidCmd(text, reader)
 		}
 		printRepl()
 	}
