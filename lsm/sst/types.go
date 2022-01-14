@@ -9,6 +9,10 @@ type SstFileHeader struct {
 	Seq uint64
 }
 
+type SstLevel struct {
+  Files []SstFile
+}
+
 type SstFile struct {
 	Filename string
 	Filter   *bloom.Filter

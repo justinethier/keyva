@@ -14,7 +14,7 @@ type LsmTree struct {
 	memtbl     *skiplist.SkipList
 	bufferSize int
 	filter     *bloom.Filter
-	files      []sst.SstFile
+	sst        []sst.SstLevel
 	lock       sync.RWMutex
 	wal        *wal.WriteAheadLog
 	walChan    chan *sst.SstEntry

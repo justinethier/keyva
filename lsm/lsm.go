@@ -50,10 +50,12 @@ func New(path string, bufSize int) *LsmTree {
 	wal, entries := wal.New(path)
 	log.Println("DEBUG wal seq = ", wal.Sequence())
 	log.Println("DEBUG wal = ", entries)
-	var files []sst.SstFile
+	var files sst.SstLevel
+  var sstLevels []sst.SstLevel
+  sstLevels = append(sstLevels, files)
 	chn := make(chan *sst.SstEntry)
 	tree := LsmTree{path: path, memtbl: buf, bufferSize: bufSize,
-		filter: f, files: files, lock: lock, wal: wal, walChan: chn}
+		filter: f, sst: sstLevels, lock: lock, wal: wal, walChan: chn}
 	seq := tree.load() // Read all SST files on disk and generate bloom filters
 
 	log.Println("loaded LSM tree seq =", seq)
@@ -77,7 +79,7 @@ func (tree *LsmTree) ResetDB() {
 	tree.lock.Lock()
 	defer tree.lock.Unlock()
 
-	tree.files = make([]sst.SstFile, 0) // Clear from memory
+	tree.sst = make([]sst.SstLevel, 1) // Clear from memory
 	sstFilenames := tree.getSstFilenames()
 	for _, filename := range sstFilenames {
 		os.Remove(tree.path + "/" + filename) // ... and remove from disk
@@ -167,7 +169,7 @@ func (tree *LsmTree) load() uint64 {
 			filter.Add(entry.Key)
 		}
 		var sstfile = sst.SstFile{filename, filter, []sst.SstEntry{}, time.Now()}
-		tree.files = append(tree.files, sstfile)
+		tree.sst[0].Files = append(tree.sst[0].Files, sstfile)
 	}
 
 	return seq
@@ -204,7 +206,7 @@ func (tree *LsmTree) flush(seqNum uint64) {
 
 	// Add information to memory
 	var sstfile = sst.SstFile{filename, filter, []sst.SstEntry{}, time.Now()}
-	tree.files = append(tree.files, sstfile)
+	tree.sst[0].Files = append(tree.sst[0].Files, sstfile)
 
 	// Clear memtbl
 	tree.memtbl = skiplist.New(skiplist.String)
@@ -305,20 +307,20 @@ func (tree *LsmTree) get(k string) ([]byte, bool) {
 
 	// Not found, search the sst files
 	// Search in reverse order, newest file to oldest
-	for i := len(tree.files) - 1; i >= 0; i-- {
-		//log.Println("DEBUG loading entries from file", tree.files[i].Filename)
-		if tree.files[i].Filter.Test(k) {
+	for i := len(tree.sst[0].Files) - 1; i >= 0; i-- {
+		//log.Println("DEBUG loading entries from file", tree.sst[0].Files[i].Filename)
+		if tree.sst[0].Files[i].Filter.Test(k) {
 			// Only read from disk if key is in the filter
 			var entries []sst.SstEntry
 
-			if len(tree.files[i].Cache) == 0 {
+			if len(tree.sst[0].Files[i].Cache) == 0 {
 				// No cache, read file from disk and cache entries
-				entries, _ = tree.loadEntriesFromSstFile(tree.files[i].Filename)
-				tree.files[i].Cache = entries
+				entries, _ = tree.loadEntriesFromSstFile(tree.sst[0].Files[i].Filename)
+				tree.sst[0].Files[i].Cache = entries
 			} else {
-				entries = tree.files[i].Cache
+				entries = tree.sst[0].Files[i].Cache
 			}
-			tree.files[i].CachedAt = time.Now() // Update cached time
+			tree.sst[0].Files[i].CachedAt = time.Now() // Update cached time
 
 			// Search for key in the file's entries
 			if entry, found := tree.findEntryValue(k, entries); found {
