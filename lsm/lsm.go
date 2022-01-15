@@ -286,32 +286,6 @@ val, found := sst.Find(k, tree.sst, tree.path)
 if found {
   return val, true
 }
-//	// Search in reverse order, newest file to oldest
-//	for i := len(tree.sst[0].Files) - 1; i >= 0; i-- {
-//		//log.Println("DEBUG loading entries from file", tree.sst[0].Files[i].Filename)
-//		if tree.sst[0].Files[i].Filter.Test(k) {
-//			// Only read from disk if key is in the filter
-//			var entries []sst.SstEntry
-//
-//			if len(tree.sst[0].Files[i].Cache) == 0 {
-//				// No cache, read file from disk and cache entries
-//				entries, _ = tree.loadEntriesFromSstFile(tree.sst[0].Files[i].Filename)
-//				tree.sst[0].Files[i].Cache = entries
-//			} else {
-//				entries = tree.sst[0].Files[i].Cache
-//			}
-//			tree.sst[0].Files[i].CachedAt = time.Now() // Update cached time
-//
-//			// Search for key in the file's entries
-//			if entry, found := tree.findEntryValue(k, entries); found {
-//				if entry.Deleted {
-//					return entry.Value, false
-//				} else {
-//					return entry.Value, true
-//				}
-//			}
-//		}
-//	}
 
 	// Key not found
 	return val, false

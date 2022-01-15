@@ -148,27 +148,29 @@ func findValue(key string, entries []SstEntry) (SstEntry, bool) {
 
 func Find(key string, lvl []SstLevel, path string) ([]byte, bool) {
 	// Search in reverse order, newest file to oldest
-	for i := len(lvl[0].Files) - 1; i >= 0; i-- {
-		//log.Println("DEBUG loading entries from file", lvl[0].Files[i].Filename)
-		if lvl[0].Files[i].Filter.Test(key) {
-			// Only read from disk if key is in the filter
-			var entries []SstEntry
+	for l := 0; l < len(lvl); l++ {
+		for i := len(lvl[l].Files) - 1; i >= 0; i-- {
+			//log.Println("DEBUG loading entries from file", lvl[l].Files[i].Filename)
+			if lvl[l].Files[i].Filter.Test(key) {
+				// Only read from disk if key is in the filter
+				var entries []SstEntry
 
-			if len(lvl[0].Files[i].Cache) == 0 {
-				// No cache, read file from disk and cache entries
-				entries, _ = Load(lvl[0].Files[i].Filename, path)
-				lvl[0].Files[i].Cache = entries
-			} else {
-				entries = lvl[0].Files[i].Cache
-			}
-			lvl[0].Files[i].CachedAt = time.Now() // Update cached time
-
-			// Search for key in the file's entries
-			if entry, found := findValue(key, entries); found {
-				if entry.Deleted {
-					return entry.Value, false
+				if len(lvl[l].Files[i].Cache) == 0 {
+					// No cache, read file from disk and cache entries
+					entries, _ = Load(lvl[l].Files[i].Filename, path)
+					lvl[l].Files[i].Cache = entries
 				} else {
-					return entry.Value, true
+					entries = lvl[l].Files[i].Cache
+				}
+				lvl[l].Files[i].CachedAt = time.Now() // Update cached time
+
+				// Search for key in the file's entries
+				if entry, found := findValue(key, entries); found {
+					if entry.Deleted {
+						return entry.Value, false
+					} else {
+						return entry.Value, true
+					}
 				}
 			}
 		}
