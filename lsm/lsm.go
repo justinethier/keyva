@@ -271,30 +271,6 @@ func (tree *LsmTree) loadEntriesFromSstFile(filename string) ([]sst.SstEntry, ss
 	return sst.Load(filename, tree.path)
 }
 
-func (tree *LsmTree) findEntryValue(key string, entries []sst.SstEntry) (sst.SstEntry, bool) {
-	var entry sst.SstEntry
-	var left = 0
-	var right = len(entries) - 1
-
-	for left <= right {
-		mid := left + int((right-left)/2)
-		//log.Println("DEBUG FEV", key, left, right, mid, entries[mid])
-
-		// Found the key
-		if entries[mid].Key == key {
-			return entries[mid], true
-		}
-
-		if entries[mid].Key > key {
-			right = mid - 1 // Key would be found before this entry
-		} else {
-			left = mid + 1 // Key would be found after this entry
-		}
-	}
-
-	return entry, false
-}
-
 func (tree *LsmTree) get(k string) ([]byte, bool) {
 	// Check in-memory buffer
 	if latestBufEntry, ok := tree.findLatestBufferEntryValue(k); ok {
@@ -306,34 +282,37 @@ func (tree *LsmTree) get(k string) ([]byte, bool) {
 	}
 
 	// Not found, search the sst files
-	// Search in reverse order, newest file to oldest
-	for i := len(tree.sst[0].Files) - 1; i >= 0; i-- {
-		//log.Println("DEBUG loading entries from file", tree.sst[0].Files[i].Filename)
-		if tree.sst[0].Files[i].Filter.Test(k) {
-			// Only read from disk if key is in the filter
-			var entries []sst.SstEntry
-
-			if len(tree.sst[0].Files[i].Cache) == 0 {
-				// No cache, read file from disk and cache entries
-				entries, _ = tree.loadEntriesFromSstFile(tree.sst[0].Files[i].Filename)
-				tree.sst[0].Files[i].Cache = entries
-			} else {
-				entries = tree.sst[0].Files[i].Cache
-			}
-			tree.sst[0].Files[i].CachedAt = time.Now() // Update cached time
-
-			// Search for key in the file's entries
-			if entry, found := tree.findEntryValue(k, entries); found {
-				if entry.Deleted {
-					return entry.Value, false
-				} else {
-					return entry.Value, true
-				}
-			}
-		}
-	}
+val, found := sst.Find(k, tree.sst, tree.path)
+if found {
+  return val, true
+}
+//	// Search in reverse order, newest file to oldest
+//	for i := len(tree.sst[0].Files) - 1; i >= 0; i-- {
+//		//log.Println("DEBUG loading entries from file", tree.sst[0].Files[i].Filename)
+//		if tree.sst[0].Files[i].Filter.Test(k) {
+//			// Only read from disk if key is in the filter
+//			var entries []sst.SstEntry
+//
+//			if len(tree.sst[0].Files[i].Cache) == 0 {
+//				// No cache, read file from disk and cache entries
+//				entries, _ = tree.loadEntriesFromSstFile(tree.sst[0].Files[i].Filename)
+//				tree.sst[0].Files[i].Cache = entries
+//			} else {
+//				entries = tree.sst[0].Files[i].Cache
+//			}
+//			tree.sst[0].Files[i].CachedAt = time.Now() // Update cached time
+//
+//			// Search for key in the file's entries
+//			if entry, found := tree.findEntryValue(k, entries); found {
+//				if entry.Deleted {
+//					return entry.Value, false
+//				} else {
+//					return entry.Value, true
+//				}
+//			}
+//		}
+//	}
 
 	// Key not found
-	var val []byte
 	return val, false
 }

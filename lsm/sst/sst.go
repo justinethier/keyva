@@ -10,6 +10,7 @@ import (
 	"os"
 	"regexp"
 	"strconv"
+	"time"
 )
 
 // Create creates a new SST file from given data
@@ -118,4 +119,60 @@ func Load(filename string, path string) ([]SstEntry, SstFileHeader) {
 	}
 
 	return buf, header
+}
+
+// find searches the given entries for key and returns the corresponding value if found.
+func findValue(key string, entries []SstEntry) (SstEntry, bool) {
+	var entry SstEntry
+	var left = 0
+	var right = len(entries) - 1
+
+	for left <= right {
+		mid := left + int((right-left)/2)
+		//log.Println("DEBUG FEV", key, left, right, mid, entries[mid])
+
+		// Found the key
+		if entries[mid].Key == key {
+			return entries[mid], true
+		}
+
+		if entries[mid].Key > key {
+			right = mid - 1 // Key would be found before this entry
+		} else {
+			left = mid + 1 // Key would be found after this entry
+		}
+	}
+
+	return entry, false
+}
+
+func Find(key string, lvl []SstLevel, path string) ([]byte, bool) {
+	// Search in reverse order, newest file to oldest
+	for i := len(lvl[0].Files) - 1; i >= 0; i-- {
+		//log.Println("DEBUG loading entries from file", lvl[0].Files[i].Filename)
+		if lvl[0].Files[i].Filter.Test(key) {
+			// Only read from disk if key is in the filter
+			var entries []SstEntry
+
+			if len(lvl[0].Files[i].Cache) == 0 {
+				// No cache, read file from disk and cache entries
+				entries, _ = Load(lvl[0].Files[i].Filename, path)
+				lvl[0].Files[i].Cache = entries
+			} else {
+				entries = lvl[0].Files[i].Cache
+			}
+			lvl[0].Files[i].CachedAt = time.Now() // Update cached time
+
+			// Search for key in the file's entries
+			if entry, found := findValue(key, entries); found {
+				if entry.Deleted {
+					return entry.Value, false
+				} else {
+					return entry.Value, true
+				}
+			}
+		}
+	}
+  var rv []byte
+  return rv, false
 }
