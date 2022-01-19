@@ -46,6 +46,26 @@ func check(e error) {
 	}
 }
 
+// Levels returns the names of any directories containing consolidated
+// SST files at levels greater than level 0. This implies the data is 
+// organized in non-overlapping regions across files at that level.
+func Levels(path string) []string {
+	files, err := ioutil.ReadDir(path)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var lvls []string
+	for _, file := range files {
+		matched, _ := regexp.Match(`^level-[0-9]*`, []byte(file.Name()))
+		if matched && file.IsDir() {
+			lvls = append(lvls, file.Name())
+		}
+	}
+
+	return lvls
+}
+
 // Filenames returns names of the SST files under path
 func Filenames(path string) []string {
 	files, err := ioutil.ReadDir(path)

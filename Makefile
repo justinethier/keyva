@@ -2,6 +2,7 @@ all:
 	cd cmd/keyva; go build
 	cd cmd/datagen; go build
 	cd cmd/httpgen; go build
+	cd cmd/repl; go build
 
 PACKAGES=./cache/... ./appendlog/... ./lsm/...
 
