@@ -154,27 +154,6 @@ func (tree *LsmTree) set(k string, value []byte, deleted bool) {
 	tree.lock.Unlock()
 }
 
-// Read all sst files from disk and load a bloom filter for each one into memory
-//func (tree *LsmTree) load() uint64 {
-//	var seq uint64
-//	sstFilenames := tree.getSstFilenames()
-//	for _, filename := range sstFilenames {
-//		//log.Println("DEBUG: loading bloom filter from file", filename)
-//		entries, header := tree.loadEntriesFromSstFile(filename)
-//		if header.Seq > seq {
-//			seq = header.Seq
-//		}
-//		filter := bloom.New(tree.bufferSize, 200)
-//		for _, entry := range entries {
-//			filter.Add(entry.Key)
-//		}
-//		var sstfile = sst.SstFile{filename, filter, []sst.SstEntry{}, time.Now()}
-//		tree.sst[0].Files = append(tree.sst[0].Files, sstfile)
-//	}
-//
-//	return seq
-//}
-
 func (tree *LsmTree) load() uint64 {
   var seq uint64
   seq = tree.loadLevel(tree.path, 0)
@@ -186,6 +165,7 @@ func (tree *LsmTree) load() uint64 {
     level = level + 1
     tree.sst = append(sstLevels, files)
     tree.loadLevel(dir, level)
+    log.Println("DEBUG: loaded data from SST level", level)
   }
 
   return seq
