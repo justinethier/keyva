@@ -89,6 +89,11 @@ func (wal *WriteAheadLog) Sequence() uint64 {
 	return wal.nextId
 }
 
+func (wal *WriteAheadLog) SetSequence(seq uint64) {
+	wal.nextId = seq
+  log.Println("Updated WAL sequence to", wal.nextId)
+}
+
 // Reset deletes all wal files from disk
 func (wal *WriteAheadLog) Reset() {
 	// tree.lock.Lock()
