@@ -184,7 +184,7 @@ func (tree *LsmTree) loadLevel(path string, level int) uint64 {
 		//log.Println("DEBUG: loading bloom filter from file", filename)
 		//entries, header := tree.loadEntriesFromSstFile(filename)
 	  entries, header := sst.Load(filename, path)
-    log.Println("DEBUG: sst", path, level, header, entries)
+    log.Println("DEBUG: sst", path, level, header)
 		if header.Seq > seq {
 			seq = header.Seq
 		}
