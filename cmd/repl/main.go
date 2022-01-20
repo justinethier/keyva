@@ -15,12 +15,12 @@ import (
 var db = lsm.New("data", 5)
 
 func printRepl() {
-	fmt.Print("go-repl> ")
+	fmt.Print("keyva> ")
 }
 
 func recoverExp(text string) {
 	if r := recover(); r != nil {
-		fmt.Println("go-repl> unknow command ", text)
+		fmt.Println("keyva> unknown command ", text)
 	}
 }
 
@@ -39,15 +39,7 @@ func printInvalidCmd(text string, reader *bufio.Reader) {
 		key := t[4:]
 		dbDelete(key)
 	} else if t != "" {
-		fmt.Println("go-repl> unknown command " + t)
-		//expression, errExp := govaluate.NewEvaluableExpression(text)
-		//result, errEval := expression.Evaluate(nil)
-		//// Before we need to know if is not a Math expr
-		//if errExp == nil && errEval == nil {
-		//	fmt.Println("go-repl>", result)
-		//} else {
-		//	fmt.Println("go-repl> unknow command " + t)
-		//}
+		fmt.Println("keyva> unknown command " + t)
 	}
 }
 
@@ -64,15 +56,17 @@ func shouldContinue(text string) bool {
 }
 
 func help() {
-	fmt.Println("go-repl> Welcome to Go Repl! ")
-	fmt.Println("go-repl> Wrote by Diego Pacheco - 2018 ")
-	fmt.Println("go-repl> This Are the Avaliable commands: ")
-	fmt.Println("go-repl> help   - Show you the Help")
-	fmt.Println("go-repl> cls    - Clear the Terminal Screen ")
-	fmt.Println("go-repl> exit   - Exits the Go REPL ")
-	fmt.Println("go-repl> 1 + 2  - Its possible todo Math expressions: true == true, 4 * 6 / 2, 2 > 1 ")
-	fmt.Println("go-repl> time   - Prints current date / time ")
-	fmt.Println("go-repl> ")
+	fmt.Println("Welcome to keyva REPL! ")
+	fmt.Println("Written by Justin Ethier - 2022 ")
+	fmt.Println("Available commands: ")
+	fmt.Println("get    - Display value for the given key")
+	fmt.Println("set    - Set value of the given key")
+	fmt.Println("del    - Delete value of the given key")
+	fmt.Println("help   - Display usage information")
+	fmt.Println("cls    - Clear the terminal screen ")
+	fmt.Println("time   - Prints current date / time ")
+	fmt.Println("exit   - Exits the REPL ")
+	fmt.Println("")
 }
 
 func cls() {
@@ -82,7 +76,7 @@ func cls() {
 }
 
 func now() {
-	fmt.Println("go-repl> ", time.Now().Format(time.RFC850))
+	fmt.Println("keyva> ", time.Now().Format(time.RFC850))
 }
 
 func dbGet(key string) {
