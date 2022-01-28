@@ -91,7 +91,7 @@ func (wal *WriteAheadLog) Sequence() uint64 {
 
 func (wal *WriteAheadLog) SetSequence(seq uint64) {
 	wal.nextId = seq
-  log.Println("Updated WAL sequence to", wal.nextId)
+	log.Println("Updated WAL sequence to", wal.nextId)
 }
 
 // Reset deletes all wal files from disk

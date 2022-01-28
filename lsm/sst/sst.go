@@ -47,7 +47,7 @@ func check(e error) {
 }
 
 // Levels returns the names of any directories containing consolidated
-// SST files at levels greater than level 0. This implies the data is 
+// SST files at levels greater than level 0. This implies the data is
 // organized in non-overlapping regions across files at that level.
 func Levels(path string) []string {
 	files, err := ioutil.ReadDir(path)
@@ -195,6 +195,6 @@ func Find(key string, lvl []SstLevel, path string) ([]byte, bool) {
 			}
 		}
 	}
-  var rv []byte
-  return rv, false
+	var rv []byte
+	return rv, false
 }

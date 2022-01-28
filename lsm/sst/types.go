@@ -10,7 +10,7 @@ type SstFileHeader struct {
 }
 
 type SstLevel struct {
-  Files []SstFile
+	Files []SstFile
 }
 
 type SstFile struct {

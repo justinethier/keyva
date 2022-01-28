@@ -51,8 +51,8 @@ func New(path string, bufSize int) *LsmTree {
 	log.Println("DEBUG wal seq =", wal.Sequence())
 	log.Println("DEBUG wal =", entries)
 	var files sst.SstLevel
-  var sstLevels []sst.SstLevel
-  sstLevels = append(sstLevels, files)
+	var sstLevels []sst.SstLevel
+	sstLevels = append(sstLevels, files)
 	chn := make(chan *sst.SstEntry)
 	tree := LsmTree{path: path, memtbl: buf, bufferSize: bufSize,
 		filter: f, sst: sstLevels, lock: lock, wal: wal, walChan: chn}
@@ -60,9 +60,9 @@ func New(path string, bufSize int) *LsmTree {
 
 	log.Println("loaded LSM tree seq =", seq)
 
-  if wal.Sequence() < seq {
-    wal.SetSequence(seq + 1)
-  }
+	if wal.Sequence() < seq {
+		wal.SetSequence(seq + 1)
+	}
 
 	// if there are entries in wal that are not in SST files,
 	// load them into memory
@@ -77,6 +77,10 @@ func New(path string, bufSize int) *LsmTree {
 
 	go tree.walJob()
 	return &tree
+}
+
+func (tree *LsmTree) SetMergeSettings(s MergeSettings) {
+	tree.merge = s
 }
 
 func (tree *LsmTree) ResetDB() {
@@ -159,22 +163,22 @@ func (tree *LsmTree) set(k string, value []byte, deleted bool) {
 }
 
 func (tree *LsmTree) load() uint64 {
-  var seq uint64
-  seq = tree.loadLevel(tree.path, 0)
-  level := 0
+	var seq uint64
+	seq = tree.loadLevel(tree.path, 0)
+	level := 0
 
-  for _, dir := range sst.Levels(tree.path) {
-    var files sst.SstLevel
-    level = level + 1
-    tree.sst = append(tree.sst, files)
-    levelSeq := tree.loadLevel(tree.path + "/" + dir, level)
-    if levelSeq > seq {
-      seq = levelSeq
-    }
-    log.Println("DEBUG: loaded data from SST level", level)
-  }
+	for _, dir := range sst.Levels(tree.path) {
+		var files sst.SstLevel
+		level = level + 1
+		tree.sst = append(tree.sst, files)
+		levelSeq := tree.loadLevel(tree.path+"/"+dir, level)
+		if levelSeq > seq {
+			seq = levelSeq
+		}
+		log.Println("DEBUG: loaded data from SST level", level)
+	}
 
-  return seq
+	return seq
 }
 
 func (tree *LsmTree) loadLevel(path string, level int) uint64 {
@@ -183,8 +187,8 @@ func (tree *LsmTree) loadLevel(path string, level int) uint64 {
 	for _, filename := range sstFilenames {
 		//log.Println("DEBUG: loading bloom filter from file", filename)
 		//entries, header := tree.loadEntriesFromSstFile(filename)
-	  entries, header := sst.Load(filename, path)
-    log.Println("DEBUG: sst", path, level, header)
+		entries, header := sst.Load(filename, path)
+		log.Println("DEBUG: sst", path, level, header)
 		if header.Seq > seq {
 			seq = header.Seq
 		}
@@ -310,10 +314,10 @@ func (tree *LsmTree) get(k string) ([]byte, bool) {
 	}
 
 	// Not found, search the sst files
-val, found := sst.Find(k, tree.sst, tree.path)
-if found {
-  return val, true
-}
+	val, found := sst.Find(k, tree.sst, tree.path)
+	if found {
+		return val, true
+	}
 
 	// Key not found
 	return val, false
