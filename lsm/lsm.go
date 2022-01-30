@@ -244,7 +244,9 @@ func (tree *LsmTree) flush(seqNum uint64) {
 }
 
 func (tree *LsmTree) Merge(level int) {
+  // Overall algorithm
   // Steps to do, could make sense in sst package instead of here:
+  //
   // - find path for level, get all sst files
   // - find path for level+1, get all sst files
   // - load file contents into heap (future: stream them)
@@ -255,6 +257,12 @@ func (tree *LsmTree) Merge(level int) {
   // - clear all in-memory data for files
   // - release locks, merge is done
   // - log to syslog, consider WAL
+
+  lPath := sst.PathForLevel(level)
+  lNextPath := sst.PathForLevel(level + 1)
+  // TODO: use sst.Filenames(path) to get filesnames for each
+
+  log.Println("Debug load files from", lPath, lNextPath)
 }
 
 func (tree *LsmTree) walJob() {

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"strconv"
 	"strings"
 	"time"
 
@@ -38,6 +39,9 @@ func printInvalidCmd(text string, reader *bufio.Reader) {
 	} else if t[:4] == "del " {
 		key := t[4:]
 		dbDelete(key)
+	} else if t[:6] == "merge " {
+	  level := t[6:]
+	  dbMerge(level)
 	} else if t != "" {
 		fmt.Println("keyva> unknown command " + t)
 	}
@@ -62,6 +66,7 @@ func help() {
 	fmt.Println("get    - Display value for the given key")
 	fmt.Println("set    - Set value of the given key")
 	fmt.Println("del    - Delete value of the given key")
+	fmt.Println("merge  - Merge data in level l of the DB")
 	fmt.Println("help   - Display usage information")
 	fmt.Println("cls    - Clear the terminal screen ")
 	fmt.Println("time   - Prints current date / time ")
@@ -96,6 +101,15 @@ func dbSet(key string, reader *bufio.Reader) {
 
 func dbDelete(key string) {
 	db.Delete(key)
+}
+
+func dbMerge(level string) {
+	l, err := strconv.Atoi(level)
+  if err != nil {
+    fmt.Println("Error: ", err)
+    return
+  }
+	db.Merge(l)
 }
 
 func main() {

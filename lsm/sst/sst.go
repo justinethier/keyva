@@ -66,6 +66,14 @@ func Levels(path string) []string {
 	return lvls
 }
 
+func PathForLevel(level int) string {
+  if level == 0 {
+    return ""
+  }
+
+  return fmt.Sprintf("level-%d", level)
+}
+
 // Filenames returns names of the SST files under path
 func Filenames(path string) []string {
 	files, err := ioutil.ReadDir(path)
