@@ -259,10 +259,13 @@ func (tree *LsmTree) Merge(level int) {
   // - log to syslog, consider WAL
 
   lPath := sst.PathForLevel(level)
+  files := sst.Filenames(lPath)
   lNextPath := sst.PathForLevel(level + 1)
+  files = append(files, sst.Filenames(lNextPath)...)
   // TODO: use sst.Filenames(path) to get filesnames for each
 
   log.Println("Debug load files from", lPath, lNextPath)
+  log.Println("Files", files)
 }
 
 func (tree *LsmTree) walJob() {
