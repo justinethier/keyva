@@ -243,6 +243,20 @@ func (tree *LsmTree) flush(seqNum uint64) {
 	tree.wal.Next()
 }
 
+func (tree *LsmTree) Merge(level int) {
+  // Steps to do, could make sense in sst package instead of here:
+  // - find path for level, get all sst files
+  // - find path for level+1, get all sst files
+  // - load file contents into heap (future: stream them)
+  // - write files back out to new temp directory
+  // - acquire tree lock
+  // - swap level+1 with new directory
+  // - delete all old files
+  // - clear all in-memory data for files
+  // - release locks, merge is done
+  // - log to syslog, consider WAL
+}
+
 func (tree *LsmTree) walJob() {
 	for {
 		v := <-tree.walChan

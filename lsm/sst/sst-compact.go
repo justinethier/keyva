@@ -48,6 +48,7 @@ import (
 
 
 // Compact implements a simple algorithm to load all SST files at the given path into memory, compact their contents, and write the contents back out to filename.
+// TODO: specify a max size per new SST file, and allow creating multiple new files
 func Compact(path string, filename string) {
 	filenames := Filenames(path)
 	fmt.Println(filenames)
