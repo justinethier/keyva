@@ -4,6 +4,8 @@ import (
 	"container/heap"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"log"
 	"os"
 )
 
@@ -49,7 +51,7 @@ import (
 
 // Compact implements a simple algorithm to load all SST files at the given path into memory, compact their contents, and write the contents back out to filename.
 // TODO: specify a max size per new SST file, and allow creating multiple new files
-func Compact(filenames []string, filename string, recordsPerSst int) {
+func Compact(filenames []string, path string, recordsPerSst int) (string, error) {
 	// load all data into min heap
 	h := &SstHeap{}
 	heap.Init(h)
@@ -68,17 +70,20 @@ func Compact(filenames []string, filename string, recordsPerSst int) {
 	}
 
 fmt.Println("JAE DEBUG seq num", seqNum)
+  tmpDir, err := ioutil.TempDir(path, "merged-sst")
+  if err != nil {
+    log.Fatal(err)
+    return "", err
+  }
 	// write data out to new file(s)
-	createSstFileFromHeap(filename, h, seqNum)
-
-	// TODO: delete old files? or provide a separate function to do that
-	//       might be cleanest to return list of files from above, that we can then
-	//       have a caller delete, perhaps while holding the appropriate locks
+	createSstFiles(tmpDir, h, seqNum)
+  return tmpDir, nil
 }
 
-// createSstFileFromHeap writes the contents of the given heap to a new file specified by filename.
-func createSstFileFromHeap(filename string, h *SstHeap, seqNum uint64) {
-	f, err := os.Create(filename)
+// createSstFiles writes the contents of the given heap to a new file specified by filename.
+func createSstFiles(path string, h *SstHeap, seqNum uint64) {
+  filename := NextFilename(path)
+	f, err := os.Create(path + "/" + filename)
 	check(err)
 
 	defer f.Close()

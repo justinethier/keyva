@@ -275,7 +275,8 @@ func (tree *LsmTree) Merge(level int) {
   files = append(files, nextLvlFiles...)
   log.Println("Files", files)
 
-  sst.Compact(files, "test.out", tree.bufferSize)
+  tmpDir, err := sst.Compact(files, tree.path, tree.bufferSize)
+  log.Println("Files in", tmpDir, err) // TODO:
 }
 
 func (tree *LsmTree) walJob() {
