@@ -49,17 +49,14 @@ import (
 
 // Compact implements a simple algorithm to load all SST files at the given path into memory, compact their contents, and write the contents back out to filename.
 // TODO: specify a max size per new SST file, and allow creating multiple new files
-func Compact(path string, filename string) {
-	filenames := Filenames(path)
-	fmt.Println(filenames)
-
+func Compact(filenames []string, filename string, recordsPerSst int) {
 	// load all data into min heap
 	h := &SstHeap{}
 	heap.Init(h)
 
 	var seqNum uint64 = 0
 	for _, filename := range filenames {
-		entries, header := Load(filename, path)
+		entries, header := Load(filename, ".")
 		if header.Seq > seqNum {
 			seqNum = header.Seq
 		}
@@ -70,6 +67,7 @@ func Compact(path string, filename string) {
 		}
 	}
 
+fmt.Println("JAE DEBUG seq num", seqNum)
 	// write data out to new file(s)
 	createSstFileFromHeap(filename, h, seqNum)
 

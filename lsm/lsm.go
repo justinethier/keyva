@@ -258,14 +258,24 @@ func (tree *LsmTree) Merge(level int) {
   // - release locks, merge is done
   // - log to syslog, consider WAL
 
-  lPath := sst.PathForLevel(level)
-  files := sst.Filenames(lPath)
-  lNextPath := sst.PathForLevel(level + 1)
-  files = append(files, sst.Filenames(lNextPath)...)
-  // TODO: use sst.Filenames(path) to get filesnames for each
+  lPath := sst.PathForLevel(tree.path, level)
+  lNextPath := sst.PathForLevel(tree.path, level + 1)
 
   log.Println("Debug load files from", lPath, lNextPath)
+
+  files := sst.Filenames(lPath)
+  for i, _ := range files {
+    files[i] = lPath + "/" + files[i]
+  }
+  nextLvlFiles := sst.Filenames(lNextPath)
+  for i, _ := range nextLvlFiles {
+    nextLvlFiles[i] = lNextPath + "/" + nextLvlFiles[i]
+  }
+
+  files = append(files, nextLvlFiles...)
   log.Println("Files", files)
+
+  sst.Compact(files, "test.out", tree.bufferSize)
 }
 
 func (tree *LsmTree) walJob() {

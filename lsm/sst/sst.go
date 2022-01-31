@@ -66,26 +66,24 @@ func Levels(path string) []string {
 	return lvls
 }
 
-func PathForLevel(level int) string {
+func PathForLevel(base string, level int) string {
   if level == 0 {
-    return ""
+    return base
   }
 
-  return fmt.Sprintf("level-%d", level)
+  return fmt.Sprintf("%s/level-%d", base, level)
 }
 
 // Filenames returns names of the SST files under path
 func Filenames(path string) []string {
-	files, err := ioutil.ReadDir(path)
-	if err != nil {
-		log.Fatal(err)
-	}
-
 	var sstFiles []string
-	for _, file := range files {
-		matched, _ := regexp.Match(`^sorted-string-table-[0-9]*\.json`, []byte(file.Name()))
-		if matched && !file.IsDir() {
-			sstFiles = append(sstFiles, file.Name())
+	files, err := ioutil.ReadDir(path)
+	if err == nil {
+		for _, file := range files {
+			matched, _ := regexp.Match(`^sorted-string-table-[0-9]*\.json`, []byte(file.Name()))
+			if matched && !file.IsDir() {
+				sstFiles = append(sstFiles, file.Name())
+			}
 		}
 	}
 
@@ -124,6 +122,7 @@ func Load(filename string, path string) ([]SstEntry, SstFileHeader) {
 
 	f, err := os.Open(path + "/" + filename)
 	if err != nil {
+		log.Println("Load error", err)
 		return buf, header
 	}
 

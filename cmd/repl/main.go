@@ -21,7 +21,7 @@ func printRepl() {
 
 func recoverExp(text string) {
 	if r := recover(); r != nil {
-		fmt.Println("keyva> unknown command ", text)
+		fmt.Println("recovered", r)
 	}
 }
 
@@ -30,20 +30,20 @@ func printInvalidCmd(text string, reader *bufio.Reader) {
 	defer recoverExp(text)
 	// \n Will be ignored
 	t := strings.TrimSuffix(text, "\n")
-	if t[:4] == "get " {
+	if len(t) > 4 && t[:4] == "get " {
 		key := t[4:]
 		dbGet(key)
-	} else if t[:4] == "set " {
+	} else if len(t) > 4 && t[:4] == "set " {
 		key := t[4:]
 		dbSet(key, reader)
-	} else if t[:4] == "del " {
+	} else if len(t) > 4 && t[:4] == "del " {
 		key := t[4:]
 		dbDelete(key)
-	} else if t[:6] == "merge " {
+	} else if len(t) > 6 && t[:6] == "merge " {
 	  level := t[6:]
 	  dbMerge(level)
 	} else if t != "" {
-		fmt.Println("keyva> unknown command " + t)
+		fmt.Println("Unknown command", t)
 	}
 }
 
