@@ -281,13 +281,11 @@ func (tree *LsmTree) Merge(level int) {
   tree.lock.Lock()
   defer tree.lock.Unlock()
 
-TODO: drop cache for all files from l/l+1
-
-  for _, filename in range files {
+  for _, filename := range files {
     os.Remove(filename)
   }
 
-  err := os.RemoveAll(lNextPath)
+  err = os.RemoveAll(lNextPath)
   if err != nil {
     log.Fatal(err)
   }
@@ -296,6 +294,20 @@ TODO: drop cache for all files from l/l+1
   if err != nil {
     log.Fatal(err)
   }
+
+  // Drop and reload cache for all files from l/l+1
+  // TODO: more efficient solution?
+  var a, b sst.SstLevel
+  tree.sst[level] = a
+  tree.loadLevel(lPath, level)
+
+  // TODO: what if lNextPath did not exist previously? does this work?
+  if len(tree.sst) < (level + 1) {
+    tree.sst = append(tree.sst, b)
+  } else {
+    tree.sst[level+1] = b
+  }
+  tree.loadLevel(lNextPath, level+1)
 
 }
 
