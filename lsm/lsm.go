@@ -277,6 +277,26 @@ func (tree *LsmTree) Merge(level int) {
 
   tmpDir, err := sst.Compact(files, tree.path, tree.bufferSize)
   log.Println("Files in", tmpDir, err) // TODO:
+
+  tree.lock.Lock()
+  defer tree.lock.Unlock()
+
+TODO: drop cache for all files from l/l+1
+
+  for _, filename in range files {
+    os.Remove(filename)
+  }
+
+  err := os.RemoveAll(lNextPath)
+  if err != nil {
+    log.Fatal(err)
+  }
+
+  err = os.Rename(tmpDir, lNextPath)
+  if err != nil {
+    log.Fatal(err)
+  }
+
 }
 
 func (tree *LsmTree) walJob() {
