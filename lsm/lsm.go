@@ -242,6 +242,9 @@ func (tree *LsmTree) flush(seqNum uint64) {
 	tree.wal.Next()
 }
 
+// Merge takes all of the current SST files at level and merges them with the
+// SST files at the next level of the LSM tree. Data is compacted during this
+// process and any older key values or tombstones are permanently removed.
 func (tree *LsmTree) Merge(level int) {
   // Overall algorithm
   // Steps to do, could make sense in sst package instead of here:
@@ -275,7 +278,7 @@ func (tree *LsmTree) Merge(level int) {
   log.Println("Files", files)
 
   tmpDir, err := sst.Compact(files, tree.path, tree.bufferSize)
-  log.Println("Files in", tmpDir, err) // TODO:
+  log.Println("Files in", tmpDir, err)
 
   tree.lock.Lock()
   defer tree.lock.Unlock()
@@ -300,7 +303,6 @@ func (tree *LsmTree) Merge(level int) {
   tree.sst[level] = a
   tree.loadLevel(lPath, level)
 
-  // TODO: what if lNextPath did not exist previously? does this work?
   if len(tree.sst) < (level + 1) {
     tree.sst = append(tree.sst, b)
   } else {
