@@ -76,18 +76,11 @@ fmt.Println("JAE DEBUG seq num", seqNum)
     return "", err
   }
 	// write data out to new file(s)
-	createSstFiles(tmpDir, h, seqNum)
+	createSstFiles(tmpDir, h, seqNum, recordsPerSst)
   return tmpDir, nil
 }
 
-// createSstFiles writes the contents of the given heap to a new file specified by filename.
-func createSstFiles(path string, h *SstHeap, seqNum uint64) {
-  filename := NextFilename(path)
-	f, err := os.Create(path + "/" + filename)
-	check(err)
-
-	defer f.Close()
-
+func writeSstFileHeader(f *os.File, seqNum uint64) {
 	header := SstFileHeader{seqNum}
 	b, err := json.Marshal(header)
 	check(err)
@@ -95,6 +88,16 @@ func createSstFiles(path string, h *SstHeap, seqNum uint64) {
 	check(err)
 	_, err = f.Write([]byte("\n"))
 	check(err)
+}
+
+// createSstFiles writes the contents of the given heap to a new file specified by filename.
+func createSstFiles(path string, h *SstHeap, seqNum uint64, recordsPerSst int) {
+  count := 0
+  filename := NextFilename(path)
+	f, err := os.Create(path + "/" + filename)
+	check(err)
+
+	writeSstFileHeader(f, seqNum)
 
 	var cur, next *SstHeapNode
 	if h.Len() > 0 {
@@ -111,6 +114,15 @@ func createSstFiles(path string, h *SstHeap, seqNum uint64) {
 		}
 		writeSstHeapEntry(cur, f)
 		cur = next
+		count++
+		if count > recordsPerSst {
+			count = 0
+			f.Close()
+			filename = NextFilename(path)
+			f, err = os.Create(path + "/" + filename)
+			check(err)
+			writeSstFileHeader(f, seqNum)
+		}
 	}
 
 	// Special case, only one SST entry
@@ -119,6 +131,8 @@ func createSstFiles(path string, h *SstHeap, seqNum uint64) {
 	} else {
 		writeSstHeapEntry(next, f)
 	}
+
+	f.Close()
 }
 
 func writeSstHeapEntry(e *SstHeapNode, f *os.File) {
