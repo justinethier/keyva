@@ -186,7 +186,7 @@ func (tree *LsmTree) loadLevel(path string, level int) uint64 {
 	sstFilenames := sst.Filenames(path)
 	for _, filename := range sstFilenames {
 		log.Println("DEBUG: loading bloom filter from file", filename)
-		entries, header := sst.Load(filename, path)
+		entries, header := sst.Load(path + "/" + filename)
 		log.Println("DEBUG: sst", path, level, header)
 		if header.Seq > seq {
 			seq = header.Seq
@@ -369,7 +369,7 @@ func (tree *LsmTree) findLatestBufferEntryValue(key string) (sst.SstEntry, bool)
 }
 
 func (tree *LsmTree) loadEntriesFromSstFile(filename string) ([]sst.SstEntry, sst.SstFileHeader) {
-	return sst.Load(filename, tree.path)
+	return sst.Load(tree.path + "/" + filename)
 }
 
 func (tree *LsmTree) get(k string) ([]byte, bool) {

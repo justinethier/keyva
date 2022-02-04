@@ -35,15 +35,42 @@ func Create(filename string, keys []string, m map[string]SstEntry, seqNum uint64
 	}
 }
 
-// TODO: open, return File and header
-// TODO: next (read?) read next entry from file
+// Open opens the given file and returns the SST file header along with a buffered reader.
+func Open(filename string) (*os.File, *bufio.Reader, SstFileHeader, error) {
+  var header SstFileHeader
+  var reader *bufio.Reader
+  f, err := os.Open(filename)
+  if err != nil {
+    return f, reader, header, err
+  }
+
+	reader = bufio.NewReader(f)
+	str, e := util.Readln(reader)
+	check(e)
+	err = json.Unmarshal([]byte(str), &header)
+	check(e)
+	//fmt.Println("DEBUG SST header", header)
+  return f, reader, header, nil
+}
+
+// Readln reads the next entry from an SST file using the given buffered reader.
+func Readln(reader *bufio.Reader) (SstEntry, error) {
+  var entry SstEntry
+  str, err := util.Readln(reader)
+  if err != nil {
+    return entry, err
+  }
+  err = json.Unmarshal([]byte(str), &entry)
+  check(err)
+  return entry, err
+}
 
 //
-func Load(filename string, path string) ([]SstEntry, SstFileHeader) {
+func Load(filename string) ([]SstEntry, SstFileHeader) {
 	var buf []SstEntry
 	var header SstFileHeader
 
-	f, err := os.Open(path + "/" + filename)
+	f, err := os.Open(filename)
 	if err != nil {
 		log.Println("Load error", err)
 		return buf, header

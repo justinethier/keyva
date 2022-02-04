@@ -58,7 +58,7 @@ func Compact(filenames []string, path string, recordsPerSst int) (string, error)
 
 	var seqNum uint64 = 0
 	for _, filename := range filenames {
-		entries, header := Load(filename, ".")
+		entries, header := Load(filename)
 		if header.Seq > seqNum {
 			seqNum = header.Seq
 		}
