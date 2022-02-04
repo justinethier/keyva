@@ -32,6 +32,9 @@
   - manifest could contain header information, possibly indicate if a file is scheduled for deletion
   - index file contains sparse set of keys and their location within the file
 - compress SST file on disk for additional savings (?)
+- will want `cmd` tools for dealing with binary data.
+  - at a minimum want a tool to convert from a binary to text (json?) format to inspect data
+  - if we are going to do that it would be handy to have a converter from that text format back to binary, to allow any changes to be made in a straightforward way
 
 # Web 
 - Have a static web page that makes it easy to perform CRUD operations. EG: post entered data to a key, or update/delete that key
