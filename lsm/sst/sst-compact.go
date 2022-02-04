@@ -2,7 +2,6 @@ package sst
 
 import (
 	"container/heap"
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -80,16 +79,6 @@ fmt.Println("JAE DEBUG seq num", seqNum)
   return tmpDir, nil
 }
 
-func writeSstFileHeader(f *os.File, seqNum uint64) {
-	header := SstFileHeader{seqNum}
-	b, err := json.Marshal(header)
-	check(err)
-	_, err = f.Write(b)
-	check(err)
-	_, err = f.Write([]byte("\n"))
-	check(err)
-}
-
 // createSstFiles writes the contents of the given heap to a new file specified by filename.
 func createSstFiles(path string, h *SstHeap, seqNum uint64, recordsPerSst int) {
   count := 0
@@ -112,7 +101,7 @@ func createSstFiles(path string, h *SstHeap, seqNum uint64, recordsPerSst int) {
 			}
 			continue
 		}
-		writeSstHeapEntry(cur, f)
+		writeSstHeapEntry(f, cur)
 		cur = next
 		count++
 		if count > recordsPerSst {
@@ -127,25 +116,11 @@ func createSstFiles(path string, h *SstHeap, seqNum uint64, recordsPerSst int) {
 
 	// Special case, only one SST entry
 	if next == nil {
-		writeSstHeapEntry(cur, f)
+		writeSstHeapEntry(f, cur)
 	} else {
-		writeSstHeapEntry(next, f)
+		writeSstHeapEntry(f, next)
 	}
 
 	f.Close()
 }
 
-func writeSstHeapEntry(e *SstHeapNode, f *os.File) {
-	if e.Entry.Deleted {
-		return
-	}
-
-	b, err := json.Marshal(&e.Entry)
-	check(err)
-
-	_, err = f.Write(b)
-	check(err)
-
-	_, err = f.Write([]byte("\n"))
-	check(err)
-}
