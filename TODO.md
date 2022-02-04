@@ -20,6 +20,19 @@
 - Key will be preserving functionality and speed while adding these "real-world" features
 - other optimizations? optimal locking? sparse indexes?
 
+# Binary (efficient) SST file format
+
+- SST file contains header, entries
+- header contains sequence number, possibly CRC, anything else?
+- entry contains key length, key contents, data length, data contents, deleted flag
+  - data can be set to 0 length as an optimization when it is deleted
+- all length and seq number fields defined as 64-bit integers. or lower for length??
+- can use single byte for deleted flag
+- separate manifest, index files
+  - manifest could contain header information, possibly indicate if a file is scheduled for deletion
+  - index file contains sparse set of keys and their location within the file
+- compress SST file on disk for additional savings (?)
+
 # Web 
 - Have a static web page that makes it easy to perform CRUD operations. EG: post entered data to a key, or update/delete that key
 - Use http.DetectContentType if content type is not supplied (EG: empty string)
