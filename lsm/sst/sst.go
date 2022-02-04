@@ -113,13 +113,13 @@ func Find(key string, lvl []SstLevel, path string) ([]byte, bool) {
 	// Search in reverse order, newest file to oldest
 	for l := 0; l < len(lvl); l++ {
 		for i := len(lvl[l].Files) - 1; i >= 0; i-- {
-			log.Println("DEBUG loading entries from file", lvl[l].Files[i].Filename)
 			if lvl[l].Files[i].Filter.Test(key) {
 				// Only read from disk if key is in the filter
 				var entries []SstEntry
 
 				if len(lvl[l].Files[i].Cache) == 0 {
 					// No cache, read file from disk and cache entries
+			    log.Println("DEBUG loading and caching entries from file", lvl[l].Files[i].Filename)
 					entries, _ = Load(PathForLevel(path, l) + "/" + lvl[l].Files[i].Filename)
 					lvl[l].Files[i].Cache = entries
 				} else {

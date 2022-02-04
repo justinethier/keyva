@@ -101,7 +101,7 @@ func createSstFiles(path string, h *SstHeap, seqNum uint64, recordsPerSst int) {
 			}
 			continue
 		}
-		writeSstHeapEntry(f, cur)
+		writeSstEntry(f, cur.Entry)
 		cur = next
 		count++
 		if count > recordsPerSst {
@@ -116,9 +116,9 @@ func createSstFiles(path string, h *SstHeap, seqNum uint64, recordsPerSst int) {
 
 	// Special case, only one SST entry
 	if next == nil {
-		writeSstHeapEntry(f, cur)
+		writeSstEntry(f, cur.Entry)
 	} else {
-		writeSstHeapEntry(f, next)
+		writeSstEntry(f, next.Entry)
 	}
 
 	f.Close()

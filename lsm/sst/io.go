@@ -18,15 +18,9 @@ func Create(filename string, keys []string, m map[string]SstEntry, seqNum uint64
 	writeSstFileHeader(f, seqNum)
 
 	for _, k := range keys {
-    // TODO: writeSstHeapEntry(f, m[k])
-		b, err := json.Marshal(m[k])
-		check(err)
-
-		_, err = f.Write(b)
-		check(err)
-
-		_, err = f.Write([]byte("\n"))
-		check(err)
+    var e SstEntry
+    e = m[k]
+    writeSstEntry(f, &e)
 	}
 }
 
@@ -103,12 +97,12 @@ func writeSstFileHeader(f *os.File, seqNum uint64) {
 	check(err)
 }
 
-func writeSstHeapEntry(f *os.File, e *SstHeapNode) {
-	if e.Entry.Deleted {
+func writeSstEntry(f *os.File, e *SstEntry) {
+	if e.Deleted {
 		return
 	}
 
-	b, err := json.Marshal(&e.Entry)
+	b, err := json.Marshal(&e)
 	check(err)
 
 	_, err = f.Write(b)
