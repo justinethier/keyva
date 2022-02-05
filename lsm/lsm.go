@@ -297,19 +297,25 @@ func (tree *LsmTree) Merge(level int) {
     log.Fatal(err)
   }
 
+  log.Println(tree.sst)
+
   // Drop and reload cache for all files from l/l+1
   // TODO: more efficient solution?
   var a, b sst.SstLevel
   tree.sst[level] = a
   tree.loadLevel(lPath, level)
 
-  if len(tree.sst) < (level + 1) {
+  log.Println(tree.sst, len(tree.sst), level)
+
+  if len(tree.sst) <= (level + 1) {
+    log.Println("Add new level", b, "to tree")
     tree.sst = append(tree.sst, b)
   } else {
+    log.Println("Update tree at level", b)
     tree.sst[level+1] = b
   }
   tree.loadLevel(lNextPath, level+1)
-
+  log.Println("Done with merge")
 }
 
 func (tree *LsmTree) walJob() {
