@@ -20,7 +20,7 @@ func Create(filename string, keys []string, m map[string]SstEntry, seqNum uint64
 	for _, k := range keys {
     var e SstEntry
     e = m[k]
-    writeSstEntry(f, &e)
+    writeSstEntry(f, &e, true)
 	}
 }
 
@@ -97,8 +97,12 @@ func writeSstFileHeader(f *os.File, seqNum uint64) {
 	check(err)
 }
 
-func writeSstEntry(f *os.File, e *SstEntry) {
-	if e.Deleted {
+func writeUndeletedSstEntry(f *os.File, e *SstEntry) {
+  writeSstEntry(f, e, false)
+}
+
+func writeSstEntry(f *os.File, e *SstEntry, writeDeleted bool) {
+	if e.Deleted && !writeDeleted {
 		return
 	}
 
