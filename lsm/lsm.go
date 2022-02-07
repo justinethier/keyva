@@ -92,6 +92,11 @@ func (tree *LsmTree) ResetDB() {
 	for _, filename := range sstFilenames {
 		os.Remove(tree.path + "/" + filename) // ... and remove from disk
 	}
+
+  sstLevels := sst.Levels(tree.path)
+  for _, level := range sstLevels {
+    os.RemoveAll(tree.path + "/" + level)
+  }
 }
 
 func (tree *LsmTree) Set(k string, value []byte) {
