@@ -286,9 +286,12 @@ func (tree *LsmTree) Merge(level int) {
   files = append(files, nextLvlFiles...)
   log.Println("Files", files)
 
-  // TODO: set to true if safe to remove tombstones
-  //       may only be safe if we are merging into the highest level of the tree
   removeDeleted := false 
+
+  if level == len(tree.sst) - 1 {
+    log.Println("Merging highest level of tree", level, "deleted keys will be permanently removed")
+    removeDeleted = true
+  }
 
   tmpDir, err := sst.Compact(files, tree.path, tree.bufferSize, removeDeleted)
   log.Println("Files in", tmpDir, err)
