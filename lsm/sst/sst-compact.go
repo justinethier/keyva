@@ -50,7 +50,7 @@ import (
 
 // Compact implements a simple algorithm to load all SST files at the given path into memory, compact their contents, and write the contents back out to filename.
 // TODO: specify a max size per new SST file, and allow creating multiple new files
-func Compact(filenames []string, path string, recordsPerSst int) (string, error) {
+func Compact(filenames []string, path string, recordsPerSst int, removeDeleted bool) (string, error) {
 	// load all data into min heap
 	h := &SstHeap{}
 	heap.Init(h)
@@ -75,12 +75,12 @@ fmt.Println("JAE DEBUG seq num", seqNum)
     return "", err
   }
 	// write data out to new file(s)
-	createSstFiles(tmpDir, h, seqNum, recordsPerSst)
+	createSstFiles(tmpDir, h, seqNum, recordsPerSst, removeDeleted)
   return tmpDir, nil
 }
 
 // createSstFiles writes the contents of the given heap to a new file specified by filename.
-func createSstFiles(path string, h *SstHeap, seqNum uint64, recordsPerSst int) {
+func createSstFiles(path string, h *SstHeap, seqNum uint64, recordsPerSst int, removeDeleted bool) {
   count := 0
   filename := NextFilename(path)
 	f, err := os.Create(path + "/" + filename)
@@ -101,7 +101,7 @@ func createSstFiles(path string, h *SstHeap, seqNum uint64, recordsPerSst int) {
 			}
 			continue
 		}
-		writeUndeletedSstEntry(f, cur.Entry)
+		writeSstEntry(f, cur.Entry, removeDeleted)
 		cur = next
 		count++
 		if count > recordsPerSst {
@@ -116,9 +116,9 @@ func createSstFiles(path string, h *SstHeap, seqNum uint64, recordsPerSst int) {
 
 	// Special case, only one SST entry
 	if next == nil {
-		writeUndeletedSstEntry(f, cur.Entry)
+		writeSstEntry(f, cur.Entry, removeDeleted)
 	} else {
-		writeUndeletedSstEntry(f, next.Entry)
+		writeSstEntry(f, next.Entry, removeDeleted)
 	}
 
 	f.Close()

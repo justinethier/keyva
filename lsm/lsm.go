@@ -157,6 +157,10 @@ func (tree *LsmTree) setInMemtbl(k string, value []byte, deleted bool) {
 }
 
 func (tree *LsmTree) set(k string, value []byte, deleted bool) {
+  var empty []byte
+  if deleted {
+    value = empty
+  }
 	entry := sst.SstEntry{k, value, deleted}
 
 	tree.lock.Lock()
@@ -282,7 +286,11 @@ func (tree *LsmTree) Merge(level int) {
   files = append(files, nextLvlFiles...)
   log.Println("Files", files)
 
-  tmpDir, err := sst.Compact(files, tree.path, tree.bufferSize)
+  // TODO: set to true if safe to remove tombstones
+  //       may only be safe if we are merging into the highest level of the tree
+  removeDeleted := false 
+
+  tmpDir, err := sst.Compact(files, tree.path, tree.bufferSize, removeDeleted)
   log.Println("Files in", tmpDir, err)
 
   tree.lock.Lock()
