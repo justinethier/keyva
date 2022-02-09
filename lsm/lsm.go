@@ -256,7 +256,6 @@ func (tree *LsmTree) flush(seqNum uint64) {
 // process and any older key values or tombstones are permanently removed.
 func (tree *LsmTree) Merge(level int) {
   // Overall algorithm
-  // Steps to do, could make sense in sst package instead of here:
   //
   // - find path for level, get all sst files
   // - find path for level+1, get all sst files
@@ -268,6 +267,17 @@ func (tree *LsmTree) Merge(level int) {
   // - clear all in-memory data for files
   // - release locks, merge is done
   // - log to syslog, consider WAL
+
+
+// TODO: if level == tree.merge.MaxLevels, then compact that level instead of merging into l+1
+
+
+  highestTreeLevel := len(tree.sst) - 1
+
+  if level > highestTreeLevel {
+    log.Println("Merge cannot merge level", level, "because the tree only has", highestTreeLevel, "levels")
+    return
+  }
 
   lPath := sst.PathForLevel(tree.path, level)
   lNextPath := sst.PathForLevel(tree.path, level + 1)
@@ -287,8 +297,7 @@ func (tree *LsmTree) Merge(level int) {
   log.Println("Files", files)
 
   removeDeleted := false 
-
-  if level == len(tree.sst) - 1 {
+  if level == highestTreeLevel {
     log.Println("Merging highest level of tree", level, "deleted keys will be permanently removed")
     removeDeleted = true
   }

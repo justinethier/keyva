@@ -87,7 +87,7 @@ func createSstFiles(path string, h *SstHeap, seqNum uint64, recordsPerSst int, r
 	check(err)
 
 	writeSstFileHeader(f, seqNum)
-
+log.Println("after sst file header")
 	var cur, next *SstHeapNode
 	if h.Len() > 0 {
 		cur = heap.Pop(h).(*SstHeapNode)
@@ -114,13 +114,17 @@ func createSstFiles(path string, h *SstHeap, seqNum uint64, recordsPerSst int, r
 		}
 	}
 
+log.Println("before special case", cur, next)
 	// Special case, only one SST entry
 	if next == nil {
-		writeSstEntry(f, cur.Entry, removeDeleted)
+    if cur != nil {
+      writeSstEntry(f, cur.Entry, removeDeleted)
+    }
 	} else {
 		writeSstEntry(f, next.Entry, removeDeleted)
 	}
 
+log.Println("done writing sst files")
 	f.Close()
 }
 

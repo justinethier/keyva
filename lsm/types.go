@@ -27,14 +27,15 @@ type LsmTree struct {
 // Define parameters for compacting the SST
 // TODO: what to do if a level still exceeds threshold after compact?
 type MergeSettings struct {
-	//merge config - size, time schedule, level, etc
+	// Maximum number of SST levels
+	MaxLevels uint32
 
 	// Compact if data in a level reaches this size
-	dataSize uint32
+	DataSize uint32
 
 	// Compact if a level contains more files than this
-	numberOfSstFiles uint32
+	NumberOfSstFiles uint32
 
 	// Relocate data from level 0 after this time window (in seconds) is exceeded
-	timeWindow uint32
+	TimeWindow uint32
 }

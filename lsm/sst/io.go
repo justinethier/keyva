@@ -98,7 +98,7 @@ func writeSstFileHeader(f *os.File, seqNum uint64) {
 }
 
 func writeSstEntry(f *os.File, e *SstEntry, removeDeleted bool) {
-	if e.Deleted && removeDeleted {
+	if (e.Deleted && removeDeleted) || e == nil {
 		return
 	}
 
