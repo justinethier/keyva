@@ -275,7 +275,11 @@ func (tree *LsmTree) Merge(level int) {
   highestTreeLevel := len(tree.sst) - 1
 
   if level > highestTreeLevel {
-    log.Println("Merge cannot merge level", level, "because the tree only has", highestTreeLevel, "levels")
+    log.Println("Merge cannot process level", level, "because the tree only has", highestTreeLevel, "levels")
+    return
+  } else if level > 0 && level == tree.merge.MaxLevels {
+    // Cannot merge above highest level so compact it instead
+    tree.Compact(level)
     return
   }
 
@@ -341,6 +345,67 @@ func (tree *LsmTree) Merge(level int) {
   }
   tree.loadLevel(lNextPath, level+1)
   log.Println("Done with merge")
+}
+
+// Compact is similar to Merge but will only merge files within the same level. This is
+// intended to be done at the highest level of the tree so that any tombstones can be
+// permanently deleted.
+func (tree *LsmTree) Compact(level int) {
+  highestTreeLevel := len(tree.sst) - 1
+
+  if level == 0 {
+    log.Println("Cannot compact files in level 0 of the SST")
+    return
+  } else if level > highestTreeLevel {
+    log.Println("Compact cannot process level", level, "because the tree only has", highestTreeLevel, "levels")
+    return
+  }
+
+  lPath := sst.PathForLevel(tree.path, level)
+
+  log.Println("Debug load files from", lPath)
+
+  files := sst.Filenames(lPath)
+  for i, _ := range files {
+    files[i] = lPath + "/" + files[i]
+  }
+  log.Println("Files", files)
+
+  removeDeleted := false
+  if level == highestTreeLevel {
+    log.Println("Compacting highest level of tree", level, "deleted keys will be permanently removed")
+    removeDeleted = true
+  }
+
+  tmpDir, err := sst.Compact(files, tree.path, tree.bufferSize, removeDeleted)
+  log.Println("Files in", tmpDir, err)
+
+  tree.lock.Lock()
+  defer tree.lock.Unlock()
+
+  for _, filename := range files {
+    os.Remove(filename)
+  }
+
+  err = os.RemoveAll(lPath)
+  if err != nil {
+    log.Fatal(err)
+  }
+
+  err = os.Rename(tmpDir, lPath)
+  if err != nil {
+    log.Fatal(err)
+  }
+
+  log.Println(tree.sst)
+
+  // Drop and reload cache for all files from this level
+  // TODO: more efficient solution?
+  var a sst.SstLevel
+  tree.sst[level] = a
+  tree.loadLevel(lPath, level)
+
+  log.Println("Done with compact")
 }
 
 func (tree *LsmTree) walJob() {

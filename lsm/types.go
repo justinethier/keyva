@@ -28,7 +28,7 @@ type LsmTree struct {
 // TODO: what to do if a level still exceeds threshold after compact?
 type MergeSettings struct {
 	// Maximum number of SST levels
-	MaxLevels uint32
+	MaxLevels int
 
 	// Compact if data in a level reaches this size
 	DataSize uint32
