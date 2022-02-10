@@ -150,18 +150,18 @@ func TestSstKeyValueWithMerge(t *testing.T) {
 	tbl.Delete(strconv.Itoa(100))
 	//tbl.Flush()
 
-levels := sst.Levels("testdb")
-if len(levels) != 0 {
-	t.Error("Found SST levels prior to merge", levels)
-}
+	levels := sst.Levels("testdb")
+	if len(levels) != 0 {
+		t.Error("Found SST levels prior to merge", levels)
+	}
 
-// Explicitly merge L0 to L1
-tbl.Merge(0)
+	// Explicitly merge L0 to L1
+	tbl.Merge(0)
 
-levels = sst.Levels("testdb")
-if len(levels) != 1 {
-	t.Error("Did not find SST levels after merge", levels)
-}
+	levels = sst.Levels("testdb")
+	if len(levels) != 1 {
+		t.Error("Did not find SST levels after merge", levels)
+	}
 
 	// verify i contains expected value
 	for i := 0; i < N; i++ {

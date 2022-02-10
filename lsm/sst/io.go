@@ -18,20 +18,20 @@ func Create(filename string, keys []string, m map[string]SstEntry, seqNum uint64
 	writeSstFileHeader(f, seqNum)
 
 	for _, k := range keys {
-    var e SstEntry
-    e = m[k]
-    writeSstEntry(f, &e, false)
+		var e SstEntry
+		e = m[k]
+		writeSstEntry(f, &e, false)
 	}
 }
 
 // Open opens the given file and returns the SST file header along with a buffered reader.
 func Open(filename string) (*os.File, *bufio.Reader, SstFileHeader, error) {
-  var header SstFileHeader
-  var reader *bufio.Reader
-  f, err := os.Open(filename)
-  if err != nil {
-    return f, reader, header, err
-  }
+	var header SstFileHeader
+	var reader *bufio.Reader
+	f, err := os.Open(filename)
+	if err != nil {
+		return f, reader, header, err
+	}
 
 	reader = bufio.NewReader(f)
 	str, e := util.Readln(reader)
@@ -39,19 +39,19 @@ func Open(filename string) (*os.File, *bufio.Reader, SstFileHeader, error) {
 	err = json.Unmarshal([]byte(str), &header)
 	check(e)
 	//fmt.Println("DEBUG SST header", header)
-  return f, reader, header, nil
+	return f, reader, header, nil
 }
 
 // Readln reads the next entry from an SST file using the given buffered reader.
 func Readln(reader *bufio.Reader) (SstEntry, error) {
-  var entry SstEntry
-  str, err := util.Readln(reader)
-  if err != nil {
-    return entry, err
-  }
-  err = json.Unmarshal([]byte(str), &entry)
-  check(err)
-  return entry, err
+	var entry SstEntry
+	str, err := util.Readln(reader)
+	if err != nil {
+		return entry, err
+	}
+	err = json.Unmarshal([]byte(str), &entry)
+	check(err)
+	return entry, err
 }
 
 //

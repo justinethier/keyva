@@ -36,11 +36,11 @@ func Levels(path string) []string {
 }
 
 func PathForLevel(base string, level int) string {
-  if level == 0 {
-    return base
-  }
+	if level == 0 {
+		return base
+	}
 
-  return fmt.Sprintf("%s/level-%d", base, level)
+	return fmt.Sprintf("%s/level-%d", base, level)
 }
 
 // Filenames returns names of the SST files under path
@@ -119,7 +119,7 @@ func Find(key string, lvl []SstLevel, path string) ([]byte, bool) {
 
 				if len(lvl[l].Files[i].Cache) == 0 {
 					// No cache, read file from disk and cache entries
-			    log.Println("DEBUG loading and caching entries from file", lvl[l].Files[i].Filename)
+					log.Println("DEBUG loading and caching entries from file", lvl[l].Files[i].Filename)
 					entries, _ = Load(PathForLevel(path, l) + "/" + lvl[l].Files[i].Filename)
 					lvl[l].Files[i].Cache = entries
 				} else {
