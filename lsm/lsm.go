@@ -20,7 +20,8 @@ package lsm
 
 import (
 	"encoding/binary"
-	//"fmt"
+	"errors"
+	"fmt"
 	"github.com/huandu/skiplist"
 	"github.com/justinethier/keyva/bloom"
 	"github.com/justinethier/keyva/lsm/sst"
@@ -254,7 +255,7 @@ func (tree *LsmTree) flush(seqNum uint64) {
 // Merge takes all of the current SST files at level and merges them with the
 // SST files at the next level of the LSM tree. Data is compacted during this
 // process and any older key values or tombstones are permanently removed.
-func (tree *LsmTree) Merge(level int) {
+func (tree *LsmTree) Merge(level int) error {
 	// Overall algorithm
 	//
 	// - find path for level, get all sst files
@@ -273,12 +274,13 @@ func (tree *LsmTree) Merge(level int) {
 	highestTreeLevel := len(tree.sst) - 1
 
 	if level > highestTreeLevel {
-		log.Println("Merge cannot process level", level, "because the tree only has", highestTreeLevel, "levels")
-		return
+		desc := fmt.Sprintf("Merge cannot process level %d because the tree only has %d levels", level, highestTreeLevel)
+		log.Println(desc)
+		return errors.New(desc)
 	} else if level > 0 && level == tree.merge.MaxLevels {
 		// Cannot merge above highest level so compact it instead
 		tree.Compact(level)
-		return
+		return nil
 	}
 
 	lPath := sst.PathForLevel(tree.path, level)
@@ -343,6 +345,7 @@ func (tree *LsmTree) Merge(level int) {
 	}
 	tree.loadLevel(lNextPath, level+1)
 	log.Println("Done with merge")
+	return nil
 }
 
 // Compact is similar to Merge but will only merge files within the same level. This is

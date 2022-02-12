@@ -219,19 +219,25 @@ func TestSstMerge(t *testing.T) {
 		t.Error("Found SST levels prior to merge", levels)
 	}
 
-TODO: specify a merge strategy here - X levels
+	// Specify merge strategy
+	tbl.SetMergeSettings(MergeSettings{MaxLevels: 3})
 
-TODO: loop this all the way up to the max levels allowed
-verify expected number of sst files at each level
+	for i := 0; i < 3; i++ {
+		// Explicitly merge L0 to L1
+		tbl.Merge(i)
 
-TODO: verify if merge/compact fails on a level that is too high?
-should we have an explicit return value for that?
-	// Explicitly merge L0 to L1
-	tbl.Merge(0)
+		levels = sst.Levels("testdb")
+		if len(levels) != i+1 {
+			t.Error("Did not find correct number of SST levels", i+1, "after merge", levels)
+		}
+	}
 
-	levels = sst.Levels("testdb")
-	if len(levels) != 1 {
-		t.Error("Did not find SST levels after merge", levels)
+	// Verify an error is reported when merging higher than MaxLevel
+	for i := 4; i < 10; i++ {
+		err := tbl.Merge(i)
+		if err == nil {
+			t.Error("Expected an error merging LSM level", i)
+		}
 	}
 
 	// verify i contains expected value
