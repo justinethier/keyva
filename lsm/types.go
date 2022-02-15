@@ -31,10 +31,11 @@ type MergeSettings struct {
 	MaxLevels int
 
 
-TODO: may be best if we have a job on its own thread checking on an interval (config here)
-to see if the following conditions are true. If so initiate a merge.
-that job could run some merges concurrently as long as there is no conflict. Maybe we do
-that later as an enhancement
+// TODO: may be best if we have a job on its own thread checking on an interval (config here)
+// to see if the following conditions are true. If so initiate a merge.
+// that job could run some merges concurrently as long as there is no conflict. Maybe we do
+// that later as an enhancement
+
 
 	// Compact if data in a level reaches this size
 	DataSize uint32

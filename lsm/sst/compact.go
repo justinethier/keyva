@@ -44,6 +44,49 @@ import (
 //   - delete all files from l that were compacted with higher level. may still be files remaining in l if a flush was performed while compaction was running
 //   - delete (or some portions) may need to be done by LSM because it caches SST file contents
 
+func Compact2(filenames []string, path string, recordsPerSst int, removeDeleted bool) (string, error){
+	h := &SstHeap{}
+	heap.Init(h)
+
+  // load header, reader from each SST file
+	var seqNum uint64 = 0
+	for _, filename := range filenames {
+		_, reader, header, err := Open(filename)
+    if err != nil {
+      return "", err
+    }
+		if header.Seq > seqNum {
+			seqNum = header.Seq
+		}
+
+    entry, err := Readln(reader)
+    if err == nil {
+      heap.Push(h, &SstHeapNode{header.Seq, &entry, reader})
+    }
+  }
+
+	tmpDir, err := ioutil.TempDir(path, "merged-sst")
+	if err != nil {
+		log.Fatal(err)
+		return "", err
+	}
+
+	for h.Len() > 0 {
+    // Get next heap entry
+    cur := heap.Pop(h).(*SstHeapNode)
+
+    // TODO: write it to file (open new file if necessary)
+
+    // read next entry from the entry's file
+    entry, err := Readln(cur.Reader)
+    if err == nil {
+      cur.Entry = &entry
+      heap.Push(h, cur)
+    }
+  }
+  return tmpDir, nil
+}
+
 // Compact implements a simple algorithm to load all SST files at the given path into memory, compact their contents, and write the contents back out to filename.
 // TODO: specify a max size per new SST file, and allow creating multiple new files
 func Compact(filenames []string, path string, recordsPerSst int, removeDeleted bool) (string, error) {
@@ -60,7 +103,7 @@ func Compact(filenames []string, path string, recordsPerSst int, removeDeleted b
 		for _, entry := range entries {
 			var e SstEntry = entry
 			//fmt.Println(e)
-			heap.Push(h, &SstHeapNode{header.Seq, &e})
+			heap.Push(h, &SstHeapNode{header.Seq, &e, nil})
 		}
 	}
 

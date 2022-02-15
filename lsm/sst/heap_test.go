@@ -7,11 +7,11 @@ import (
 )
 
 func TestMinHeap(t *testing.T) {
-	a := &SstHeapNode{1, &SstEntry{"a", nil, false}}
-	b := &SstHeapNode{1, &SstEntry{"b", nil, false}}
-	c := &SstHeapNode{1, &SstEntry{"c", nil, false}}
-	d := &SstHeapNode{1, &SstEntry{"d", nil, false}}
-	e := &SstHeapNode{1, &SstEntry{"e", nil, false}}
+	a := &SstHeapNode{1, &SstEntry{"a", nil, false}, nil}
+	b := &SstHeapNode{1, &SstEntry{"b", nil, false}, nil}
+	c := &SstHeapNode{1, &SstEntry{"c", nil, false}, nil}
+	d := &SstHeapNode{1, &SstEntry{"d", nil, false}, nil}
+	e := &SstHeapNode{1, &SstEntry{"e", nil, false}, nil}
 	//e_del := &SstEntry{"e", nil, true}
 
 	// This example inserts several ints into an IntHeap, checks the minimum,
