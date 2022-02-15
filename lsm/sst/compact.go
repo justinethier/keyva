@@ -71,11 +71,20 @@ func Compact2(filenames []string, path string, recordsPerSst int, removeDeleted 
 		return "", err
 	}
 
+	count := 0
+	filename := NextFilename(path)
+	f, err := os.Create(path + "/" + filename)
+	check(err)
+	writeSstFileHeader(f, seqNum)
+
+	var cur, next *SstHeapNode
 	for h.Len() > 0 {
     // Get next heap entry
     cur := heap.Pop(h).(*SstHeapNode)
 
     // TODO: write it to file (open new file if necessary)
+    // TODO: see next/cur logic in createSstFiles to account for duplicate keys
+    //       may need to rework this whole loop, and possibly read cur prior to looping
 
     // read next entry from the entry's file
     entry, err := Readln(cur.Reader)
@@ -84,6 +93,22 @@ func Compact2(filenames []string, path string, recordsPerSst int, removeDeleted 
       heap.Push(h, cur)
     }
   }
+
+  // TODO: special case from end of createSstFiles -
+
+	// log.Println("before special case", cur, next)
+	// // Special case, only one SST entry
+	// if next == nil {
+	// 	if cur != nil {
+	// 		writeSstEntry(f, cur.Entry, removeDeleted)
+	// 	}
+	// } else {
+	// 	writeSstEntry(f, next.Entry, removeDeleted)
+	// }
+
+	// log.Println("done writing sst files")
+	// f.Close()
+
   return tmpDir, nil
 }
 
