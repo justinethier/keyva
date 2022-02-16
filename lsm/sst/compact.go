@@ -78,9 +78,13 @@ func Compact2(filenames []string, path string, recordsPerSst int, removeDeleted 
 	writeSstFileHeader(f, seqNum)
 
 	var cur, next *SstHeapNode
+	if h.Len() > 0 {
+		cur = heap.Pop(h).(*SstHeapNode)
+    // TODO: read another entry from cur's reader
+	}
 	for h.Len() > 0 {
     // Get next heap entry
-    cur := heap.Pop(h).(*SstHeapNode)
+    next := heap.Pop(h).(*SstHeapNode)
 
     // TODO: write it to file (open new file if necessary)
     // TODO: see next/cur logic in createSstFiles to account for duplicate keys
