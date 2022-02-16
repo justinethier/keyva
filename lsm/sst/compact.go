@@ -44,6 +44,13 @@ import (
 //   - delete all files from l that were compacted with higher level. may still be files remaining in l if a flush was performed while compaction was running
 //   - delete (or some portions) may need to be done by LSM because it caches SST file contents
 
+func readNext(h *SstHeap, node *SstHeapNode, seq uint64) {
+    entry, err := Readln(node.Reader)
+    if err == nil {
+      heap.Push(h, &SstHeapNode{seq, &entry, node.Reader})
+    }
+}
+
 func Compact2(filenames []string, path string, recordsPerSst int, removeDeleted bool) (string, error){
 	h := &SstHeap{}
 	heap.Init(h)
