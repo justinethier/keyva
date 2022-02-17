@@ -7,40 +7,40 @@ import (
 	"os"
 )
 
-// Compact performs a k-way merge of data from the given SST files. 
-// 
+// Compact performs a k-way merge of data from the given SST files.
+//
 // As data in each input SST file is sorted, that data is streamed from each
-// file one entry at a time and added to a min heap. We then read from the 
-// heap to get the next sorted element and write it out to a new SST file. 
+// file one entry at a time and added to a min heap. We then read from the
+// heap to get the next sorted element and write it out to a new SST file.
 //
 // Ultimately a new set of SST files is generated containing sorted, non-overlapping data.
-// 
+//
 // Thus we can handle large files as only a small portion of data is kept in memory at once.
 //
 // If there are any duplicate keys, only the most recent entry (IE largest sequence number)
 // is written. Note this is only applicable to SST level 0 which contains SST files that
 // may contain overlapping data.
 //
-func Compact(filenames []string, path string, recordsPerSst int, removeDeleted bool) (string, error){
+func Compact(filenames []string, path string, recordsPerSst int, removeDeleted bool) (string, error) {
 	h := &SstHeap{}
 	heap.Init(h)
 
-  // load header, reader from each SST file
+	// load header, reader from each SST file
 	var seqNum uint64 = 0
 	for _, filename := range filenames {
 		_, reader, header, err := Open(filename)
-    if err != nil {
-      return "", err
-    }
+		if err != nil {
+			return "", err
+		}
 		if header.Seq > seqNum {
 			seqNum = header.Seq
 		}
 
-    entry, err := Readln(reader)
-    if err == nil {
-      heap.Push(h, &SstHeapNode{header.Seq, &entry, reader})
-    }
-  }
+		entry, err := Readln(reader)
+		if err == nil {
+			heap.Push(h, &SstHeapNode{header.Seq, &entry, reader})
+		}
+	}
 
 	tmpDir, err := ioutil.TempDir(path, "merged-sst")
 	if err != nil {
@@ -57,12 +57,12 @@ func Compact(filenames []string, path string, recordsPerSst int, removeDeleted b
 	var cur, next *SstHeapNode
 	if h.Len() > 0 {
 		cur = heap.Pop(h).(*SstHeapNode)
-    pushNextToHeap(h, cur)
+		pushNextToHeap(h, cur)
 	}
 	for h.Len() > 0 {
-    // Get next heap entry
-    next := heap.Pop(h).(*SstHeapNode)
-    pushNextToHeap(h, next)
+		// Get next heap entry
+		next := heap.Pop(h).(*SstHeapNode)
+		pushNextToHeap(h, next)
 
 		// Account for duplicate keys
 		if next.Entry.Key == cur.Entry.Key {
@@ -72,7 +72,7 @@ func Compact(filenames []string, path string, recordsPerSst int, removeDeleted b
 			continue
 		}
 
-    writeSstEntry(f, cur.Entry, removeDeleted)
+		writeSstEntry(f, cur.Entry, removeDeleted)
 		cur = next
 		count++
 		if count > recordsPerSst {
@@ -83,7 +83,7 @@ func Compact(filenames []string, path string, recordsPerSst int, removeDeleted b
 			check(err)
 			writeSstFileHeader(f, seqNum)
 		}
-  }
+	}
 
 	log.Println("before special case", cur, next)
 	// Special case, only one SST entry
@@ -98,14 +98,13 @@ func Compact(filenames []string, path string, recordsPerSst int, removeDeleted b
 	log.Println("done writing sst files")
 	f.Close()
 
-  return tmpDir, nil
+	return tmpDir, nil
 }
 
 // pushNextToHeap reads the next entry from the given file reader and pushes it onto the heap.
 func pushNextToHeap(h *SstHeap, node *SstHeapNode) {
-    entry, err := Readln(node.Reader)
-    if err == nil {
-      heap.Push(h, &SstHeapNode{node.Seq, &entry, node.Reader})
-    }
+	entry, err := Readln(node.Reader)
+	if err == nil {
+		heap.Push(h, &SstHeapNode{node.Seq, &entry, node.Reader})
+	}
 }
-

@@ -1,7 +1,7 @@
 package sst
 
 import (
-  "bufio"
+	"bufio"
 	"github.com/justinethier/keyva/bloom"
 	"time"
 )
@@ -35,9 +35,9 @@ type SstEntry struct {
 }
 
 type SstHeapNode struct {
-	Seq   uint64
-	Entry *SstEntry
-  Reader *bufio.Reader
+	Seq    uint64
+	Entry  *SstEntry
+	Reader *bufio.Reader
 }
 
 // An min-heap of SST entries
