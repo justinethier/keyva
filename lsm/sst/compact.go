@@ -2,19 +2,10 @@ package sst
 
 import (
 	"container/heap"
-	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
 )
-
-// pushNextToHeap reads the next entry from the given file reader and pushes it onto the heap.
-func pushNextToHeap(h *SstHeap, node *SstHeapNode) {
-    entry, err := Readln(node.Reader)
-    if err == nil {
-      heap.Push(h, &SstHeapNode{node.Seq, &entry, node.Reader})
-    }
-}
 
 // Compact performs a k-way merge of data from the given SST files. 
 // 
@@ -110,81 +101,11 @@ func Compact(filenames []string, path string, recordsPerSst int, removeDeleted b
   return tmpDir, nil
 }
 
-// Compact implements a simple algorithm to load all SST files at the given path into memory, compact their contents, and write the contents back out to filename.
-func CompactOld(filenames []string, path string, recordsPerSst int, removeDeleted bool) (string, error) {
-	// load all data into min heap
-	h := &SstHeap{}
-	heap.Init(h)
-
-	var seqNum uint64 = 0
-	for _, filename := range filenames {
-		entries, header := Load(filename)
-		if header.Seq > seqNum {
-			seqNum = header.Seq
-		}
-		for _, entry := range entries {
-			var e SstEntry = entry
-			//fmt.Println(e)
-			heap.Push(h, &SstHeapNode{header.Seq, &e, nil})
-		}
-	}
-
-	fmt.Println("JAE DEBUG seq num", seqNum)
-	tmpDir, err := ioutil.TempDir(path, "merged-sst")
-	if err != nil {
-		log.Fatal(err)
-		return "", err
-	}
-	// write data out to new file(s)
-	createSstFiles(tmpDir, h, seqNum, recordsPerSst, removeDeleted)
-	return tmpDir, nil
+// pushNextToHeap reads the next entry from the given file reader and pushes it onto the heap.
+func pushNextToHeap(h *SstHeap, node *SstHeapNode) {
+    entry, err := Readln(node.Reader)
+    if err == nil {
+      heap.Push(h, &SstHeapNode{node.Seq, &entry, node.Reader})
+    }
 }
 
-// createSstFiles writes the contents of the given heap to a new file specified by filename.
-func createSstFiles(path string, h *SstHeap, seqNum uint64, recordsPerSst int, removeDeleted bool) {
-	count := 0
-	filename := NextFilename(path)
-	f, err := os.Create(path + "/" + filename)
-	check(err)
-
-	writeSstFileHeader(f, seqNum)
-	log.Println("after sst file header")
-	var cur, next *SstHeapNode
-	if h.Len() > 0 {
-		cur = heap.Pop(h).(*SstHeapNode)
-	}
-	for h.Len() > 0 {
-		next := heap.Pop(h).(*SstHeapNode)
-		// Account for duplicate keys
-		if next.Entry.Key == cur.Entry.Key {
-			if next.Seq > cur.Seq {
-				cur = next
-			}
-			continue
-		}
-		writeSstEntry(f, cur.Entry, removeDeleted)
-		cur = next
-		count++
-		if count > recordsPerSst {
-			count = 0
-			f.Close()
-			filename = NextFilename(path)
-			f, err = os.Create(path + "/" + filename)
-			check(err)
-			writeSstFileHeader(f, seqNum)
-		}
-	}
-
-	log.Println("before special case", cur, next)
-	// Special case, only one SST entry
-	if next == nil {
-		if cur != nil {
-			writeSstEntry(f, cur.Entry, removeDeleted)
-		}
-	} else {
-		writeSstEntry(f, next.Entry, removeDeleted)
-	}
-
-	log.Println("done writing sst files")
-	f.Close()
-}
