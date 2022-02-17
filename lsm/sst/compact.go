@@ -8,13 +8,21 @@ import (
 	"os"
 )
 
-// Compact performs a k-way merge of data from the given SST files.
+// Compact performs a k-way merge of data from the given SST files under
+// the given path.
 //
-// As data in each input SST file is sorted, that data is streamed from each
-// file one entry at a time and added to a min heap. We then read from the
+// The recordsPerSst parameter determines the maximum number of records written
+// to each new SST file.
+//
+// The removeDeleted parameter indicates whether tombstones will be permanently
+// removed (true) or carried through to the new SST files (false).
+//
+// Data must be sorted within each input SST file. That data is streamed from
+// each file one entry at a time and added to a min heap. We then read from the
 // heap to get the next sorted element and write it out to a new SST file.
 //
-// Ultimately a new set of SST files is generated containing sorted, non-overlapping data.
+// This process is performed for all input data, generating a new set of SST 
+// files containing sorted and non-overlapping data.
 //
 // Thus we can handle large files as only a small portion of data is kept in memory at once.
 //
