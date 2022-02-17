@@ -1,6 +1,7 @@
 package sst
 
 import (
+	"bufio"
 	"container/heap"
 	"io/ioutil"
 	"log"
@@ -36,10 +37,7 @@ func Compact(filenames []string, path string, recordsPerSst int, removeDeleted b
 			seqNum = header.Seq
 		}
 
-		entry, err := Readln(reader)
-		if err == nil {
-			heap.Push(h, &SstHeapNode{header.Seq, &entry, reader})
-		}
+    pushNextToHeap(h, reader, header.Seq)
 	}
 
 	tmpDir, err := ioutil.TempDir(path, "merged-sst")
@@ -57,12 +55,12 @@ func Compact(filenames []string, path string, recordsPerSst int, removeDeleted b
 	var cur, next *SstHeapNode
 	if h.Len() > 0 {
 		cur = heap.Pop(h).(*SstHeapNode)
-		pushNextToHeap(h, cur)
+		pushNextToHeap(h, cur.Reader, cur.Seq)
 	}
 	for h.Len() > 0 {
 		// Get next heap entry
 		next := heap.Pop(h).(*SstHeapNode)
-		pushNextToHeap(h, next)
+		pushNextToHeap(h, next.Reader, next.Seq)
 
 		// Account for duplicate keys
 		if next.Entry.Key == cur.Entry.Key {
@@ -101,10 +99,10 @@ func Compact(filenames []string, path string, recordsPerSst int, removeDeleted b
 	return tmpDir, nil
 }
 
-// pushNextToHeap reads the next entry from the given file reader and pushes it onto the heap.
-func pushNextToHeap(h *SstHeap, node *SstHeapNode) {
-	entry, err := Readln(node.Reader)
+// pushNextToHeap is a helper function to read the next entry from the given file reader and push it onto the heap.
+func pushNextToHeap(h *SstHeap, reader *bufio.Reader, seq uint64) {
+	entry, err := Readln(reader)
 	if err == nil {
-		heap.Push(h, &SstHeapNode{node.Seq, &entry, node.Reader})
+		heap.Push(h, &SstHeapNode{seq, &entry, reader})
 	}
 }
