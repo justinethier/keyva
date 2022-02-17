@@ -21,7 +21,7 @@ import (
 // each file one entry at a time and added to a min heap. We then read from the
 // heap to get the next sorted element and write it out to a new SST file.
 //
-// This process is performed for all input data, generating a new set of SST 
+// This process is performed for all input data, generating a new set of SST
 // files containing sorted and non-overlapping data.
 //
 // Thus we can handle large files as only a small portion of data is kept in memory at once.
@@ -45,7 +45,7 @@ func Compact(filenames []string, path string, recordsPerSst int, removeDeleted b
 			seqNum = header.Seq
 		}
 
-    pushNextToHeap(h, reader, header.Seq)
+		pushNextToHeap(h, reader, header.Seq)
 	}
 
 	tmpDir, err := ioutil.TempDir(path, "merged-sst")
