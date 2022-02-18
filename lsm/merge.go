@@ -6,7 +6,7 @@ import (
 	"github.com/justinethier/keyva/lsm/sst"
 	"log"
 	"os"
-	//"time"
+	"time"
 )
 
 func (tree *LsmTree) SetMergeSettings(s MergeSettings) {
@@ -172,6 +172,9 @@ func (tree *LsmTree) Compact(level int) {
 
 func (tree *LsmTree) MergeJob() {
   // sleep for interval
+  // TODO: use time.NewTicker instead?
+  time.Sleep(tree.merge.Interval)
+
   // find SST levels
   // for each level
      // has a threshold been exceeded?
