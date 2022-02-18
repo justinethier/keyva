@@ -170,3 +170,10 @@ func (tree *LsmTree) Compact(level int) {
 	log.Println("Done with compact")
 }
 
+func (tree *LsmTree) MergeJob() {
+  // sleep for interval
+  // find SST levels
+  // for each level
+     // has a threshold been exceeded?
+     // if so, merge this level
+}
