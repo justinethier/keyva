@@ -171,12 +171,36 @@ func (tree *LsmTree) Compact(level int) {
 }
 
 func (tree *LsmTree) MergeJob() {
+  if tree.merge.Interval == 0 {
+    log.Println("MergeJob interval not set, stopping goroutine")
+    return
+  }
+
   // sleep for interval
   // TODO: use time.NewTicker instead?
   time.Sleep(tree.merge.Interval)
+  log.Println("LSM merge job woke up")
 
   // find SST levels
+  levels := sst.Levels(tree.path)
+
   // for each level
+  for i, dir := range levels {
      // has a threshold been exceeded?
-     // if so, merge this level
+	   lPath := tree.path + "/" + dir
+     files := sst.Filenames(lPath)
+
+     merge := false
+
+     if tree.merge.NumberOfSstFiles > 0 &&
+        len(files) > tree.merge.NumberOfSstFiles {
+       log.Println("Merge level", i, " - Number of files", len(files), "exceeded merge threshold", tree.merge.NumberOfSstFiles)
+     }
+     // TODO: DataSize
+     // TODO: TimeWindow
+
+     if merge {
+       tree.Merge(i)
+     }
+  }
 }

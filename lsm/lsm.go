@@ -72,6 +72,7 @@ func New(path string, bufSize int) *LsmTree {
 	}
 
 	go tree.walJob()
+	go tree.MergeJob()
 	return &tree
 }
 

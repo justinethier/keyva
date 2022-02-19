@@ -43,7 +43,7 @@ type MergeSettings struct {
 	DataSize uint32
 
 	// Compact if a level contains more files than this
-	NumberOfSstFiles uint32
+	NumberOfSstFiles int
 
 	// Relocate data from level 0 after this time window (in seconds) is exceeded
 	TimeWindow uint32
