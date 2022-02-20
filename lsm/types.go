@@ -25,7 +25,7 @@ type LsmTree struct {
 	merge MergeSettings
 }
 
-// Define parameters for compacting the SST
+// Define parameters for managing the SST levels
 // TODO: what to do if a level still exceeds threshold after compact?
 type MergeSettings struct {
 	// Maximum number of SST levels
