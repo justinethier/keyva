@@ -11,6 +11,8 @@ import (
 	"github.com/justinethier/keyva/lsm"
 )
 
+TODO: modify to generate 1 MB, then 100 MB+ of data for the DB
+
 func main() {
 	tbl := lsm.New("data", 5)
   //tbl.ResetDB()
