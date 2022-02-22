@@ -172,46 +172,46 @@ func (tree *LsmTree) Compact(level int) {
 
 // MergeJob runs as a background thread and coordinates when to check SST levels for merging.
 func (tree *LsmTree) MergeJob() {
-  if tree.merge.Interval == 0 {
-    log.Println("MergeJob interval not set, stopping goroutine")
-    return
-  }
+	if tree.merge.Interval == 0 {
+		log.Println("MergeJob interval not set, stopping goroutine")
+		return
+	}
 
-  for {
-    // sleep for interval
-    // TODO: use time.NewTicker instead?
-    time.Sleep(tree.merge.Interval)
-    log.Println("LSM merge job woke up")
+	for {
+		// sleep for interval
+		// TODO: use time.NewTicker instead?
+		time.Sleep(tree.merge.Interval)
+		log.Println("LSM merge job woke up")
 
-    tree.mergeJob()
-  }
+		tree.mergeJob()
+	}
 }
 
 // mergeJob determines if a level needs to be merged and runs Merge() as needed.
 func (tree *LsmTree) mergeJob() { // TODO: any state to receive?
-  // find SST levels
-  levels := sst.Levels(tree.path)
+	// find SST levels
+	levels := sst.Levels(tree.path)
 
-  // for each level
-  for i, dir := range levels {
-     // has a threshold been exceeded?
-	   lPath := tree.path + "/" + dir
-     files := sst.Filenames(lPath)
+	// for each level
+	for i, dir := range levels {
+		// has a threshold been exceeded?
+		lPath := tree.path + "/" + dir
+		files := sst.Filenames(lPath)
 
-     merge := false
+		merge := false
 
-     // TODO: need to multiply num files by level #?
-     //       what prevents a cascade? EG: merge l0, then immediately merge l1, l2, etc
-     //       This is why we allow (num_files * level) files below here -
-     if tree.merge.NumberOfSstFiles > 0 &&
-        len(files) > tree.merge.NumberOfSstFiles * (i + 1) {
-       log.Println("Merge level", i, " - Number of files", len(files), "exceeded merge threshold", tree.merge.NumberOfSstFiles)
-     }
-     // TODO: DataSize
-     // TODO: TimeWindow
+		// TODO: need to multiply num files by level #?
+		//       what prevents a cascade? EG: merge l0, then immediately merge l1, l2, etc
+		//       This is why we allow (num_files * level) files below here -
+		if tree.merge.NumberOfSstFiles > 0 &&
+			len(files) > tree.merge.NumberOfSstFiles*(i+1) {
+			log.Println("Merge level", i, " - Number of files", len(files), "exceeded merge threshold", tree.merge.NumberOfSstFiles)
+		}
+		// TODO: DataSize
+		// TODO: TimeWindow
 
-     if merge {
-       tree.Merge(i)
-     }
-  }
+		if merge {
+			tree.Merge(i)
+		}
+	}
 }

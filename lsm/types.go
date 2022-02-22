@@ -31,8 +31,8 @@ type MergeSettings struct {
 	// Maximum number of SST levels
 	MaxLevels int
 
-  // Amount of time to wait before checking to see if any levels need a merge
-  Interval time.Duration
+	// Amount of time to wait before checking to see if any levels need a merge
+	Interval time.Duration
 
 	// TODO: may be best if we have a job on its own thread checking on an interval (config here)
 	// to see if the following conditions are true. If so initiate a merge.
