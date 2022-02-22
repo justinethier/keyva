@@ -21,6 +21,7 @@ doc:
 fmt:
 	go fmt $(PACKAGES)
 	go fmt cmd/keyva/*.go
+	go fmt cmd/datagen/*.go
 
 bench:
 	go test $(PACKAGES) -bench=.
