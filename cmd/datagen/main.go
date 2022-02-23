@@ -7,16 +7,16 @@ import (
 	//"log"
 	//"net/http"
 	"github.com/justinethier/keyva/lsm"
+	"github.com/justinethier/keyva/util"
 	//"math/rand"
 	//"time"
 )
 
 //TODO: modify to generate 1 MB, then 100 MB+ of data for the DB
-
-TODO: log to syslog instead of console?
 TODO: assess merge performance by using repl
 
 func main() {
+	util.OpenSyslog()
 	tbl := lsm.New("data", 1024)
 	// May need to merge separately; data will fill faster than merge job can keep up
 	//tbl.SetMergeSettings(MergeSettings{MaxLevels: 10, NumberOfSstFiles: 10})
