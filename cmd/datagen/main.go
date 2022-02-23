@@ -7,21 +7,24 @@ import (
 	//"log"
 	//"net/http"
 	"github.com/justinethier/keyva/lsm"
-	"math/rand"
-	"time"
+	//"math/rand"
+	//"time"
 )
 
-TODO: modify to generate 1 MB, then 100 MB+ of data for the DB
-TODO: increase buffer size below
-TODO: configure merge settings
+//TODO: modify to generate 1 MB, then 100 MB+ of data for the DB
+
+TODO: log to syslog instead of console?
+TODO: assess merge performance by using repl
 
 func main() {
-	tbl := lsm.New("data", 5)
-	//tbl.ResetDB()
+	tbl := lsm.New("data", 1024)
+	// May need to merge separately; data will fill faster than merge job can keep up
+	//tbl.SetMergeSettings(MergeSettings{MaxLevels: 10, NumberOfSstFiles: 10})
+	tbl.ResetDB()
 
-	for i := 0; i < 125; i++ {
-		key := fmt.Sprintf("%d", rand.Intn(100))
-		doc := fmt.Sprintf("%d", time.Now().UnixNano())
+	for i := 0; i < 1000 * 1000; i++ {
+		key := fmt.Sprintf("%d", i); //rand.Intn(100))
+		doc := fmt.Sprintf("%d", i); //time.Now().UnixNano())
 		//set(key, "text/plain", []byte(doc))
 		tbl.Set(key, []byte(doc))
 	}
