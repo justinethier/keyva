@@ -28,4 +28,8 @@ func main() {
 		//set(key, "text/plain", []byte(doc))
 		tbl.Set(key, []byte(doc))
 	}
+	
+	TODO: Explicitly merge the sst after creating data.
+	      Even it out into a couple levels. 
+	      Let’s measure performance if one merge first though
 }
