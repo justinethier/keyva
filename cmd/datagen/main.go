@@ -13,19 +13,20 @@ import (
 )
 
 //TODO: modify to generate 1 MB, then 100 MB+ of data for the DB
-TODO: assess merge performance by using repl
+//TODO: assess merge performance by using repl
 
 func main() {
 	util.OpenSyslog()
 	tbl := lsm.New("data", 1024)
 	// May need to merge separately; data will fill faster than merge job can keep up
 	//tbl.SetMergeSettings(MergeSettings{MaxLevels: 10, NumberOfSstFiles: 10})
+	tbl.SetMergeSettings(lsm.MergeSettings{Immediate: true, MaxLevels: 10, NumberOfSstFiles: 10})
 	tbl.ResetDB()
 
-	for i := 0; i < 1000 * 1000; i++ {
-    TODO: merge every N? Try to do multiple levels here?
-    TODO: would be nice if we had an *immediate* mode to simulate what would 
-          happen over time with a real server
+	for i := 0; i < 1000 * 100; i++ {
+    //TODO: merge every N? Try to do multiple levels here?
+    //TODO: would be nice if we had an *immediate* mode to simulate what would 
+    //      happen over time with a real server
 
 		key := fmt.Sprintf("%d", i); //rand.Intn(100))
 		doc := fmt.Sprintf("%d", i); //time.Now().UnixNano())
@@ -34,5 +35,5 @@ func main() {
 	}
 	
 	// Explicitly merge out of level 0 after creating data.
-  lsm.Merge(0)
+  //lsm.Merge(0)
 }

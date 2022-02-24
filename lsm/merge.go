@@ -192,12 +192,18 @@ func (tree *LsmTree) mergeJob() { // TODO: any state to receive?
 	// find SST levels
 	levels := sst.Levels(tree.path)
 
+  // Don't forget level 0
+  levels = append(levels, ".")
+
+  log.Println("mergeJob path", tree.path, "levels", levels)
+
 	// for each level
 	for i, dir := range levels {
 		// has a threshold been exceeded?
 		lPath := tree.path + "/" + dir
 		files := sst.Filenames(lPath)
 
+    log.Println("mergJob lPath", lPath, "files", files)
 		merge := false
 
 		// TODO: need to multiply num files by level #?
@@ -206,6 +212,7 @@ func (tree *LsmTree) mergeJob() { // TODO: any state to receive?
 		if tree.merge.NumberOfSstFiles > 0 &&
 			len(files) > tree.merge.NumberOfSstFiles*(i+1) {
 			log.Println("Merge level", i, " - Number of files", len(files), "exceeded merge threshold", tree.merge.NumberOfSstFiles)
+			merge = true
 		}
 		// TODO: DataSize
 		// TODO: TimeWindow
