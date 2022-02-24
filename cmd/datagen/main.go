@@ -23,13 +23,16 @@ func main() {
 	tbl.ResetDB()
 
 	for i := 0; i < 1000 * 1000; i++ {
+    TODO: merge every N? Try to do multiple levels here?
+    TODO: would be nice if we had an *immediate* mode to simulate what would 
+          happen over time with a real server
+
 		key := fmt.Sprintf("%d", i); //rand.Intn(100))
 		doc := fmt.Sprintf("%d", i); //time.Now().UnixNano())
 		//set(key, "text/plain", []byte(doc))
 		tbl.Set(key, []byte(doc))
 	}
 	
-	TODO: Explicitly merge the sst after creating data.
-	      Even it out into a couple levels. 
-	      Let’s measure performance if one merge first though
+	// Explicitly merge out of level 0 after creating data.
+  lsm.Merge(0)
 }
