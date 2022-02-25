@@ -23,7 +23,7 @@ func main() {
 	tbl.SetMergeSettings(lsm.MergeSettings{Immediate: true, MaxLevels: 10, NumberOfSstFiles: 10})
 	tbl.ResetDB()
 
-	for i := 0; i < 1000 * 100; i++ {
+	for i := 0; i < 1000 * 150; i++ {
     //TODO: merge every N? Try to do multiple levels here?
     //TODO: would be nice if we had an *immediate* mode to simulate what would 
     //      happen over time with a real server
