@@ -19,8 +19,7 @@ func main() {
 	util.OpenSyslog()
 	tbl := lsm.New("data", 1024)
 	// May need to merge separately; data will fill faster than merge job can keep up
-	//tbl.SetMergeSettings(MergeSettings{MaxLevels: 10, NumberOfSstFiles: 10})
-	tbl.SetMergeSettings(lsm.MergeSettings{Immediate: true, MaxLevels: 10, NumberOfSstFiles: 10})
+	tbl.SetMergeSettings(lsm.MergeSettings{Immediate: true, MaxLevels: 2, NumberOfSstFiles: 10})
 	tbl.ResetDB()
 
 	for i := 0; i < 1000 * 150; i++ {

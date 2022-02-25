@@ -217,6 +217,7 @@ func (tree *LsmTree) mergeJob() { // TODO: any state to receive?
 			len(files) > tree.merge.NumberOfSstFiles*(i+1) {
 			log.Println("Merge level", i, " - Number of files", len(files), "exceeded merge threshold", tree.merge.NumberOfSstFiles)
 			merge = true
+      TODO: if last level is maxed out, need to even-out merges so we don't constantly merge that last level repeatedly, which will absolutely kill performance
 		}
 		// TODO: DataSize
 		// TODO: TimeWindow
