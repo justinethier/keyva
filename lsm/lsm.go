@@ -243,11 +243,11 @@ func (tree *LsmTree) flush(seqNum uint64) {
 	// Switch to new wal
 	tree.wal.Next()
 
-  // Run merge job IF we are in immediate mode (mostly just used for debugging)
-  if (tree.merge.Immediate) {
-    log.Println("Immediate mode calling mergeJob from flush")
-    tree.mergeJob()
-  }
+	// Run merge job IF we are in immediate mode (mostly just used for debugging)
+	if tree.merge.Immediate {
+		log.Println("Immediate mode calling mergeJob from flush")
+		tree.mergeJob()
+	}
 }
 
 func (tree *LsmTree) walJob() {

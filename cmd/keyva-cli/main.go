@@ -40,8 +40,8 @@ func printInvalidCmd(text string, reader *bufio.Reader) {
 		key := t[4:]
 		dbDelete(key)
 	} else if len(t) > 6 && t[:6] == "merge " {
-	  level := t[6:]
-	  dbMerge(level)
+		level := t[6:]
+		dbMerge(level)
 	} else if t != "" {
 		fmt.Println("Unknown command", t)
 	}
@@ -94,8 +94,8 @@ func dbGet(key string) {
 }
 
 func dbSet(key string, reader *bufio.Reader) {
-  fmt.Println("Value to set: ")
-  value := get(reader)
+	fmt.Println("Value to set: ")
+	value := get(reader)
 	db.Set(key, []byte(value))
 }
 
@@ -105,10 +105,10 @@ func dbDelete(key string) {
 
 func dbMerge(level string) {
 	l, err := strconv.Atoi(level)
-  if err != nil {
-    fmt.Println("Error: ", err)
-    return
-  }
+	if err != nil {
+		fmt.Println("Error: ", err)
+		return
+	}
 	db.Merge(l)
 }
 

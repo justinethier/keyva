@@ -70,9 +70,9 @@ func (tree *LsmTree) Merge(level int) error {
 	tmpDir, err := sst.Compact(files, tree.path, tree.bufferSize, removeDeleted)
 	log.Println("Files in", tmpDir, err)
 
-	if (!tree.merge.Immediate) {
-    tree.lock.Lock()
-    defer tree.lock.Unlock()
+	if !tree.merge.Immediate {
+		tree.lock.Lock()
+		defer tree.lock.Unlock()
 	}
 
 	for _, filename := range files {
@@ -144,9 +144,9 @@ func (tree *LsmTree) Compact(level int) {
 	tmpDir, err := sst.Compact(files, tree.path, tree.bufferSize, removeDeleted)
 	log.Println("Files in", tmpDir, err)
 
-	if (!tree.merge.Immediate) {
-	  tree.lock.Lock()
-	  defer tree.lock.Unlock()
+	if !tree.merge.Immediate {
+		tree.lock.Lock()
+		defer tree.lock.Unlock()
 	}
 
 	for _, filename := range files {
@@ -196,10 +196,10 @@ func (tree *LsmTree) mergeJob() { // TODO: any state to receive?
 	// find SST levels
 	levels := sst.Levels(tree.path)
 
-  // Don't forget level 0
-  levels = append([]string{"."}, levels...)
+	// Don't forget level 0
+	levels = append([]string{"."}, levels...)
 
-  //log.Println("mergeJob path", tree.path, "levels", levels)
+	//log.Println("mergeJob path", tree.path, "levels", levels)
 
 	// for each level
 	for i, dir := range levels {
@@ -207,7 +207,7 @@ func (tree *LsmTree) mergeJob() { // TODO: any state to receive?
 		lPath := tree.path + "/" + dir
 		files := sst.Filenames(lPath)
 
-    //log.Println("mergJob lPath", lPath, "files", files)
+		//log.Println("mergJob lPath", lPath, "files", files)
 		merge := false
 
 		// TODO: need to multiply num files by level #?
@@ -217,7 +217,18 @@ func (tree *LsmTree) mergeJob() { // TODO: any state to receive?
 			len(files) > tree.merge.NumberOfSstFiles*(i+1) {
 			log.Println("Merge level", i, " - Number of files", len(files), "exceeded merge threshold", tree.merge.NumberOfSstFiles)
 			merge = true
-      TODO: if last level is maxed out, need to even-out merges so we don't constantly merge that last level repeatedly, which will absolutely kill performance
+
+			if i == len(levels) {
+				// last level is maxed out, need to even-out merges to avoid constantly merging
+				// that last level, which will absolutely kill performance
+				if tree.cooldown == 0 {
+					tree.cooldown = tree.merge.NumberOfSstFiles * (i + 1)
+				} else {
+					merge = false
+					tree.cooldown--
+				}
+			}
+
 		}
 		// TODO: DataSize
 		// TODO: TimeWindow

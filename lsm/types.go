@@ -21,15 +21,16 @@ type LsmTree struct {
 	wal     *wal.WriteAheadLog
 	walChan chan *sst.SstEntry
 	// SST files are used for long-term storage
-	sst   []sst.SstLevel
-	merge MergeSettings
+	sst      []sst.SstLevel
+	merge    MergeSettings
+	cooldown int
 }
 
 // Define parameters for managing the SST levels
 // TODO: what to do if a level still exceeds threshold after compact?
 type MergeSettings struct {
-  // Merge immediately from main thread if this is set to true
-  Immediate bool
+	// Merge immediately from main thread if this is set to true
+	Immediate bool
 
 	// Maximum number of SST levels
 	MaxLevels int
