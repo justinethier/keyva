@@ -31,6 +31,8 @@ import (
 	"time"
 )
 
+// New creates a new LsmTree object.
+// Data for the tree will be stored at the given path.
 func New(path string, bufSize int) *LsmTree {
 	// Create data directory if it does not exist
 	if _, err := os.Stat(path); os.IsNotExist(err) {
@@ -76,6 +78,7 @@ func New(path string, bufSize int) *LsmTree {
 	return &tree
 }
 
+// ResetDB removes all data from disk
 func (tree *LsmTree) ResetDB() {
 	tree.lock.Lock()
 	defer tree.lock.Unlock()
@@ -92,15 +95,22 @@ func (tree *LsmTree) ResetDB() {
 	}
 }
 
+// Set will add (or update) an entry in the tree with the corresponding key/value.
 func (tree *LsmTree) Set(k string, value []byte) {
 	tree.set(k, value, false)
 }
 
+// Delete will remove the corresponding key from the tree. 
+// Note the actual key/value may not be removed from memory or disk immediately. 
+// One or more merge/compact must run before data is removed from disk.
 func (tree *LsmTree) Delete(k string) {
 	var val []byte
 	tree.set(k, val, true)
 }
 
+// Increment will add one to the integer counter specified by the given key,
+// and the most recent value will be returned. 
+// New counters return a value of 0.
 func (tree *LsmTree) Increment(k string) uint32 {
 	var result uint32
 
@@ -129,17 +139,25 @@ func (tree *LsmTree) Increment(k string) uint32 {
 	return result
 }
 
-//func (tree *LsmTree) Flush() {
-//	tree.lock.Lock()
-//	defer tree.lock.Unlock()
-//	tree.flush(tree.wal.Sequence())
-//}
-
+// Get looks up the given key and returns a boolean indicating if a value was
+// found and (if found) the corresponding value as a byte array.
 func (tree *LsmTree) Get(k string) ([]byte, bool) {
 	tree.lock.Lock()
 	defer tree.lock.Unlock()
 	val, ok := tree.get(k)
 	return val, ok
+}
+
+// Exists returns a boolean value indicating whether the given key exists within the tree.
+func (tree *LsmTree) Exists(k string) bool {
+	// FUTURE: instead of calling get() and discarding the value it would be more
+	// efficient if existence could be determined without necessarily reading the
+	// value. On the other hand multiple Exists() may be more efficient if we do
+	// a full read and cache the result, so there is a trade-off.
+	tree.lock.Lock()
+	defer tree.lock.Unlock()
+	_, found := tree.get(k)
+	return found
 }
 
 // Only set in memory do not update WAL or SST, useful for loading data at startup

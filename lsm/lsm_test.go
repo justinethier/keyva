@@ -119,6 +119,9 @@ func TestSstKeyValue(t *testing.T) {
 		if val, found := tbl.Get(strconv.Itoa(i)); found {
 			t.Error("Unexpected value", val, "for deleted key", i)
 		}
+		if found := tbl.Exists(strconv.Itoa(i)); found {
+			t.Error("Unexpected value for deleted key", i)
+		}
 	}
 
 	// add a key back
@@ -271,6 +274,10 @@ func TestSstMerge(t *testing.T) {
 			t.Error("Unexpected value", val, "for key", "abcd")
 		}
 	} else {
+		t.Error("Value not found for key", "abcd")
+	}
+
+	if found := tbl.Exists("abcd"); !found {
 		t.Error("Value not found for key", "abcd")
 	}
 
