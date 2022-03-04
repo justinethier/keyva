@@ -3,7 +3,7 @@
 
 LSM Tree - log-structured merge tree
 WAL - Write ahead log, disk storage for a transaction log of sorts. This allows reconstructing the in-memory portion of the tree in the event of service crash/restart, for data that has not been flushed to SST yet
-memtable - In-memory table holding some portion of the LSM tree
+Memtable - In-memory table holding some portion of the LSM tree
 SST - sorted string table, primary data representation for storing LSM on disk
 
 # Notes
@@ -53,6 +53,10 @@ See article on this. Can compact at thresholds, time intervals (EG: time series 
 ### Indexing
 
 * need a way to index into the files
+* probably makes more sense with binary files
+* sparse index can index into various portions of file (store index in separate file?),
+* then sequential search to find entry
+* do we even cache file contents at all? maybe if more than N reads in T time
 
 ### binary encoding
 
