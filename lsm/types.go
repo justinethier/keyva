@@ -24,6 +24,12 @@ type LsmTree struct {
 	sst      []sst.SstLevel
 	merge    MergeSettings
 	cooldown int
+	// TODO: config Config
+}
+
+type Config struct {
+  MemtblDataSize uint32
+  Merge MergeSettings
 }
 
 // Define parameters for managing the SST levels
