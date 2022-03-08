@@ -1,14 +1,20 @@
 package sst
 
 import (
-	//"unicode/utf8"
-	//"encoding/json"
-	//"log"
-	//"os"
+	"encoding/binary"
+	"unicode/utf8"
+	"log"
+	"os"
 )
 
-func binaryWrite(fp *File, data SstEntry) {
-  var bytes int = utf8.RuneCountInString(data.Key)
+func binaryWrite(f *os.File, data SstEntry) {
+  var bytes uint32 = uint32(utf8.RuneCountInString(data.Key))
   //f.Write()
-  numBytes := f.WriteString(data.Key)
+
+  err := binary.Write(f, binary.LittleEndian, bytes)
+  if err != nil {
+    log.Fatal(err)
+  }
+  numBytes, _ := f.WriteString(data.Key)
+  log.Printf("bytes = %d, numBytes = %d", bytes, numBytes)
 }

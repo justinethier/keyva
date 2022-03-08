@@ -1,13 +1,16 @@
 package sst
 
 import (
-	//"fmt"
-	"unicode/utf8"
+	"log"
+	"os"
 	"testing"
 )
 
 func TestBinary(t *testing.T) {
-  f, err := os.Open("mytest.bin")
+  f, err := os.Create("mytest.bin")
+  if err != nil {
+    log.Fatal(err)
+  }
   defer f.Close()
 
   binaryWrite(f, SstEntry{"my key", []byte("my data"), false})
