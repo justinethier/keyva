@@ -22,3 +22,14 @@ func TestBinary(t *testing.T) {
 
   writeEntries(f, lis)
 }
+
+func TestBinaryRead(t *testing.T) {
+  f, err := os.Open("mytest.bin")
+  if err != nil {
+    log.Fatal(err)
+  }
+  defer f.Close()
+
+  lis, err := readEntries(f)
+  log.Println("read entries", len(lis))
+}

@@ -7,6 +7,29 @@ import (
 	"os"
 )
 
+func readEntries(f *os.File) ([]SstEntry, error) {
+  readEntry(f)
+  return nil, nil
+}
+
+func readEntry(f *os.File) ([]SstEntry, error){
+  var length int32
+
+  err := binary.Read(f, binary.LittleEndian, &length)
+  if err != nil {
+    log.Fatal(err)
+    return nil, err
+  }
+  log.Println("key length", length)
+
+  // TODO: use f.ReadFull to read key
+  // TODO: read value length
+  // TODO: use f.ReadFull to read value
+  // TODO: read deleted
+
+  return nil, nil
+}
+
 func writeEntries(f *os.File, entries []SstEntry) (int, error){
   var offset int = 0
   for _, e := range entries {
@@ -47,7 +70,6 @@ func writeEntry(f *os.File, data SstEntry) (int, error){
     return bcount, err
   }
   bcount += 4
-
 
   numBytes, err = f.Write(data.Value)
   if err != nil {
