@@ -57,24 +57,39 @@ func readEntry(f *os.File) (SstEntry, error){
 }
 
 func writeSst(filename string, keys []string, m map[string]SstEntry, seqNum uint64) {
+  f, err := os.Create(filename)
+  if err != nil {
+    log.Fatal(err)
+  }
+  defer f.Close()
+
   // TODO: write seq header to index file
   // TODO: write every nth entry tp index file (sparse index)
   // TODO: writeEntries(...)
-}
 
-func writeEntries(f *os.File, entries []SstEntry) (int, error){
-  var offset int = 0
-  for _, e := range entries {
-    bytes, err := writeEntry(f, e)
-    if err != nil {
-      return offset, err
+	for _, k := range keys {
+		var e SstEntry
+		e = m[k]
+		_, err := writeEntry(f, e)
+		if err != nil {
+      log.Fatal(err)
     }
-    offset += bytes
-    // TODO: keep track of every nth key/offset for the sparse index
-  }
-
-  return offset, nil
+	}
 }
+
+//func writeEntries(f *os.File, entries []SstEntry) (int, error){
+//  var offset int = 0
+//  for _, e := range entries {
+//    bytes, err := writeEntry(f, e)
+//    if err != nil {
+//      return offset, err
+//    }
+//    offset += bytes
+//    // TODO: keep track of every nth key/offset for the sparse index
+//  }
+//
+//  return offset, nil
+//}
 
 func writeEntry(f *os.File, data SstEntry) (int, error){
   var bcount int = 0
