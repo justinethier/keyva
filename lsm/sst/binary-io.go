@@ -56,6 +56,12 @@ func readEntry(f *os.File) (SstEntry, error){
   return e, nil
 }
 
+func writeSst(filename string, keys []string, m map[string]SstEntry, seqNum uint64) {
+  // TODO: write seq header to index file
+  // TODO: write every nth entry tp index file (sparse index)
+  // TODO: writeEntries(...)
+}
+
 func writeEntries(f *os.File, entries []SstEntry) (int, error){
   var offset int = 0
   for _, e := range entries {
