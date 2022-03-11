@@ -8,14 +8,18 @@ import (
 	"os"
 )
 
-func readEntries(f *os.File) ([]SstEntry, error) {
-  for {
-    _, err := readEntry(f)
-    if err != nil {
-      break
+func readEntries(f *os.File) []SstEntry {
+  var lis []SstEntry
+  var err error
+  var e SstEntry
+
+  for err == nil {
+    e, err = readEntry(f)
+    if err == nil {
+      lis = append(lis, e)
     }
   }
-  return nil, nil
+  return lis
 }
 
 func readEntry(f *os.File) (SstEntry, error){
@@ -24,10 +28,12 @@ func readEntry(f *os.File) (SstEntry, error){
 
   err := binary.Read(f, binary.LittleEndian, &length)
   if err != nil {
-    log.Fatal(err)
+    if err != io.EOF {
+      log.Fatal(err)
+    }
     return e, err
   }
-  log.Println("key length", length)
+  //log.Println("key length", length)
 
   var keybuf = make([]byte, int(length))
   _, err = io.ReadFull(f, keybuf)
@@ -39,7 +45,7 @@ func readEntry(f *os.File) (SstEntry, error){
     log.Fatal(err)
     return e, err
   }
-  log.Println("value length", length)
+  //log.Println("value length", length)
 
   // TODO: use f.ReadFull to read value
   var valbuf = make([]byte, int(length))
@@ -47,12 +53,11 @@ func readEntry(f *os.File) (SstEntry, error){
   e.Value = valbuf
 
   err = binary.Read(f, binary.LittleEndian, &e.Deleted)
-  if err != nil {
+  if err != nil && err != io.EOF {
     log.Fatal(err)
     return e, err
   }
-  log.Println("entry", e)
-
+  //log.Println("entry", e)
   return e, nil
 }
 
