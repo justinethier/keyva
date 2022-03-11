@@ -34,6 +34,13 @@ func TestBinaryRead(t *testing.T) {
   }
   defer findex.Close()
 
+  // TODO: validate index file contents
+  _, header, err := readIndex(findex)
+  if header.Seq != uint64(10) {
+    t.Error("Unexpected sequence number", header.Seq)
+  }
+
+  // Validate contents of SST
   lis := readEntries(f)
   log.Println("read entries", len(lis))
   for i, e := range lis {

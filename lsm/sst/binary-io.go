@@ -93,6 +93,24 @@ func writeSst(filename string, keys []string, m map[string]SstEntry, seqNum uint
 	}
 }
 
+func readIndex(f *os.File) ([]SstIndex, SstFileHeader, error) {
+  var header SstFileHeader
+  var index []SstIndex
+  err := binary.Read(f, binary.LittleEndian, &header.Seq)
+  if err != nil {
+    log.Fatal(err)
+    return index, header, err
+  }
+
+  for contents of index
+    read key length
+    read key
+    read offset
+    package into SstIndex, append to list
+
+  return index, header, nil
+}
+
 func writeIndex(f *os.File, data SstEntry, offset int) error {
   // key length
   var bytes int32 = int32(utf8.RuneCountInString(data.Key))

@@ -10,6 +10,11 @@ type SstFileHeader struct {
 	Seq uint64
 }
 
+type SstIndex struct {
+  Key string
+  offset int
+}
+
 type SstLevel struct {
 	Files []SstFile
 }
