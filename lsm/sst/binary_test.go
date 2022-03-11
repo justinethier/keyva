@@ -18,7 +18,7 @@ func TestBinary(t *testing.T) {
     m[key] = SstEntry{key, []byte("Test Value"), false}
   }
 
-  writeSst("mytest.bin", keys, m, uint64(10))
+  writeSst("mytest", keys, m, uint64(10))
 
 //  var lis = [] SstEntry {
 //    SstEntry{"my key 1", []byte("my data 1"), true},

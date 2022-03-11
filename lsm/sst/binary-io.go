@@ -57,39 +57,59 @@ func readEntry(f *os.File) (SstEntry, error){
 }
 
 func writeSst(filename string, keys []string, m map[string]SstEntry, seqNum uint64) {
-  f, err := os.Create(filename)
+  f, err := os.Create(filename + ".bin")
   if err != nil {
     log.Fatal(err)
   }
   defer f.Close()
 
-  // TODO: write seq header to index file
-  // TODO: write every nth entry tp index file (sparse index)
-  // TODO: writeEntries(...)
+  findex, err := os.Create(filename + ".index")
+  if err != nil {
+    log.Fatal(err)
+  }
+  defer findex.Close()
 
-	for _, k := range keys {
+  // write seq header to index file
+  err = binary.Write(findex, binary.LittleEndian, seqNum)
+
+  // TODO: write every nth entry tp index file (sparse index)
+  var offset int = 0
+	for i, k := range keys {
 		var e SstEntry
 		e = m[k]
-		_, err := writeEntry(f, e)
+		bytes, err := writeEntry(f, e)
 		if err != nil {
       log.Fatal(err)
     }
+    if (i % 2) == 0 { // TODO: larger and configurable interval
+      writeIndex(findex, e, bytes)
+    }
+    offset += bytes
 	}
 }
 
-//func writeEntries(f *os.File, entries []SstEntry) (int, error){
-//  var offset int = 0
-//  for _, e := range entries {
-//    bytes, err := writeEntry(f, e)
-//    if err != nil {
-//      return offset, err
-//    }
-//    offset += bytes
-//    // TODO: keep track of every nth key/offset for the sparse index
-//  }
-//
-//  return offset, nil
-//}
+func writeIndex(f *os.File, data SstEntry, offset int) error {
+  // key length
+  var bytes int32 = int32(utf8.RuneCountInString(data.Key))
+  err := binary.Write(f, binary.LittleEndian, bytes)
+  if err != nil {
+    log.Fatal(err)
+    return err
+  }
+  // key
+  _, err = f.WriteString(data.Key)
+  if err != nil {
+    log.Fatal(err)
+    return err
+  }
+  // offset
+  err = binary.Write(f, binary.LittleEndian, int32(offset))
+  if err != nil {
+    log.Fatal(err)
+    return err
+  }
+  return nil
+}
 
 func writeEntry(f *os.File, data SstEntry) (int, error){
   var bcount int = 0
