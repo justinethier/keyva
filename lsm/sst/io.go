@@ -2,7 +2,7 @@ package sst
 
 import (
 	"bufio"
-	"encoding/json"
+	//"encoding/json"
 	"github.com/justinethier/keyva/util"
 	"log"
 	"os"
