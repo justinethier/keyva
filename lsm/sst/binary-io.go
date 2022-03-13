@@ -42,7 +42,7 @@ func readEntry(f *os.File) (SstEntry, error) {
 	_, err = io.ReadFull(f, keybuf)
 	e.Key = string(keybuf)
 
-	// TODO: read value length
+	// read value length
 	err = binary.Read(f, binary.LittleEndian, &length)
 	if err != nil {
 		log.Fatal(err)
@@ -50,7 +50,7 @@ func readEntry(f *os.File) (SstEntry, error) {
 	}
 	//log.Println("value length", length)
 
-	// TODO: use f.ReadFull to read value
+	// read value
 	var valbuf = make([]byte, int(length))
 	_, err = io.ReadFull(f, valbuf)
 	e.Value = valbuf
@@ -83,7 +83,7 @@ func writeSst(filename string, keys []string, m map[string]SstEntry, seqNum uint
 	// write seq header to index file
 	err = binary.Write(findex, binary.LittleEndian, seqNum)
 
-	// TODO: write every nth entry tp index file (sparse index)
+	// write every nth entry to index file (sparse index)
 	var offset int = 0
 	for i, k := range keys {
 		var e SstEntry
