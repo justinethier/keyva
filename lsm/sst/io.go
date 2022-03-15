@@ -13,6 +13,7 @@ import (
 	"strconv"
 )
 
+// TODO: input is name of .bin file. write that and corresponding .index file
 // Create creates a new SST file from given data
 func Create(filename string, keys []string, m map[string]SstEntry, seqNum uint64) {
 	f, err := os.Create(filename)
@@ -29,6 +30,7 @@ func Create(filename string, keys []string, m map[string]SstEntry, seqNum uint64
 	}
 }
 
+// TODO: input is name of .bin file. read that and corresponding .index file
 // Open opens the given file and returns the SST file header along with a buffered reader.
 func Open(filename string) (*os.File, *bufio.Reader, SstFileHeader, error) {
 	var header SstFileHeader
@@ -146,7 +148,7 @@ func PathForLevel(base string, level int) string {
 	return fmt.Sprintf("%s/level-%d", base, level)
 }
 
-// Filenames returns names of the SST files under path
+// Filenames returns names of the SST binary files under path
 func Filenames(path string) []string {
 	var sstFiles []string
 	files, err := ioutil.ReadDir(path)
@@ -162,7 +164,7 @@ func Filenames(path string) []string {
 	return sstFiles
 }
 
-// NextFilename returns the name of the next SST file in given directory
+// NextFilename returns the name of the next SST binary file in given directory
 func NextFilename(path string) string {
 	files, err := ioutil.ReadDir(path)
 	if err != nil {
