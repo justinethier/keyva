@@ -59,7 +59,7 @@ func Readln(reader *bufio.Reader) (SstEntry, error) {
 	return entry, err
 }
 
-//
+// TODO: input is name of .bin file. read that and corresponding .index file and load into memory
 func Load(filename string) ([]SstEntry, SstFileHeader) {
 	var buf []SstEntry
 	var header SstFileHeader
@@ -185,6 +185,13 @@ func NextFilename(path string) string {
 	}
 
 	return "sorted-string-table-0000.json"
+}
+
+// Delete SST file from disk
+func Remove(filename string) {
+		indexFile := indexFileForBin(filename)
+		os.Remove(filename)
+		os.Remove(indexFile)
 }
 
 // Delete all SST files from disk

@@ -76,7 +76,7 @@ func (tree *LsmTree) Merge(level int) error {
 	}
 
 	for _, filename := range files {
-		os.Remove(filename)
+		sst.Remove(filename)
 	}
 
 	err = os.RemoveAll(lNextPath)
@@ -150,7 +150,7 @@ func (tree *LsmTree) Compact(level int) {
 	}
 
 	for _, filename := range files {
-		os.Remove(filename)
+		sst.Remove(filename)
 	}
 
 	err = os.RemoveAll(lPath)
