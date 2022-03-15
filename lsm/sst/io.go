@@ -2,10 +2,14 @@ package sst
 
 import (
 	"bufio"
-	//"encoding/json"
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
 	"github.com/justinethier/keyva/util"
 	"log"
 	"os"
+	"regexp"
+	"strconv"
 )
 
 // Create creates a new SST file from given data
@@ -110,4 +114,74 @@ func writeSstEntry(f *os.File, e *SstEntry, removeDeleted bool) {
 
 	_, err = f.Write([]byte("\n"))
 	check(err)
+}
+
+
+// Levels returns the names of any directories containing consolidated
+// SST files at levels greater than level 0. This implies the data is
+// organized in non-overlapping regions across files at that level.
+func Levels(path string) []string {
+	files, err := ioutil.ReadDir(path)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var lvls []string
+	for _, file := range files {
+		matched, _ := regexp.Match(`^level-[0-9]*`, []byte(file.Name()))
+		if matched && file.IsDir() {
+			lvls = append(lvls, file.Name())
+		}
+	}
+
+	return lvls
+}
+
+func PathForLevel(base string, level int) string {
+	if level == 0 {
+		return base
+	}
+
+	return fmt.Sprintf("%s/level-%d", base, level)
+}
+
+// Filenames returns names of the SST files under path
+func Filenames(path string) []string {
+	var sstFiles []string
+	files, err := ioutil.ReadDir(path)
+	if err == nil {
+		for _, file := range files {
+			matched, _ := regexp.Match(`^sorted-string-table-[0-9]*\.json`, []byte(file.Name()))
+			if matched && !file.IsDir() {
+				sstFiles = append(sstFiles, file.Name())
+			}
+		}
+	}
+
+	return sstFiles
+}
+
+// NextFilename returns the name of the next SST file in given directory
+func NextFilename(path string) string {
+	files, err := ioutil.ReadDir(path)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var sstFiles []string
+	for _, file := range files {
+		matched, _ := regexp.Match(`^sorted-string-table-[0-9]*\.json`, []byte(file.Name()))
+		if matched && !file.IsDir() {
+			//fmt.Println(file.Name(), file.IsDir())
+			sstFiles = append(sstFiles, file.Name())
+		}
+	}
+
+	if len(sstFiles) > 0 {
+		var latest = sstFiles[len(sstFiles)-1][20:24]
+		n, _ := strconv.Atoi(latest)
+		return fmt.Sprintf("sorted-string-table-%04d.json", n+1)
+	}
+
+	return "sorted-string-table-0000.json"
 }
