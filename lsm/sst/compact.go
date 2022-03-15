@@ -5,7 +5,6 @@ import (
 	"container/heap"
 	"io/ioutil"
 	"log"
-	"os"
 )
 
 // Compact performs a k-way merge of data from the given SST files under
