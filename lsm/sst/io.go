@@ -9,6 +9,7 @@ import (
 	"log"
 	"os"
 	"regexp"
+	"strings"
 	"strconv"
 )
 
@@ -185,3 +186,29 @@ func NextFilename(path string) string {
 
 	return "sorted-string-table-0000.json"
 }
+
+// Delete all SST files from disk
+func RemoveAll(path string) {
+	sstFilenames := Filenames(path)
+	for _, filename := range sstFilenames {
+		indexFile := indexFileForBin(filename)
+		os.Remove(path + "/" + filename)
+		os.Remove(path + "/" + indexFile)
+	}
+
+	sstLevels := Levels(path)
+	for _, level := range sstLevels {
+		os.RemoveAll(path + "/" + level)
+	}
+}
+
+// Get filename of index file for given SST file
+func indexFileForBin(filename string) string {
+  return strings.TrimSuffix(filename, ".bin") + ".index"
+}
+
+// Get filename of binary file for given index file
+func binFileForIndex(filename string) string {
+  return strings.TrimSuffix(filename, ".index") + ".bin"
+}
+

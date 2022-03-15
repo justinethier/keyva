@@ -84,15 +84,7 @@ func (tree *LsmTree) ResetDB() {
 	defer tree.lock.Unlock()
 
 	tree.sst = make([]sst.SstLevel, 1) // Clear from memory
-	sstFilenames := tree.getSstFilenames()
-	for _, filename := range sstFilenames {
-		os.Remove(tree.path + "/" + filename) // ... and remove from disk
-	}
-
-	sstLevels := sst.Levels(tree.path)
-	for _, level := range sstLevels {
-		os.RemoveAll(tree.path + "/" + level)
-	}
+	sst.RemoveAll(tree.path) // And delete from disk
 }
 
 // Set will add (or update) an entry in the tree with the corresponding key/value.
@@ -298,14 +290,6 @@ func (tree *LsmTree) walJob() {
 
 func (tree *LsmTree) nextSstFilename() string {
 	return sst.NextFilename(tree.path)
-}
-
-func (tree *LsmTree) getSstFilenames() []string {
-	return sst.Filenames(tree.path)
-}
-
-func (tree *LsmTree) getSstLevels() []string {
-	return sst.Levels(tree.path)
 }
 
 func (tree *LsmTree) findLatestBufferEntryValue(key string) (sst.SstEntry, bool) {
