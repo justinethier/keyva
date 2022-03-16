@@ -3,6 +3,7 @@ package sst
 import (
 	"bufio"
 	"github.com/justinethier/keyva/bloom"
+	"os"
 	"time"
 )
 
@@ -43,6 +44,13 @@ type SstHeapNode struct {
 	Seq    uint64
 	Entry  *SstEntry
 	Reader *bufio.Reader
+}
+
+// TODO: replace above with this one
+type SstHeapNode2 struct {
+	Seq    uint64
+	Entry  *SstEntry
+	File   *os.File
 }
 
 // An min-heap of SST entries

@@ -5,6 +5,7 @@ import (
 	"container/heap"
 	"io/ioutil"
 	"log"
+	"os"
 )
 
 // Compact performs a k-way merge of data from the given SST files under
@@ -112,4 +113,39 @@ func pushNextToHeap(h *SstHeap, reader *bufio.Reader, seq uint64) {
 	if err == nil {
 		heap.Push(h, &SstHeapNode{seq, &entry, reader})
 	}
+}
+
+func pushNextToHeap2(h *SstHeap, f *os.File, seq uint64) {
+	entry, err := readEntry(f)
+	if err == nil {
+		heap.Push(h, &SstHeapNode2{seq, &entry, f})
+	}
+}
+
+func CompactBin(filenames []string, path string, recordsPerSst int, removeDeleted bool) (string, error) {
+	h := &SstHeap{}
+	heap.Init(h)
+
+	// load header, reader from each SST file
+	var seqNum uint64 = 0
+	for _, filename := range filenames {
+    _, header, err := readIndexFile(filename)
+		if err != nil {
+			return "", err
+		}
+		if header.Seq > seqNum {
+			seqNum = header.Seq
+		}
+    f, err := os.Open(filename)
+		if err != nil {
+      log.Fatal(err)
+			return "", err
+		}
+    defer f.Close()
+
+		pushNextToHeap2(h, f, header.Seq)
+	}
+
+  // TODO:
+  return "", nil
 }
