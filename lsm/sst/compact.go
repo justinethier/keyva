@@ -122,7 +122,7 @@ func pushNextToHeap2(h *SstHeap, f *os.File, seq uint64) {
 	}
 }
 
-func CompactBin(filenames []string, path string, recordsPerSst int, removeDeleted bool) (string, error) {
+func Compact2(filenames []string, path string, recordsPerSst int, removeDeleted bool) (string, error) {
 	h := &SstHeap{}
 	heap.Init(h)
 
@@ -145,6 +145,19 @@ func CompactBin(filenames []string, path string, recordsPerSst int, removeDelete
 
 		pushNextToHeap2(h, f, header.Seq)
 	}
+
+	tmpDir, err := ioutil.TempDir(path, "merged-sst")
+	if err != nil {
+		log.Fatal(err)
+		return "", err
+	}
+
+TODO: open index, main file. then will need to add entries to each
+	count := 0
+	filename := NextFilename(tmpDir)
+	f, err := os.Create(tmpDir + "/" + filename)
+	check(err)
+	writeSstFileHeader(f, seqNum)
 
   // TODO:
   return "", nil
