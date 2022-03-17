@@ -122,11 +122,12 @@ func pushNextToHeap2(h *SstHeap, f *os.File, seq uint64) {
 	}
 }
 
-func Compact2(filenames []string, path string, recordsPerSst int, removeDeleted bool) (string, error) {
+// Lot of logic duplicated with writeSst. consider consolidation??
+func Compact2(filenames []string, path string, recordsPerSst int, keysPerSegment int, removeDeleted bool) (string, error) {
 	h := &SstHeap{}
 	heap.Init(h)
 
-	// load header, reader from each SST file
+	// load header, file pointer from each SST
 	var seqNum uint64 = 0
 	for _, filename := range filenames {
     _, header, err := readIndexFile(filename)
@@ -152,13 +153,21 @@ func Compact2(filenames []string, path string, recordsPerSst int, removeDeleted 
 		return "", err
 	}
 
-TODO: open index, main file. then will need to add entries to each
-	count := 0
-	filename := NextFilename(tmpDir)
-	f, err := os.Create(tmpDir + "/" + filename)
-	check(err)
-	writeSstFileHeader(f, seqNum)
+TODO: 
 
-  // TODO:
-  return "", nil
+  // create index/sst files
+  // write seq to header
+
+  // while data
+     // get next entry
+     // account for dupes
+     // write data to index and SST file
+     // if exceeded SST file size
+        // close current files
+        // create new files
+        // write seq to header
+  // handle special cases
+
+
+  return tmpDir, nil
 }
