@@ -156,12 +156,42 @@ func Compact2(filenames []string, path string, recordsPerSst int, keysPerSegment
 TODO: 
 
   // create index/sst files
-  // write seq to header
+  count := 0
+  offset := 0
+  createFiles := func() (findex *os.File, fbin *os.File) {
+    filename := NextFilename(tmpDir)
+    indexFilename := indexFileForBin(filename)
+    fbin, err := os.Create(filename)
+    check(err)
+    fidx, err := os.Create(indexFilename)
+    check(err)
+  }
+  fbin, fidx := createFiles()
+	// write seq header to index file
+	err = binary.Write(fidx, binary.LittleEndian, seqNum)
 
   // while data
+	var cur, next *SstHeapNode2
+	if h.Len() > 0 {
+		cur = heap.Pop(h).(*SstHeapNode2)
+		pushNextToHeap2(h, cur.File, cur.Seq)
+	}
+	for h.Len() > 0 {
      // get next entry
-     // account for dupes
+		// Get next heap entry
+		next := heap.Pop(h).(*SstHeapNode2)
+		pushNextToHeap2(h, next.File, next.Seq)
+
+		// Account for duplicate keys
+		if next.Entry.Key == cur.Entry.Key {
+			if next.Seq > cur.Seq {
+				cur = next
+			}
+			continue
+		}
+
      // write data to index and SST file
+     bytes, err := writeEntry(fbin, cur.Entry) TODO: removedeleted
      // if exceeded SST file size
         // close current files
         // create new files
