@@ -158,17 +158,27 @@ TODO:
   // create index/sst files
   count := 0
   offset := 0
-  createFiles := func() (findex *os.File, fbin *os.File) {
+  createFiles := func() (*os.File, *os.File) {
     filename := NextFilename(tmpDir)
     indexFilename := indexFileForBin(filename)
     fbin, err := os.Create(filename)
     check(err)
     fidx, err := os.Create(indexFilename)
     check(err)
+    return fbin, fidx 
+  }
+  myWriteEntry := func (f *os.File, data SstEntry) (int, error) {
+TODO: 
+	if (e.Deleted && removeDeleted) || e == nil {
+		return
+	}
+    bytes, err := writeEntry(f, data)
+    return bytes, err
   }
   fbin, fidx := createFiles()
 	// write seq header to index file
 	err = binary.Write(fidx, binary.LittleEndian, seqNum)
+  check(err)
 
   // while data
 	var cur, next *SstHeapNode2
@@ -192,12 +202,30 @@ TODO:
 
      // write data to index and SST file
      bytes, err := writeEntry(fbin, cur.Entry) TODO: removedeleted
-     // if exceeded SST file size
-        // close current files
-        // create new files
-        // write seq to header
+     count++
+     if count > recordsPerSst {
+        count = 0
+        fbin.Close()
+        fidx.Close()
+        fbin, fidx = createFiles()
+	      err = binary.Write(fidx, binary.LittleEndian, seqNum)
+        check(err)
+     }
   // handle special cases
 
+  log.Println("before special case", cur, next)
+  // Special case, only one SST entry
+  if next == nil {
+  	if cur != nil {
+  		// TODO: writeSstEntry(f, cur.Entry, removeDeleted)
+  	}
+  } else {
+  	// TODO: writeSstEntry(f, next.Entry, removeDeleted)
+  }
+
+  log.Println("done writing sst files")
+  fbin.Close()
+  fidx.Close()
 
   return tmpDir, nil
 }
