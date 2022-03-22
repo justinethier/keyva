@@ -49,6 +49,10 @@ func TestBinaryRead(t *testing.T) {
 		if key != e.Key {
 			t.Error("Expected index key", key, "but received", e.Key)
 		}
+		offset := i * 60
+		if offset != e.offset {
+			t.Error("Expected index offset", offset, "but received", e.offset)
+		}
 	}
 
 	// Validate contents of SST
