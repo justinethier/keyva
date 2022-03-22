@@ -88,12 +88,12 @@ func writeSst(filename string, keys []string, m map[string]SstEntry, seqNum uint
 	for i, k := range keys {
 		var e SstEntry
 		e = m[k]
-		bytes, err := writeEntry(f, e)
+		bytes, err := writeEntry(f, &e)
 		if err != nil {
 			log.Fatal(err)
 		}
 		if (i % keysPerSegment) == 0 {
-			writeKeyToIndex(findex, e.Key, bytes)
+			writeKeyToIndex(findex, e.Key, offset)
 		}
 		offset += bytes
 	}
@@ -186,7 +186,7 @@ func writeKeyToIndex(f *os.File, key string, offset int) error {
 }
 
 // writeEntry writes data for a single key/value pair to file
-func writeEntry(f *os.File, data SstEntry) (int, error) {
+func writeEntry(f *os.File, data *SstEntry) (int, error) {
 	var bcount int = 0
 	var bytes int32 = int32(utf8.RuneCountInString(data.Key))
 

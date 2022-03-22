@@ -3,6 +3,7 @@ package sst
 import (
 	"bufio"
 	"container/heap"
+	"encoding/binary"
 	"io/ioutil"
 	"log"
 	"os"
@@ -153,11 +154,9 @@ func Compact2(filenames []string, path string, recordsPerSst int, keysPerSegment
 		return "", err
 	}
 
-TODO: 
-
   // create index/sst files
   count := 0
-  offset := 0
+	var offset int = 0
   createFiles := func() (*os.File, *os.File) {
     filename := NextFilename(tmpDir)
     indexFilename := indexFileForBin(filename)
@@ -167,13 +166,15 @@ TODO:
     check(err)
     return fbin, fidx 
   }
-  myWriteEntry := func (f *os.File, data SstEntry) (int, error) {
-TODO: 
-	if (e.Deleted && removeDeleted) || e == nil {
-		return
-	}
-    bytes, err := writeEntry(f, data)
-    return bytes, err
+  myWriteEntry := func (f *os.File, fidx *os.File, e *SstEntry, removeDeleted bool) {
+	  if (e.Deleted && removeDeleted) || e == nil {
+		  return
+	  }
+    bytes, _ := writeEntry(f, e)
+    offset += bytes
+		if (count % keysPerSegment) == 0 {
+			writeKeyToIndex(fidx, e.Key, offset)
+		}
   }
   fbin, fidx := createFiles()
 	// write seq header to index file
@@ -187,7 +188,6 @@ TODO:
 		pushNextToHeap2(h, cur.File, cur.Seq)
 	}
 	for h.Len() > 0 {
-     // get next entry
 		// Get next heap entry
 		next := heap.Pop(h).(*SstHeapNode2)
 		pushNextToHeap2(h, next.File, next.Seq)
@@ -201,7 +201,7 @@ TODO:
 		}
 
      // write data to index and SST file
-     bytes, err := writeEntry(fbin, cur.Entry) TODO: removedeleted
+     myWriteEntry(fbin, fidx, cur.Entry, removeDeleted)
      count++
      if count > recordsPerSst {
         count = 0
@@ -211,16 +211,16 @@ TODO:
 	      err = binary.Write(fidx, binary.LittleEndian, seqNum)
         check(err)
      }
-  // handle special cases
+  }
 
   log.Println("before special case", cur, next)
   // Special case, only one SST entry
   if next == nil {
   	if cur != nil {
-  		// TODO: writeSstEntry(f, cur.Entry, removeDeleted)
+      myWriteEntry(fbin, fidx, cur.Entry, removeDeleted)
   	}
   } else {
-  	// TODO: writeSstEntry(f, next.Entry, removeDeleted)
+    myWriteEntry(fbin, fidx, next.Entry, removeDeleted)
   }
 
   log.Println("done writing sst files")
