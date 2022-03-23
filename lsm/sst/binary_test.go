@@ -70,4 +70,8 @@ func TestBinaryRead(t *testing.T) {
 			t.Error("Unexpected deleted flag", e.Deleted)
 		}
 	}
+
+  files := []string{"mytest.bin"}
+  tmpdir, _ := Compact2(files, ".", 4, 2, false)
+  log.Println("Compacted to", tmpdir)
 }

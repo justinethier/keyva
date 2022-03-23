@@ -116,7 +116,7 @@ func pushNextToHeap(h *SstHeap, reader *bufio.Reader, seq uint64) {
 	}
 }
 
-func pushNextToHeap2(h *SstHeap, f *os.File, seq uint64) {
+func pushNextToHeap2(h *SstHeap2, f *os.File, seq uint64) {
 	entry, err := readEntry(f)
 	if err == nil {
 		heap.Push(h, &SstHeapNode2{seq, &entry, f})
@@ -125,7 +125,7 @@ func pushNextToHeap2(h *SstHeap, f *os.File, seq uint64) {
 
 // Lot of logic duplicated with writeSst. consider consolidation??
 func Compact2(filenames []string, path string, recordsPerSst int, keysPerSegment int, removeDeleted bool) (string, error) {
-	h := &SstHeap{}
+	h := &SstHeap2{}
 	heap.Init(h)
 
 	// load header, file pointer from each SST

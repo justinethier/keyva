@@ -53,6 +53,26 @@ type SstHeapNode2 struct {
 	File   *os.File
 }
 
+type SstHeap2 []*SstHeapNode2
+
+func (h SstHeap2) Len() int           { return len(h) }
+func (h SstHeap2) Less(i, j int) bool { return h[i].Entry.Key < h[j].Entry.Key }
+func (h SstHeap2) Swap(i, j int)      { h[i], h[j] = h[j], h[i] }
+
+func (h *SstHeap2) Push(x interface{}) {
+	// Push and Pop use pointer receivers because they modify the slice's length,
+	// not just its contents.
+	*h = append(*h, x.(*SstHeapNode2))
+}
+
+func (h *SstHeap2) Pop() interface{} {
+	old := *h
+	n := len(old)
+	x := old[n-1]
+	*h = old[0 : n-1]
+	return x
+}
+
 // An min-heap of SST entries
 // Provides an easy way to sort large numbers of entries
 type SstHeap []*SstHeapNode
