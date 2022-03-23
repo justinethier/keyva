@@ -13,9 +13,9 @@ func TestBinary(t *testing.T) {
 	m := make(map[string]SstEntry)
 
 	for i := 0; i < 10; i++ {
-		key := strconv.Itoa(i)
+		key := "Key " + strconv.Itoa(i)
 		keys = append(keys, key)
-		m[key] = SstEntry{key, []byte("Test Value"), false}
+		m[key] = SstEntry{key, []byte("Test Value " + key), false}
 	}
 
 	writeSst("mytest", keys, m, uint64(10), 3)
@@ -45,7 +45,7 @@ func TestBinaryRead(t *testing.T) {
 
 	// Validate contents of index
 	for i, e := range index {
-		key := strconv.Itoa(i * 3)
+		key := "Key " + strconv.Itoa(i * 3)
 		if key != e.Key {
 			t.Error("Expected index key", key, "but received", e.Key)
 		}
@@ -59,7 +59,7 @@ func TestBinaryRead(t *testing.T) {
 	lis := readEntries(f)
 	log.Println("read entries", len(lis))
 	for i, e := range lis {
-		key := strconv.Itoa(i)
+		key := "Key " + strconv.Itoa(i)
 		if key != e.Key {
 			t.Error("Expected key", key, "but received", e.Key)
 		}
