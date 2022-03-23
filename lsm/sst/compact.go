@@ -170,9 +170,11 @@ func Compact2(filenames []string, path string, recordsPerSst int, keysPerSegment
 	  if (e.Deleted && removeDeleted) || e == nil {
 		  return
 	  }
+		log.Println("Debug compact2 writing entry", e.Key)
     bytes, _ := writeEntry(f, e)
     offset += bytes
 		if (count % keysPerSegment) == 0 {
+			log.Println("Debug compact2 writing to index", e.Key)
 			writeKeyToIndex(fidx, e.Key, offset)
 		}
   }
@@ -202,6 +204,7 @@ func Compact2(filenames []string, path string, recordsPerSst int, keysPerSegment
 
      // write data to index and SST file
      myWriteEntry(fbin, fidx, cur.Entry, removeDeleted)
+     cur = next
      count++
      if count > recordsPerSst {
         count = 0
