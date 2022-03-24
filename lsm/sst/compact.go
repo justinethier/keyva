@@ -31,101 +31,8 @@ import (
 // is written. Note this is only applicable to SST level 0 which contains SST files that
 // may contain overlapping data.
 //
-func Compact(filenames []string, path string, recordsPerSst int, removeDeleted bool) (string, error) {
+func Compact(filenames []string, path string, recordsPerSst int, keysPerSegment int, removeDeleted bool) (string, error) {
 	h := &SstHeap{}
-	heap.Init(h)
-
-	// load header, reader from each SST file
-	var seqNum uint64 = 0
-	for _, filename := range filenames {
-		_, reader, header, err := Open(filename)
-		if err != nil {
-			return "", err
-		}
-		if header.Seq > seqNum {
-			seqNum = header.Seq
-		}
-
-		pushNextToHeap(h, reader, header.Seq)
-	}
-
-	tmpDir, err := ioutil.TempDir(path, "merged-sst")
-	if err != nil {
-		log.Fatal(err)
-		return "", err
-	}
-
-	count := 0
-	filename := NextFilename(tmpDir)
-	f, err := os.Create(tmpDir + "/" + filename)
-	check(err)
-	writeSstFileHeader(f, seqNum)
-
-	var cur, next *SstHeapNode
-	if h.Len() > 0 {
-		cur = heap.Pop(h).(*SstHeapNode)
-		pushNextToHeap(h, cur.Reader, cur.Seq)
-	}
-	for h.Len() > 0 {
-		// Get next heap entry
-		next := heap.Pop(h).(*SstHeapNode)
-		pushNextToHeap(h, next.Reader, next.Seq)
-
-		// Account for duplicate keys
-		if next.Entry.Key == cur.Entry.Key {
-			if next.Seq > cur.Seq {
-				cur = next
-			}
-			continue
-		}
-
-		writeSstEntry(f, cur.Entry, removeDeleted)
-		cur = next
-		count++
-		if count > recordsPerSst {
-			count = 0
-			f.Close()
-			filename = NextFilename(tmpDir)
-			f, err = os.Create(tmpDir + "/" + filename)
-			check(err)
-			writeSstFileHeader(f, seqNum)
-		}
-	}
-
-	log.Println("before special case", cur, next)
-	// Special case, only one SST entry
-	if next == nil {
-		if cur != nil {
-			writeSstEntry(f, cur.Entry, removeDeleted)
-		}
-	} else {
-		writeSstEntry(f, next.Entry, removeDeleted)
-	}
-
-	log.Println("done writing sst files")
-	f.Close()
-
-	return tmpDir, nil
-}
-
-// pushNextToHeap is a helper function to read the next entry from the given file reader and push it onto the heap.
-func pushNextToHeap(h *SstHeap, reader *bufio.Reader, seq uint64) {
-	entry, err := Readln(reader)
-	if err == nil {
-		heap.Push(h, &SstHeapNode{seq, &entry, reader})
-	}
-}
-
-func pushNextToHeap2(h *SstHeap2, f *os.File, seq uint64) {
-	entry, err := readEntry(f)
-	if err == nil {
-		heap.Push(h, &SstHeapNode2{seq, &entry, f})
-	}
-}
-
-// Lot of logic duplicated with writeSst. consider consolidation??
-func Compact2(filenames []string, path string, recordsPerSst int, keysPerSegment int, removeDeleted bool) (string, error) {
-	h := &SstHeap2{}
 	heap.Init(h)
 
 	// load header, file pointer from each SST
@@ -145,7 +52,7 @@ func Compact2(filenames []string, path string, recordsPerSst int, keysPerSegment
 		}
     defer f.Close()
 
-		pushNextToHeap2(h, f, header.Seq)
+		pushNextToHeap(h, f, header.Seq)
 	}
 
 	tmpDir, err := ioutil.TempDir(path, "merged-sst")
@@ -170,11 +77,11 @@ func Compact2(filenames []string, path string, recordsPerSst int, keysPerSegment
 	  if (e.Deleted && removeDeleted) || e == nil {
 		  return
 	  }
-		log.Println("Debug compact2 writing entry", e.Key)
+		log.Println("Debug compact writing entry", e.Key)
     bytes, _ := writeEntry(f, e)
     offset += bytes
 		if (count % keysPerSegment) == 0 {
-			log.Println("Debug compact2 writing to index", e.Key)
+			log.Println("Debug compact writing to index", e.Key)
 			writeKeyToIndex(fidx, e.Key, offset)
 		}
   }
@@ -184,15 +91,15 @@ func Compact2(filenames []string, path string, recordsPerSst int, keysPerSegment
   check(err)
 
   // while data
-	var cur, next *SstHeapNode2
+	var cur, next *SstHeapNode
 	if h.Len() > 0 {
-		cur = heap.Pop(h).(*SstHeapNode2)
-		pushNextToHeap2(h, cur.File, cur.Seq)
+		cur = heap.Pop(h).(*SstHeapNode)
+		pushNextToHeap(h, cur.File, cur.Seq)
 	}
 	for h.Len() > 0 {
 		// Get next heap entry
-		next := heap.Pop(h).(*SstHeapNode2)
-		pushNextToHeap2(h, next.File, next.Seq)
+		next := heap.Pop(h).(*SstHeapNode)
+		pushNextToHeap(h, next.File, next.Seq)
 
 		// Account for duplicate keys
 		if next.Entry.Key == cur.Entry.Key {
