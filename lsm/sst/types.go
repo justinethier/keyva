@@ -1,7 +1,6 @@
 package sst
 
 import (
-	"bufio"
 	"github.com/justinethier/keyva/bloom"
 	"os"
 	"time"

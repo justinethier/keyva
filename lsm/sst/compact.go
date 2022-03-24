@@ -1,7 +1,6 @@
 package sst
 
 import (
-	"bufio"
 	"container/heap"
 	"encoding/binary"
 	"io/ioutil"
@@ -139,3 +138,11 @@ func Compact(filenames []string, path string, recordsPerSst int, keysPerSegment 
 
   return tmpDir, nil
 }
+
+func pushNextToHeap(h *SstHeap, f *os.File, seq uint64) {
+	entry, err := readEntry(f)
+	if err == nil {
+		heap.Push(h, &SstHeapNode{seq, &entry, f})
+	}
+}
+
