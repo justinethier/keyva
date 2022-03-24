@@ -160,9 +160,9 @@ func Compact2(filenames []string, path string, recordsPerSst int, keysPerSegment
   createFiles := func() (*os.File, *os.File) {
     filename := NextFilename(tmpDir)
     indexFilename := indexFileForBin(filename)
-    fbin, err := os.Create(filename)
+    fbin, err := os.Create(tmpDir + "/" + filename)
     check(err)
-    fidx, err := os.Create(indexFilename)
+    fidx, err := os.Create(tmpDir + "/" + indexFilename)
     check(err)
     return fbin, fidx 
   }

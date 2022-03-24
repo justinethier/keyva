@@ -72,6 +72,6 @@ func TestBinaryRead(t *testing.T) {
 	}
 
   files := []string{"mytest.bin"}
-  tmpdir, _ := Compact2(files, ".", 4, 2, false)
+  tmpdir, _ := Compact2(files, ".", 40, 2, false)
   log.Println("Compacted to", tmpdir)
 }
