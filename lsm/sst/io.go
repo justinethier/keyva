@@ -2,7 +2,6 @@ package sst
 
 import (
 	"bufio"
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"github.com/justinethier/keyva/util"
