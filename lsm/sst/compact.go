@@ -37,19 +37,19 @@ func Compact(filenames []string, path string, recordsPerSst int, keysPerSegment 
 	// load header, file pointer from each SST
 	var seqNum uint64 = 0
 	for _, filename := range filenames {
-    _, header, err := readIndexFile(filename)
+		_, header, err := readIndexFile(filename)
 		if err != nil {
 			return "", err
 		}
 		if header.Seq > seqNum {
 			seqNum = header.Seq
 		}
-    f, err := os.Open(filename)
+		f, err := os.Open(filename)
 		if err != nil {
-      log.Fatal(err)
+			log.Fatal(err)
 			return "", err
 		}
-    defer f.Close()
+		defer f.Close()
 
 		pushNextToHeap(h, f, header.Seq)
 	}
@@ -60,36 +60,36 @@ func Compact(filenames []string, path string, recordsPerSst int, keysPerSegment 
 		return "", err
 	}
 
-  // create index/sst files
-  count := 0
+	// create index/sst files
+	count := 0
 	var offset int = 0
-  createFiles := func() (*os.File, *os.File) {
-    filename := NextFilename(tmpDir)
-    indexFilename := indexFileForBin(filename)
-    fbin, err := os.Create(tmpDir + "/" + filename)
-    check(err)
-    fidx, err := os.Create(tmpDir + "/" + indexFilename)
-    check(err)
-    return fbin, fidx 
-  }
-  myWriteEntry := func (f *os.File, fidx *os.File, e *SstEntry, removeDeleted bool) {
-	  if (e.Deleted && removeDeleted) || e == nil {
-		  return
-	  }
+	createFiles := func() (*os.File, *os.File) {
+		filename := NextFilename(tmpDir)
+		indexFilename := indexFileForBin(filename)
+		fbin, err := os.Create(tmpDir + "/" + filename)
+		check(err)
+		fidx, err := os.Create(tmpDir + "/" + indexFilename)
+		check(err)
+		return fbin, fidx
+	}
+	myWriteEntry := func(f *os.File, fidx *os.File, e *SstEntry, removeDeleted bool) {
+		if (e.Deleted && removeDeleted) || e == nil {
+			return
+		}
 		log.Println("Debug compact writing entry", e.Key)
-    bytes, _ := writeEntry(f, e)
-    offset += bytes
+		bytes, _ := writeEntry(f, e)
+		offset += bytes
 		if (count % keysPerSegment) == 0 {
 			log.Println("Debug compact writing to index", e.Key)
 			writeKeyToIndex(fidx, e.Key, offset)
 		}
-  }
-  fbin, fidx := createFiles()
+	}
+	fbin, fidx := createFiles()
 	// write seq header to index file
 	err = binary.Write(fidx, binary.LittleEndian, seqNum)
-  check(err)
+	check(err)
 
-  // while data
+	// while data
 	var cur, next *SstHeapNode
 	if h.Len() > 0 {
 		cur = heap.Pop(h).(*SstHeapNode)
@@ -108,35 +108,35 @@ func Compact(filenames []string, path string, recordsPerSst int, keysPerSegment 
 			continue
 		}
 
-     // write data to index and SST file
-     myWriteEntry(fbin, fidx, cur.Entry, removeDeleted)
-     cur = next
-     count++
-     if count > recordsPerSst {
-        count = 0
-        fbin.Close()
-        fidx.Close()
-        fbin, fidx = createFiles()
-	      err = binary.Write(fidx, binary.LittleEndian, seqNum)
-        check(err)
-     }
-  }
+		// write data to index and SST file
+		myWriteEntry(fbin, fidx, cur.Entry, removeDeleted)
+		cur = next
+		count++
+		if count > recordsPerSst {
+			count = 0
+			fbin.Close()
+			fidx.Close()
+			fbin, fidx = createFiles()
+			err = binary.Write(fidx, binary.LittleEndian, seqNum)
+			check(err)
+		}
+	}
 
-  log.Println("before special case", cur, next)
-  // Special case, only one SST entry
-  if next == nil {
-  	if cur != nil {
-      myWriteEntry(fbin, fidx, cur.Entry, removeDeleted)
-  	}
-  } else {
-    myWriteEntry(fbin, fidx, next.Entry, removeDeleted)
-  }
+	log.Println("before special case", cur, next)
+	// Special case, only one SST entry
+	if next == nil {
+		if cur != nil {
+			myWriteEntry(fbin, fidx, cur.Entry, removeDeleted)
+		}
+	} else {
+		myWriteEntry(fbin, fidx, next.Entry, removeDeleted)
+	}
 
-  log.Println("done writing sst files")
-  fbin.Close()
-  fidx.Close()
+	log.Println("done writing sst files")
+	fbin.Close()
+	fidx.Close()
 
-  return tmpDir, nil
+	return tmpDir, nil
 }
 
 func pushNextToHeap(h *SstHeap, f *os.File, seq uint64) {
@@ -145,4 +145,3 @@ func pushNextToHeap(h *SstHeap, f *os.File, seq uint64) {
 		heap.Push(h, &SstHeapNode{seq, &entry, f})
 	}
 }
-

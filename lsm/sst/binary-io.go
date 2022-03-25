@@ -100,14 +100,14 @@ func writeSst(filename string, keys []string, m map[string]SstEntry, seqNum uint
 }
 
 func readIndexFile(filename string) ([]SstIndex, SstFileHeader, error) {
-  indexFilename := indexFileForBin(filename)
-  fp, err := os.Open(indexFilename)
-  if err != nil {
-    log.Fatal(err)
-  }
-  defer fp.Close()
+	indexFilename := indexFileForBin(filename)
+	fp, err := os.Open(indexFilename)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer fp.Close()
 
-  return readIndex(fp)
+	return readIndex(fp)
 }
 
 // readIndex reads and returns the contents of the given SST index file pointer.

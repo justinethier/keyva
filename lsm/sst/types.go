@@ -11,8 +11,8 @@ type SstFileHeader struct {
 }
 
 type SstIndex struct {
-  Key string
-  offset int
+	Key    string
+	offset int
 }
 
 type SstLevel struct {
@@ -40,9 +40,9 @@ type SstEntry struct {
 }
 
 type SstHeapNode struct {
-	Seq    uint64
-	Entry  *SstEntry
-	File   *os.File
+	Seq   uint64
+	Entry *SstEntry
+	File  *os.File
 }
 
 // An min-heap of SST entries
@@ -66,4 +66,3 @@ func (h *SstHeap) Pop() interface{} {
 	*h = old[0 : n-1]
 	return x
 }
-

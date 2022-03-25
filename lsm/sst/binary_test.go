@@ -45,7 +45,7 @@ func TestBinaryRead(t *testing.T) {
 
 	// Validate contents of index
 	for i, e := range index {
-		key := "Key " + strconv.Itoa(i * 3)
+		key := "Key " + strconv.Itoa(i*3)
 		if key != e.Key {
 			t.Error("Expected index key", key, "but received", e.Key)
 		}
@@ -71,7 +71,7 @@ func TestBinaryRead(t *testing.T) {
 		}
 	}
 
-  files := []string{"mytest.bin"}
-  tmpdir, _ := Compact2(files, ".", 40, 2, false)
-  log.Println("Compacted to", tmpdir)
+	files := []string{"mytest.bin"}
+	tmpdir, _ := Compact(files, ".", 40, 2, false)
+	log.Println("Compacted to", tmpdir)
 }
