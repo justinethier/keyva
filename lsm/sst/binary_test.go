@@ -49,7 +49,7 @@ func TestBinaryRead(t *testing.T) {
 		if key != e.Key {
 			t.Error("Expected index key", key, "but received", e.Key)
 		}
-		offset := i * 60
+		offset := i * 90
 		if offset != e.offset {
 			t.Error("Expected index offset", offset, "but received", e.offset)
 		}
@@ -63,7 +63,7 @@ func TestBinaryRead(t *testing.T) {
 		if key != e.Key {
 			t.Error("Expected key", key, "but received", e.Key)
 		}
-		if bytes.Compare(e.Value, []byte("Test Value")) != 0 {
+		if bytes.Compare(e.Value, []byte("Test Value " + key)) != 0 {
 			t.Error("Unexpected data", e.Value)
 		}
 		if e.Deleted != false {
