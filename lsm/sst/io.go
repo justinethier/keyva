@@ -66,7 +66,7 @@ func Filenames(path string) []string {
 	files, err := ioutil.ReadDir(path)
 	if err == nil {
 		for _, file := range files {
-			matched, _ := regexp.Match(`^sorted-string-table-[0-9]*\.json`, []byte(file.Name()))
+			matched, _ := regexp.Match(`^sst-[0-9]*\.bin`, []byte(file.Name()))
 			if matched && !file.IsDir() {
 				sstFiles = append(sstFiles, file.Name())
 			}
@@ -85,7 +85,7 @@ func NextFilename(path string) string {
 
 	var sstFiles []string
 	for _, file := range files {
-		matched, _ := regexp.Match(`^sorted-string-table-[0-9]*\.json`, []byte(file.Name()))
+		matched, _ := regexp.Match(`^sst-[0-9]*\.bin`, []byte(file.Name()))
 		if matched && !file.IsDir() {
 			//fmt.Println(file.Name(), file.IsDir())
 			sstFiles = append(sstFiles, file.Name())
@@ -95,10 +95,10 @@ func NextFilename(path string) string {
 	if len(sstFiles) > 0 {
 		var latest = sstFiles[len(sstFiles)-1][20:24]
 		n, _ := strconv.Atoi(latest)
-		return fmt.Sprintf("sorted-string-table-%04d.json", n+1)
+		return fmt.Sprintf("sst-%04d.bin", n+1)
 	}
 
-	return "sorted-string-table-0000.json"
+	return "sst-0000.bin"
 }
 
 // Delete SST file from disk
