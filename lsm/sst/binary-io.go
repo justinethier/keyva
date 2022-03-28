@@ -68,13 +68,14 @@ func readEntry(f *os.File) (SstEntry, error) {
 // seqNum is the sequence number of the latest entry.
 // keysPerSegment is the number of keys that will be stored for each sparse index.
 func writeSst(filename string, keys []string, m map[string]SstEntry, seqNum uint64, keysPerSegment int) {
-	f, err := os.Create(filename + ".bin")
+	baseFilename := sstBaseFilename(filename)
+	f, err := os.Create(baseFilename + ".bin")
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer f.Close()
 
-	findex, err := os.Create(filename + ".index")
+	findex, err := os.Create(baseFilename + ".index")
 	if err != nil {
 		log.Fatal(err)
 	}

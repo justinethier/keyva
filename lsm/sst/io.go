@@ -132,3 +132,9 @@ func indexFileForBin(filename string) string {
 func binFileForIndex(filename string) string {
 	return strings.TrimSuffix(filename, ".index") + ".bin"
 }
+
+func sstBaseFilename(filename string) string {
+  nobin := strings.TrimSuffix(filename, ".bin")
+  noidx := strings.TrimSuffix(nobin, ".index")
+  return noidx
+}
