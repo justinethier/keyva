@@ -67,7 +67,7 @@ func (tree *LsmTree) Merge(level int) error {
 		removeDeleted = true
 	}
 
-	tmpDir, err := sst.Compact(files, tree.path, tree.bufferSize, removeDeleted)
+	tmpDir, err := sst.Compact(files, tree.path, tree.bufferSize, tree.bufferSize / 10, removeDeleted)
 	log.Println("Files in", tmpDir, err)
 
 	if !tree.merge.Immediate {
@@ -141,7 +141,7 @@ func (tree *LsmTree) Compact(level int) {
 		removeDeleted = true
 	}
 
-	tmpDir, err := sst.Compact(files, tree.path, tree.bufferSize, removeDeleted)
+	tmpDir, err := sst.Compact(files, tree.path, tree.bufferSize, tree.bufferSize / 10, removeDeleted)
 	log.Println("Files in", tmpDir, err)
 
 	if !tree.merge.Immediate {
