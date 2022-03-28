@@ -95,7 +95,6 @@ func NextFilename(path string) string {
 	if len(sstFiles) > 0 {
 		var latest = sstFiles[len(sstFiles)-1][4:8]
 		n, _ := strconv.Atoi(latest)
-		return fmt.Sprintf("sorted-string-table-%04d.bin", n+1)
 		return fmt.Sprintf("sst-%04d.bin", n+1)
 	}
 
