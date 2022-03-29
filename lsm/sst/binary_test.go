@@ -63,7 +63,7 @@ func TestBinaryRead(t *testing.T) {
 		if key != e.Key {
 			t.Error("Expected key", key, "but received", e.Key)
 		}
-		if bytes.Compare(e.Value, []byte("Test Value " + key)) != 0 {
+		if bytes.Compare(e.Value, []byte("Test Value "+key)) != 0 {
 			t.Error("Unexpected data", e.Value)
 		}
 		if e.Deleted != false {
