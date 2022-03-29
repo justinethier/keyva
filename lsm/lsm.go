@@ -1,5 +1,5 @@
 // Package lsm implements a log-structured merge-tree (LSM tree) data structure.
-// Ttypically used when dealing with write-heavy workloads, the write path is
+// Typically used when dealing with write-heavy workloads, the write path is
 // optimized by only performing sequential writes.
 //
 // Records are initially inserted into an in-memory buffer (mem table).
