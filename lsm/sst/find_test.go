@@ -11,18 +11,24 @@ func TestFindIndex(t *testing.T) {
 	u := SstIndex{"uu", 300}
 	index := []SstIndex{e, j, m, u}
 
-	check := func(key string, start int, end int, err bool) {
-		s, e, er := findIndex("ee", index)
-		if er != err {
-			t.Error("Expected error of", err, "but received", er)
+	check := func(key string, start int, end int, found bool) {
+		s, e, f := findIndex("ee", index)
+		if f != found {
+			t.Error("Key", key, "Expected found", found, "but received", f)
 			return
 		}
 		if s != start {
-			t.Error("Expected starting offset", start, "but received", s)
+			t.Error("Key", key, "Expected starting offset", start, "but received", s)
 		}
 		if e != end {
-			t.Error("Expected starting offset", start, "but received", s)
+			t.Error("Key", key, "Expected starting offset", start, "but received", s)
 		}
 	}
-	check("ee", 0, 100, true) 
+	check("ee", 0, 100, true)
+	check("aa", 0, 0, false)
+	check("ff", 0, 100, true)
+	check("gg", 0, 100, true)
+	check("jj", 100, 200, true)
+	check("ll", 100, 200, true)
+	check("zz", 300, -1, true)
 }
