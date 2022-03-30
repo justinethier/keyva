@@ -24,5 +24,5 @@ func TestFindIndex(t *testing.T) {
 			t.Error("Expected starting offset", start, "but received", s)
 		}
 	}
-	check("ee", 0, 0, false) // TODO: fix this
+	check("ee", 0, 100, true) 
 }

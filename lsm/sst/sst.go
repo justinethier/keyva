@@ -30,12 +30,24 @@ func findIndex(key string, tbl []SstIndex) (int, int, bool) {
 		//
 		// K[m] == key - use this index (key is an index, unlikely but will happen)
 		// K[m] < key && K[m+1] > key - use this index (key between K[m] and K[m+1])
-		// K[m] < key && (m+1 == len(K)) > key - use this index (its the last one)
+		// K[m] < key && (m+1 == len(K)) - use this index (its the last one)
 		// K[m] > key && (m == 0) - a failure case, key is before first index entry
 
 		if tbl[mid].Key == key {
-			return 0, 0, true //tbl[mid], true
-		}
+      endOffset := -1
+      if mid+1 < len(tbl) {
+        endOffset = tbl[mid+1].offset
+      }
+			return tbl[mid].offset, endOffset, true
+		} else if tbl[mid].Key < key {
+      if mid < len(tbl) && tbl[mid+1].Key > key { // Key between mid and mid+1
+			  return tbl[mid].offset, tbl[mid+1].offset, true
+      } else if (mid + 1) == len(tbl) { // Key is in last index
+			  return tbl[mid].offset, -1, true
+      }
+		} else if mid == 0 && tbl[mid].Key > key{
+      return 0, 0, false // There is no index that contains key
+    }
 
 		if tbl[mid].Key > key {
 			right = mid - 1 // Key would be found before this entry
