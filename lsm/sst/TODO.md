@@ -15,4 +15,6 @@ How to make this work.
 
 Everything is in sorted order so can we take advantage of that? Should be able to do a binary search to find the appropriate SST file.
 
+Do with a new function, eg: findSortedSst or such.
+
 From there do the same steps as for level 0.

@@ -14,7 +14,7 @@ func check(e error) {
 // findIndex finds the index that may contain the given key. That is, the key is between the starting point of
 // that index and the starting point of the next index. EG: Key "bbb" is between index A at "aaa" and index B
 // at "bbb". So we return data for index A.
-func findIndex(key string, tbl []SstIndex) (int, int, bool) {
+func findIndex(key string, tbl []SstIndex) (*SstIndex, *SstIndex, bool) {
 	var left = 0
 	var right = len(tbl) - 1
 
@@ -24,19 +24,19 @@ func findIndex(key string, tbl []SstIndex) (int, int, bool) {
 
 		// Have we found the appropriate index?
 		if tbl[mid].Key == key {
-			endOffset := -1
+			var next *SstIndex
 			if mid+1 < len(tbl) {
-				endOffset = tbl[mid+1].offset
+				next = &tbl[mid+1]
 			}
-			return tbl[mid].offset, endOffset, true
+			return &tbl[mid], next, true
 		} else if tbl[mid].Key < key {
 			if (mid+1) < len(tbl) && tbl[mid+1].Key > key { // Key between mid and mid+1
-				return tbl[mid].offset, tbl[mid+1].offset, true
+				return &tbl[mid], &tbl[mid+1], true
 			} else if (mid + 1) == len(tbl) { // Key is in last index
-				return tbl[mid].offset, -1, true
+				return &tbl[mid], nil, true
 			}
 		} else if mid == 0 && tbl[mid].Key > key {
-			return 0, 0, false // There is no index that contains key
+			return nil, nil, false // There is no index that contains key
 		}
 
 		if tbl[mid].Key > key {
@@ -47,7 +47,7 @@ func findIndex(key string, tbl []SstIndex) (int, int, bool) {
 	}
 
 	// Don't think this is possible but if we got here there is no matching index
-	return 0, 0, false
+	return nil, nil, false
 }
 
 // find searches the given entries for key and returns the corresponding value if found.
