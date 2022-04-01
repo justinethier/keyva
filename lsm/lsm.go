@@ -207,6 +207,10 @@ func (tree *LsmTree) loadLevel(path string, level int) uint64 {
 		for _, entry := range entries {
 			filter.Add(entry.Key)
 		}
+
+    TODO: use sst.readIndexFile or such to read index into memory
+    TODO: corresponding SstIndexCache of same length, but contents can be empty
+
 		var sstfile = sst.SstFile{filename, filter, []sst.SstEntry{}, time.Now()}
 		tree.sst[level].Files = append(tree.sst[level].Files, sstfile)
 	}

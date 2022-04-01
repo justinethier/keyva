@@ -22,7 +22,12 @@ type SstLevel struct {
 type SstFile struct {
 	Filename string
 	Filter   *bloom.Filter
-	Cache    []SstEntry // cached file contents
+	Index    []SstIndex
+	Cache    []SstIndexCache
+}
+
+type SstIndexCache struct {
+	Data     []SstEntry // cached file contents
 	CachedAt time.Time  // timestamp when cache was last accessed
 	// may convert to seconds (best way to compare???) using -
 	//now := time.Now()      // current local time

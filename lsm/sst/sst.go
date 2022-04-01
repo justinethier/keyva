@@ -83,6 +83,9 @@ func Find(key string, lvl []SstLevel, path string) ([]byte, bool) {
 				// Only read from disk if key is in the filter
 				var entries []SstEntry
 
+TODO: Use lvl[l].Files[i].Index and findIndex to find appropriate segment.
+then either return the cache, or read from file and cache contents
+
 				if len(lvl[l].Files[i].Cache) == 0 {
 					// No cache, read file from disk and cache entries
 					log.Println("DEBUG loading and caching entries from file", lvl[l].Files[i].Filename)
