@@ -1,8 +1,8 @@
 package sst
 
 import (
-	"log"
-	"time"
+	//"log"
+	//"time"
 )
 
 func check(e error) {
@@ -14,7 +14,7 @@ func check(e error) {
 // findIndex finds the index that may contain the given key. That is, the key is between the starting point of
 // that index and the starting point of the next index. EG: Key "bbb" is between index A at "aaa" and index B
 // at "bbb". So we return data for index A.
-func findIndex(key string, tbl []SstIndex) (*SstIndex, *SstIndex, bool) {
+func findIndex(key string, tbl []SstIndex) (*SstIndex, *SstIndex, int, bool) {
 	var left = 0
 	var right = len(tbl) - 1
 
@@ -28,15 +28,15 @@ func findIndex(key string, tbl []SstIndex) (*SstIndex, *SstIndex, bool) {
 			if mid+1 < len(tbl) {
 				next = &tbl[mid+1]
 			}
-			return &tbl[mid], next, true
+			return &tbl[mid], next, mid, true
 		} else if tbl[mid].Key < key {
 			if (mid+1) < len(tbl) && tbl[mid+1].Key > key { // Key between mid and mid+1
-				return &tbl[mid], &tbl[mid+1], true
+				return &tbl[mid], &tbl[mid+1], mid, true
 			} else if (mid + 1) == len(tbl) { // Key is in last index
-				return &tbl[mid], nil, true
+				return &tbl[mid], nil, mid, true
 			}
 		} else if mid == 0 && tbl[mid].Key > key {
-			return nil, nil, false // There is no index that contains key
+			return nil, nil, -1, false // There is no index that contains key
 		}
 
 		if tbl[mid].Key > key {
@@ -83,18 +83,22 @@ func Find(key string, lvl []SstLevel, path string) ([]byte, bool) {
 				// Only read from disk if key is in the filter
 				var entries []SstEntry
 
-TODO: Use lvl[l].Files[i].Index and findIndex to find appropriate segment.
-then either return the cache, or read from file and cache contents
-
-				if len(lvl[l].Files[i].Cache) == 0 {
-					// No cache, read file from disk and cache entries
-					log.Println("DEBUG loading and caching entries from file", lvl[l].Files[i].Filename)
-					entries, _ = Load(PathForLevel(path, l) + "/" + lvl[l].Files[i].Filename)
-					lvl[l].Files[i].Cache = entries
-				} else {
-					entries = lvl[l].Files[i].Cache
-				}
-				lvl[l].Files[i].CachedAt = time.Now() // Update cached time
+//TODO: Use lvl[l].Files[i].Index and findIndex to find appropriate segment.
+//then either return the cache, or read from file and cache contents
+//
+//findIndex will find appropriate SstIndex segments.
+//but then how to correlate those with cache?
+//need to have it return an index
+//
+//				if len(lvl[l].Files[i].Cache) == 0 {
+//					// No cache, read file from disk and cache entries
+//					log.Println("DEBUG loading and caching entries from file", lvl[l].Files[i].Filename)
+//					entries, _ = Load(PathForLevel(path, l) + "/" + lvl[l].Files[i].Filename)
+//					lvl[l].Files[i].Cache = entries
+//				} else {
+//					entries = lvl[l].Files[i].Cache
+//				}
+//				lvl[l].Files[i].CachedAt = time.Now() // Update cached time
 
 				// Search for key in the file's entries
 				if entry, found := findValue(key, entries); found {
