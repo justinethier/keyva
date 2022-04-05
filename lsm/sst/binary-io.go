@@ -2,6 +2,7 @@ package sst
 
 import (
 	"encoding/binary"
+	"github.com/justinethier/keyva/bloom"
 	"io"
 	"log"
 	"os"
@@ -230,4 +231,11 @@ func writeEntry(f *os.File, data *SstEntry) (int, error) {
 	bcount += 1
 
 	return bcount, nil
+}
+
+func NewSstFile(filename string, filter *bloom.Filter) SstFile {
+  index, _, err := readIndexFile(filename)
+  check(err)
+  cache := make([]SstIndexCache, len(index))
+  return SstFile{filename, filter, index, cache}
 }
