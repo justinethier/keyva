@@ -10,11 +10,6 @@ type SstFileHeader struct {
 	Seq uint64
 }
 
-type SstIndex struct {
-	Key    string
-	offset int
-}
-
 type SstLevel struct {
 	Files []SstFile
 }
@@ -23,10 +18,15 @@ type SstFile struct {
 	Filename string
 	Filter   *bloom.Filter
 	Index    []SstIndex
-	Cache    []SstIndexCache
+	Cache    []SstIndexData
 }
 
-type SstIndexCache struct {
+type SstIndex struct {
+	Key    string
+	offset int
+}
+
+type SstIndexData struct {
 	Data     []SstEntry // cached file contents
 	CachedAt time.Time  // timestamp when cache was last accessed
 	// may convert to seconds (best way to compare???) using -

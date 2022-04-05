@@ -236,6 +236,6 @@ func writeEntry(f *os.File, data *SstEntry) (int, error) {
 func NewSstFile(filename string, filter *bloom.Filter) SstFile {
   index, _, err := readIndexFile(filename)
   check(err)
-  cache := make([]SstIndexCache, len(index))
+  cache := make([]SstIndexData, len(index))
   return SstFile{filename, filter, index, cache}
 }

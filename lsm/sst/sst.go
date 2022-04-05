@@ -47,7 +47,7 @@ func findIndex(key string, tbl []SstIndex) (*SstIndex, *SstIndex, int, bool) {
 	}
 
 	// Don't think this is possible but if we got here there is no matching index
-	return nil, nil, false
+	return nil, nil, -1, false
 }
 
 // find searches the given entries for key and returns the corresponding value if found.
@@ -86,9 +86,13 @@ func Find(key string, lvl []SstLevel, path string) ([]byte, bool) {
 //TODO: Use lvl[l].Files[i].Index and findIndex to find appropriate segment.
 //then either return the cache, or read from file and cache contents
 //
-//findIndex will find appropriate SstIndex segments.
-//but then how to correlate those with cache?
-//need to have it return an index
+//findIndex will find the appropriate SstIndex data block.
+//  but then how to correlate those with cache?
+//  need to have it return an index
+//
+// from there, read that data block from disk into memory (seek to offset, read to next offset). need a function to do that, and test
+// once we have the data block contents, cache it in memory
+// then assign "entries" to that data and use it below to findValue
 //
 //				if len(lvl[l].Files[i].Cache) == 0 {
 //					// No cache, read file from disk and cache entries
