@@ -83,12 +83,13 @@ func Find(key string, lvl []SstLevel, path string) ([]byte, bool) {
 				// Only read from disk if key is in the filter
 				var entries []SstEntry
 
-        // Find the appropriate SstIndex data block.
-        if thisIndex, nextIndex, idx, found := findIndex(key, lvl[l].Files[i].Index); found {
-          // from there, read that data block from disk into memory (seek to offset, read to next offset). need a function to do that, and test
-          // once we have the data block contents, cache it in memory
-          // then assign "entries" to that data and use it below to findValue
-        }
+// TODO:
+//        // Find the appropriate SstIndex data block.
+//        if thisIndex, nextIndex, idx, found := findIndex(key, lvl[l].Files[i].Index); found {
+//          // from there, read that data block from disk into memory (seek to offset, read to next offset). need a function to do that, and test
+//          // once we have the data block contents, cache it in memory
+//          // then assign "entries" to that data and use it below to findValue
+//        }
 
 //				if len(lvl[l].Files[i].Cache) == 0 {
 //					// No cache, read file from disk and cache entries

@@ -2,6 +2,7 @@ package sst
 
 import (
 	"bytes"
+	"fmt"
 	"log"
 	"os"
 	"strconv"
@@ -74,4 +75,43 @@ func TestBinaryRead(t *testing.T) {
 	files := []string{"mytest.bin"}
 	tmpdir, _ := Compact(files, ".", 40, 2, false)
 	log.Println("Compacted to", tmpdir)
+}
+
+func TestSparseIndex(t *testing.T) {
+	var keys []string
+	m := make(map[string]SstEntry)
+
+	for i := 0; i < 100; i++ {
+		key := fmt.Sprintf("Key %03d", i); // Print such that alpha/numeric sorts are the same
+		keys = append(keys, key)
+		m[key] = SstEntry{key, []byte("Test Value " + key), false}
+	}
+
+	writeSst("mytest2", keys, m, uint64(100), 5)
+
+	findex, err := os.Open("mytest2.index")
+	check(err)
+	defer findex.Close()
+
+	index, header, err := readIndex(findex)
+	if len(index) != 20 {
+		t.Error("Expected index of length 20 but received one of length", len(index))
+	}
+	if header.Seq != uint64(100) {
+		t.Error("Unexpected sequence number", header.Seq)
+	}
+
+  thisIndex, nextIndex, idx, found := findIndex("Key 010", index)
+  if !found {
+    t.Error("Sparse key not found")
+  }
+  if idx != 2 {
+    t.Error("Unexpected sparse index block", idx)
+  }
+  if thisIndex.offset != 340 {
+    t.Error("Unexpected found index offset", thisIndex.offset, thisIndex.Key)
+  }
+  if nextIndex.offset != 510 {
+    t.Error("Unexpected next index offset", nextIndex.offset, nextIndex.Key)
+  }
 }

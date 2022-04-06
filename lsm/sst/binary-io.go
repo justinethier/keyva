@@ -67,8 +67,8 @@ func readEntry(f *os.File) (SstEntry, error) {
 
 // writeSst creates an SST file and corresponding index file using the given data.
 // seqNum is the sequence number of the latest entry.
-// keysPerSegment is the number of keys that will be stored for each sparse index.
-func writeSst(filename string, keys []string, m map[string]SstEntry, seqNum uint64, keysPerSegment int) {
+// keysPerIndex is the number of keys that will be stored for each sparse index.
+func writeSst(filename string, keys []string, m map[string]SstEntry, seqNum uint64, keysPerIndex int) {
 	baseFilename := sstBaseFilename(filename)
 	f, err := os.Create(baseFilename + ".bin")
 	if err != nil {
@@ -94,7 +94,7 @@ func writeSst(filename string, keys []string, m map[string]SstEntry, seqNum uint
 		if err != nil {
 			log.Fatal(err)
 		}
-		if (i % keysPerSegment) == 0 {
+		if (i % keysPerIndex) == 0 {
 			writeKeyToIndex(findex, e.Key, offset)
 		}
 		offset += bytes
