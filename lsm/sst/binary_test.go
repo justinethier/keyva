@@ -114,4 +114,12 @@ func TestSparseIndex(t *testing.T) {
   if nextIndex.offset != 510 {
     t.Error("Unexpected next index offset", nextIndex.offset, nextIndex.Key)
   }
+
+	fbin, err := os.Open("mytest2.bin")
+	check(err)
+	defer fbin.Close()
+  entries := readDataBlockEntries(fbin, 340, 510)
+  if len(entries) != 5 {
+    t.Error("Expected", 5, "entries in data block but received", len(entries))
+  }
 }

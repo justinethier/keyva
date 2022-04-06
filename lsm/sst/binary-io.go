@@ -25,6 +25,29 @@ func readEntries(f *os.File) []SstEntry {
 	return lis
 }
 
+func readDataBlockEntries(f *os.File, _start int, _end int) []SstEntry{
+	var lis []SstEntry
+	var err error
+	var e SstEntry
+
+  var start, end int64 = int64(_start), int64(_end)
+  offset, err := f.Seek(start, 0)
+  check(err)
+
+	for err == nil {
+		e, err = readEntry(f)
+		if err == nil {
+			lis = append(lis, e)
+		}
+    // Read until we reach the end of the block
+    offset, err = f.Seek(0, 1) // Current position
+    if err == nil && offset >= end {
+      break
+    }
+	}
+	return lis
+}
+
 // readEntry reads a single entry from the given SST file pointer
 func readEntry(f *os.File) (SstEntry, error) {
 	var length int32
