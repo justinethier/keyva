@@ -25,25 +25,27 @@ func readEntries(f *os.File) []SstEntry {
 	return lis
 }
 
-func readDataBlockEntries(f *os.File, _start int, _end int) []SstEntry{
+func readDataBlockEntries(f *os.File, _start int, _end int) []SstEntry {
 	var lis []SstEntry
 	var err error
 	var e SstEntry
 
-  var start, end int64 = int64(_start), int64(_end)
-  offset, err := f.Seek(start, 0)
-  check(err)
+	var start, end int64 = int64(_start), int64(_end)
+	offset, err := f.Seek(start, 0)
+	check(err)
 
 	for err == nil {
 		e, err = readEntry(f)
 		if err == nil {
 			lis = append(lis, e)
+		} else if err == io.EOF {
+			break
 		}
-    // Read until we reach the end of the block
-    offset, err = f.Seek(0, 1) // Current position
-    if err == nil && offset >= end {
-      break
-    }
+		// Read until we reach the end of the block
+		offset, err = f.Seek(0, 1) // Current position
+		if err == nil && end > 0 && offset >= end {
+			break
+		}
 	}
 	return lis
 }
@@ -256,9 +258,9 @@ func writeEntry(f *os.File, data *SstEntry) (int, error) {
 	return bcount, nil
 }
 
-func NewSstFile(filename string, filter *bloom.Filter) SstFile {
-  index, _, err := readIndexFile(filename)
-  check(err)
-  cache := make([]SstIndexData, len(index))
-  return SstFile{filename, filter, index, cache}
+func NewSstFile(path string, filename string, filter *bloom.Filter) SstFile {
+	index, _, err := readIndexFile(path + "/" + filename)
+	check(err)
+	cache := make([]SstIndexData, len(index))
+	return SstFile{filename, filter, index, cache}
 }

@@ -28,7 +28,6 @@ import (
 	"os"
 	"sort"
 	"sync"
-	"time"
 )
 
 // New creates a new LsmTree object.
@@ -84,7 +83,7 @@ func (tree *LsmTree) ResetDB() {
 	defer tree.lock.Unlock()
 
 	tree.sst = make([]sst.SstLevel, 1) // Clear from memory
-	sst.RemoveAll(tree.path) // And delete from disk
+	sst.RemoveAll(tree.path)           // And delete from disk
 }
 
 // Set will add (or update) an entry in the tree with the corresponding key/value.
@@ -92,8 +91,8 @@ func (tree *LsmTree) Set(k string, value []byte) {
 	tree.set(k, value, false)
 }
 
-// Delete will remove the corresponding key from the tree. 
-// Note the actual key/value may not be removed from memory or disk immediately. 
+// Delete will remove the corresponding key from the tree.
+// Note the actual key/value may not be removed from memory or disk immediately.
 // One or more merge/compact must run before data is removed from disk.
 func (tree *LsmTree) Delete(k string) {
 	var val []byte
@@ -101,7 +100,7 @@ func (tree *LsmTree) Delete(k string) {
 }
 
 // Increment will add one to the integer counter specified by the given key,
-// and the most recent value will be returned. 
+// and the most recent value will be returned.
 // New counters return a value of 0.
 func (tree *LsmTree) Increment(k string) uint32 {
 	var result uint32
@@ -207,7 +206,7 @@ func (tree *LsmTree) loadLevel(path string, level int) uint64 {
 		for _, entry := range entries {
 			filter.Add(entry.Key)
 		}
-		var sstfile = sst.NewSstFile(filename, filter)
+		var sstfile = sst.NewSstFile(path, filename, filter)
 		tree.sst[level].Files = append(tree.sst[level].Files, sstfile)
 	}
 
@@ -244,7 +243,7 @@ func (tree *LsmTree) flush(seqNum uint64) {
 	//log.Println("DEBUG wrote new sst file", filename)
 
 	// Add information to memory
-	var sstfile = sst.SstFile{filename, filter, []sst.SstEntry{}, time.Now()}
+	var sstfile = sst.NewSstFile(tree.path, filename, filter)
 	tree.sst[0].Files = append(tree.sst[0].Files, sstfile)
 
 	// Clear memtbl

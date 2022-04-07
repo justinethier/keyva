@@ -15,12 +15,12 @@ func TestFindIndex(t *testing.T) {
 		iKey, iNext, i, f := findBlock(key, index)
 		var s, e int
 
-   if iKey != nil {
-     s = iKey.offset
-   }
-   if iNext != nil {
-     e = iNext.offset
-   }
+		if iKey != nil {
+			s = iKey.offset
+		}
+		if iNext != nil {
+			e = iNext.offset
+		}
 
 		if f != found {
 			t.Error("Key", key, "Expected found", found, "but received", f)

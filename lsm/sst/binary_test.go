@@ -82,7 +82,7 @@ func TestSparseIndex(t *testing.T) {
 	m := make(map[string]SstEntry)
 
 	for i := 0; i < 100; i++ {
-		key := fmt.Sprintf("Key %03d", i); // Print such that alpha/numeric sorts are the same
+		key := fmt.Sprintf("Key %03d", i) // Print such that alpha/numeric sorts are the same
 		keys = append(keys, key)
 		m[key] = SstEntry{key, []byte("Test Value " + key), false}
 	}
@@ -101,25 +101,25 @@ func TestSparseIndex(t *testing.T) {
 		t.Error("Unexpected sequence number", header.Seq)
 	}
 
-  thisIndex, nextIndex, idx, found := findBlock("Key 010", index)
-  if !found {
-    t.Error("Sparse key not found")
-  }
-  if idx != 2 {
-    t.Error("Unexpected sparse index block", idx)
-  }
-  if thisIndex.offset != 340 {
-    t.Error("Unexpected found index offset", thisIndex.offset, thisIndex.Key)
-  }
-  if nextIndex.offset != 510 {
-    t.Error("Unexpected next index offset", nextIndex.offset, nextIndex.Key)
-  }
+	thisIndex, nextIndex, idx, found := findBlock("Key 010", index)
+	if !found {
+		t.Error("Sparse key not found")
+	}
+	if idx != 2 {
+		t.Error("Unexpected sparse index block", idx)
+	}
+	if thisIndex.offset != 340 {
+		t.Error("Unexpected found index offset", thisIndex.offset, thisIndex.Key)
+	}
+	if nextIndex.offset != 510 {
+		t.Error("Unexpected next index offset", nextIndex.offset, nextIndex.Key)
+	}
 
 	fbin, err := os.Open("mytest2.bin")
 	check(err)
 	defer fbin.Close()
-  entries := readDataBlockEntries(fbin, 340, 510)
-  if len(entries) != 5 {
-    t.Error("Expected", 5, "entries in data block but received", len(entries))
-  }
+	entries := readDataBlockEntries(fbin, 340, 510)
+	if len(entries) != 5 {
+		t.Error("Expected", 5, "entries in data block but received", len(entries))
+	}
 }

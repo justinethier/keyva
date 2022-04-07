@@ -84,20 +84,25 @@ func Find(key string, lvl []SstLevel, path string) ([]byte, bool) {
 				// Only read from disk if key is in the filter
 				var entries []SstEntry
 
-        // Find appropriate data block using sparse index
-        if thisIndex, nextIndex, idx, found := findBlock(key, sstf.Index); found {
-          if len(sstf.Cache[idx].Data) > 0 {
-            entries = sstf.Cache[idx].Data
-          } else {
-					  // No cache, read file from disk and cache entries
-					  log.Println("DEBUG loading and caching entries from file", sstf.Filename)
-					  filename := PathForLevel(path, l) + "/" + sstf.Filename
-					  start, end := thisIndex.offset, nextIndex.offset
-					  entries = LoadBlock(filename, start, end)
-					  sstf.Cache[idx].Data = entries
-          }
-          sstf.Cache[idx].CachedAt = time.Now()
-        }
+				// Find appropriate data block using sparse index
+				if thisIndex, nextIndex, idx, found := findBlock(key, sstf.Index); found {
+					if len(sstf.Cache[idx].Data) > 0 {
+						entries = sstf.Cache[idx].Data
+					} else {
+						// No cache, read file from disk and cache entries
+						log.Println("DEBUG loading and caching entries from file", sstf.Filename)
+						filename := PathForLevel(path, l) + "/" + sstf.Filename
+						log.Println("DEBUG", thisIndex, nextIndex)
+						start := thisIndex.offset
+						end := -1
+						if nextIndex != nil {
+							end = nextIndex.offset
+						}
+						entries = LoadBlock(filename, start, end)
+						sstf.Cache[idx].Data = entries
+					}
+					sstf.Cache[idx].CachedAt = time.Now()
+				}
 
 				// Search for key in the file's entries
 				if entry, found := findValue(key, entries); found {
