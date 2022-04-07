@@ -6,6 +6,15 @@ WAL - Write ahead log, disk storage for a transaction log of sorts. This allows 
 Memtable - In-memory table holding some portion of the LSM tree
 SST - sorted string table, primary data representation for storing LSM on disk
 
+# Data Layout
+
+- (WAL)
+- Memtable - All data goes here first, an in-memory cache
+- SST
+  - Level - Data divided into multiple levels, starting at 0. Files at level 0 may contain overlapping data. Higher levels contain data in non-overlapping, sorted order across all files.
+  - Segment - Data is divided into segments on disk, one per SST file
+  - Block - Data within an SST is divided into blocks. There is one sparse index per block
+
 # Notes
 
 How we ideally want this to work:
