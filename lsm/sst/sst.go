@@ -1,8 +1,8 @@
 package sst
 
 import (
-	//"log"
-	//"time"
+	"log"
+	"time"
 )
 
 func check(e error) {
@@ -11,16 +11,16 @@ func check(e error) {
 	}
 }
 
-// findIndex finds the index that may contain the given key. That is, the key is between the starting point of
+// findBlock finds the index that may contain the given key. That is, the key is between the starting point of
 // that index and the starting point of the next index. EG: Key "bbb" is between index A at "aaa" and index B
 // at "bbb". So we return data for index A.
-func findIndex(key string, tbl []SstIndex) (*SstIndex, *SstIndex, int, bool) {
+func findBlock(key string, tbl []SstIndex) (*SstIndex, *SstIndex, int, bool) {
 	var left = 0
 	var right = len(tbl) - 1
 
 	for left <= right {
 		mid := left + int((right-left)/2)
-		//log.Println("DEBUG findIndex", key, left, right, mid, tbl[mid])
+		//log.Println("DEBUG findBlock", key, left, right, mid, tbl[mid])
 
 		// Have we found the appropriate index?
 		if tbl[mid].Key == key {
@@ -79,27 +79,25 @@ func Find(key string, lvl []SstLevel, path string) ([]byte, bool) {
 	// Search in reverse order, newest file to oldest
 	for l := 0; l < len(lvl); l++ {
 		for i := len(lvl[l].Files) - 1; i >= 0; i-- {
-			if lvl[l].Files[i].Filter.Test(key) {
+			sstf := lvl[l].Files[i]
+			if sstf.Filter.Test(key) {
 				// Only read from disk if key is in the filter
 				var entries []SstEntry
 
-// TODO:
-//        // Find the appropriate SstIndex data block.
-//        if thisIndex, nextIndex, idx, found := findIndex(key, lvl[l].Files[i].Index); found {
-//          // from there, read that data block from disk into memory (seek to offset, read to next offset). need a function to do that, and test
-//          // once we have the data block contents, cache it in memory
-//          // then assign "entries" to that data and use it below to findValue
-//        }
-
-//				if len(lvl[l].Files[i].Cache) == 0 {
-//					// No cache, read file from disk and cache entries
-//					log.Println("DEBUG loading and caching entries from file", lvl[l].Files[i].Filename)
-//					entries, _ = Load(PathForLevel(path, l) + "/" + lvl[l].Files[i].Filename)
-//					lvl[l].Files[i].Cache = entries
-//				} else {
-//					entries = lvl[l].Files[i].Cache
-//				}
-//				lvl[l].Files[i].CachedAt = time.Now() // Update cached time
+        // Find appropriate data block using sparse index
+        if thisIndex, nextIndex, idx, found := findBlock(key, sstf.Index); found {
+          if len(sstf.Cache[idx].Data) > 0 {
+            entries = sstf.Cache[idx].Data
+          } else {
+					  // No cache, read file from disk and cache entries
+					  log.Println("DEBUG loading and caching entries from file", sstf.Filename)
+					  filename := PathForLevel(path, l) + "/" + sstf.Filename
+					  start, end := thisIndex.offset, nextIndex.offset
+					  entries = LoadBlock(filename, start, end)
+					  sstf.Cache[idx].Data = entries
+          }
+          sstf.Cache[idx].CachedAt = time.Now()
+        }
 
 				// Search for key in the file's entries
 				if entry, found := findValue(key, entries); found {

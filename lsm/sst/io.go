@@ -32,6 +32,17 @@ func Load(filename string) ([]SstEntry, SstFileHeader) {
 	return buf, header
 }
 
+func LoadBlock(filename string, start int, end int) []SstEntry {
+	var data []SstEntry
+
+	fbin, err := os.Open(filename)
+	check(err)
+	defer fbin.Close()
+	data = readDataBlockEntries(fbin, start, end)
+
+	return data
+}
+
 // Levels returns the names of any directories containing consolidated
 // SST files at levels greater than level 0. This implies the data is
 // organized in non-overlapping regions across files at that level.

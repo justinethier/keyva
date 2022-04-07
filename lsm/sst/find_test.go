@@ -12,7 +12,7 @@ func TestFindIndex(t *testing.T) {
 	index := []SstIndex{e, j, m, u}
 
 	check := func(key string, start int, end int, idx int, found bool) {
-		iKey, iNext, i, f := findIndex(key, index)
+		iKey, iNext, i, f := findBlock(key, index)
 		var s, e int
 
    if iKey != nil {

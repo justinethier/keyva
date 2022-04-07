@@ -101,7 +101,7 @@ func TestSparseIndex(t *testing.T) {
 		t.Error("Unexpected sequence number", header.Seq)
 	}
 
-  thisIndex, nextIndex, idx, found := findIndex("Key 010", index)
+  thisIndex, nextIndex, idx, found := findBlock("Key 010", index)
   if !found {
     t.Error("Sparse key not found")
   }
