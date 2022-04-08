@@ -9,6 +9,16 @@ import (
 	"unicode/utf8"
 )
 
+func DumpBin(filename string) {
+  f, err := os.Open(filename)
+  check(err)
+  defer f.Close()
+  entries := readEntries(f)
+  for _, e := range entries {
+    log.Println("Key", e.Key, "Val", e.Value, "Del", e.Deleted)
+  }
+}
+
 // readEntries reads all entries from the given SST file pointer and
 // returns them as an array
 func readEntries(f *os.File) []SstEntry {
