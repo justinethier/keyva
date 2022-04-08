@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/justinethier/keyva/lsm/sst"
 	"os"
+	"strings"
 )
 
 func main() {
@@ -14,5 +15,9 @@ func main() {
   // print bin
   // usage
   filename := os.Args[1]
-  sst.DumpBin(filename)
+  if strings.HasSuffix(filename, ".index") {
+    sst.DumpIndex(filename)
+  } else {
+    sst.DumpBin(filename)
+  }
 }

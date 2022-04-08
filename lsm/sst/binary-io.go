@@ -19,6 +19,19 @@ func DumpBin(filename string) {
   }
 }
 
+func DumpIndex(filename string) {
+  f, err := os.Open(filename)
+  check(err)
+  defer f.Close()
+  index, header, err := readIndex(f)
+  log.Println("Header", header)
+  if err == nil {
+    for _, e := range index {
+      log.Println("Key", e.Key, "offset", e.offset)
+    }
+  }
+}
+
 // readEntries reads all entries from the given SST file pointer and
 // returns them as an array
 func readEntries(f *os.File) []SstEntry {
