@@ -5,11 +5,14 @@ import (
 	"os"
 )
 
-//TODO: modify to generate 1 MB, then 100 MB+ of data for the DB
-//TODO: assess merge performance by using repl
-
 func main() {
 	//util.OpenSyslog()
-	filename := os.Args[1]
+
+  // TODO: need args to:
+  //
+  // print index
+  // print bin
+  // usage
+  filename := os.Args[1]
   sst.DumpBin(filename)
 }
