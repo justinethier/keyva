@@ -78,11 +78,11 @@ func Compact(filenames []string, path string, recordsPerSst int, keysPerSegment 
 		}
 		log.Println("Debug compact writing entry", e.Key)
 		bytes, _ := writeEntry(f, e)
-		offset += bytes
 		if (count % keysPerSegment) == 0 {
 			log.Println("Debug compact writing to index", e.Key)
 			writeKeyToIndex(fidx, e.Key, offset)
 		}
+		offset += bytes
 	}
 	fbin, fidx := createFiles()
 	// write seq header to index file
