@@ -114,6 +114,7 @@ func Compact(filenames []string, path string, recordsPerSst int, keysPerSegment 
 		count++
 		if count > recordsPerSst {
 			count = 0
+			offset = 0
 			fbin.Close()
 			fidx.Close()
 			fbin, fidx = createFiles()
