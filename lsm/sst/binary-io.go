@@ -10,26 +10,26 @@ import (
 )
 
 func DumpBin(filename string) {
-  f, err := os.Open(filename)
-  check(err)
-  defer f.Close()
-  entries := readEntries(f)
-  for _, e := range entries {
-    log.Println("Key", e.Key, "Val", e.Value, "Del", e.Deleted)
-  }
+	f, err := os.Open(filename)
+	check(err)
+	defer f.Close()
+	entries := readEntries(f)
+	for _, e := range entries {
+		log.Println("Key", e.Key, "Val", e.Value, "Del", e.Deleted)
+	}
 }
 
 func DumpIndex(filename string) {
-  f, err := os.Open(filename)
-  check(err)
-  defer f.Close()
-  index, header, err := readIndex(f)
-  log.Println("Header", header)
-  if err == nil {
-    for _, e := range index {
-      log.Println("Key", e.Key, "offset", e.offset)
-    }
-  }
+	f, err := os.Open(filename)
+	check(err)
+	defer f.Close()
+	index, header, err := readIndex(f)
+	log.Println("Header", header)
+	if err == nil {
+		for _, e := range index {
+			log.Println("Key", e.Key, "offset", e.offset)
+		}
+	}
 }
 
 // readEntries reads all entries from the given SST file pointer and

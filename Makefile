@@ -1,8 +1,9 @@
 all: 
-	cd cmd/keyva; go build
-	cd cmd/keyva-cli; go build
+	cd cmd/conv; go build
 	cd cmd/datagen; go build
 	cd cmd/httpgen; go build
+	cd cmd/keyva-cli; go build
+	cd cmd/keyva; go build
 
 PACKAGES=./cache/... ./appendlog/... ./lsm/...
 
@@ -20,9 +21,11 @@ doc:
 
 fmt:
 	go fmt $(PACKAGES)
-	go fmt cmd/keyva/*.go
-	go fmt cmd/keyva-cli/*.go
+	go fmt cmd/conv/*.go
 	go fmt cmd/datagen/*.go
+	go fmt cmd/httpgen/*.go
+	go fmt cmd/keyva-cli/*.go
+	go fmt cmd/keyva/*.go
 
 bench:
 	go test $(PACKAGES) -bench=.
