@@ -1,9 +1,9 @@
 
 ![data struct](../docs/images/lsm-data-struct.png "data struct")
 
-!SST Level 0[](lsm-level-0.png "SST Level 0")
-!SST Level 1[](lsm-level-1.png "SST Level 1")
-![SST Index](lsm-sst-index.png "SST Index")
+![SST Level 0](../docs/images/lsm-level-0.png "SST Level 0")
+![SST Level 1](../docs/images/lsm-level-1.png "SST Level 1")
+![SST Index](../docs/images/lsm-sst-index.png "SST Index")
 
 # Data structures
 
