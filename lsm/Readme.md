@@ -1,5 +1,6 @@
 
-![](lsm-Data Structures.drawio.png "")
+![data struct](../docs/images/lsm-data-struct.png "data struct")
+
 ![](lsm-SST Files - Level 0.drawio.png "")
 ![](lsm-SST Files - Level 1.drawio.png "")
 ![](lsm-SST w_Index.drawio.png "")
