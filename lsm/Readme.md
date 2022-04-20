@@ -1,4 +1,9 @@
 
+![](lsm-Data Structures.drawio.png "")
+![](lsm-SST Files - Level 0.drawio.png "")
+![](lsm-SST Files - Level 1.drawio.png "")
+![](lsm-SST w_Index.drawio.png "")
+
 # Data structures
 
 LSM Tree - log-structured merge tree
