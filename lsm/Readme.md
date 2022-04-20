@@ -35,10 +35,19 @@ How we ideally want this to work:
 
 ## Get
 
+Basic algorithm to find a value:
+
+TODO: go over this again, revise, then create a diagram (flowchart??)
+
 * check memtable(s)
-  - could be more than one if we support immutable memtables
+  - (could be more than one if we support immutable memtables)
 * check SST files at level 0
+  - At this level we need to check each file, starting from the newest ones first
+  - Check bloom filter for each file, only check file if key is in bloom filter
 * check SST files at level 1, ...
+  - Can be more efficient since keys are sorted across files
+  - binary search using sparse index to find appropriate file, then check bloom filter before reading file
+  - TODO: implement this in `sst.Find`. TODO: benchmark this vs old algorithm, how much faster is it??
 
 ## SST
 
