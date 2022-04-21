@@ -1,6 +1,8 @@
 
 ![data struct](../docs/images/lsm-data-struct.png "data struct")
 
+![Reads](../docs/images/lsm-Reads.drawio.png "reads")
+
 ![SST Level 0](../docs/images/lsm-level-0.png "SST Level 0")
 ![SST Level 1](../docs/images/lsm-level-1.png "SST Level 1")
 ![SST Index](../docs/images/lsm-sst-index.png "SST Index")
