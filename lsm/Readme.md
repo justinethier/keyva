@@ -24,8 +24,13 @@ This document provides an overview of how LSM trees work (both in the context of
 ## WAL
 ## Sorted String Table
 
+- sorted strings (binary search)
+- data layout
+  - segment (single sst file)
+  - block (keys within a single sparse index)
 - sparse index
 - levels
+- caching
 - bloom filter
 
 ![SST Level 0](../docs/images/lsm-level-0.png "SST Level 0")
@@ -33,6 +38,8 @@ This document provides an overview of how LSM trees work (both in the context of
 ![SST Index](../docs/images/lsm-sst-index.png "SST Index")
 
 # Reading data
+
+TODO: relocate section above data structures??
 
 ![Reads](../docs/images/lsm-Reads.drawio.png "reads")
 
