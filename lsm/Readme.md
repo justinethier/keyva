@@ -18,10 +18,24 @@ This document provides an overview of how LSM trees work (both in the context of
 (overview diagram)
 ![data struct](../docs/images/lsm-data-struct.png "data struct")
 
+inserts
+deletes - tombstone
+
+write amplification
+
 # Data Structures 
 
 ## MemTable
+
+tree / skiplist
+
 ## WAL
+
+plain-text dump of all inserts
+
+in our implementation wal is purged after SST is written to disk
+- prevents infinite growth
+
 ## Sorted String Table
 
 - sorted strings (binary search)
@@ -30,8 +44,11 @@ This document provides an overview of how LSM trees work (both in the context of
   - block (keys within a single sparse index)
 - sparse index
 - levels
-- caching
 - bloom filter
+
+this implementation
+- size of each segment / index
+- caching
 
 ![SST Level 0](../docs/images/lsm-level-0.png "SST Level 0")
 ![SST Level 1](../docs/images/lsm-level-1.png "SST Level 1")
