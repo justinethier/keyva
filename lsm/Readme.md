@@ -1,11 +1,42 @@
+# Overview
 
+The Log-structured merge tree (LSM tree) is a popular alternative to B-trees that databases use for persistently storing data. 
+
+LSM tree are specifically designed to handle write-heavy workloads...
+
+Used in many popular NoSQL databases including Apache Cassandra, Elasticsearch, Google Bigtable, Apache HBase, and InfluxDB.
+
+Embedded data stores - (LevelDB and RocksDB)
+
+This project uses an LSM tree to store data in terms of key/value pairs. Keys may be any UTF-8 encoded string and each value is a sequence of bytes.
+
+This document provides an overview of how LSM trees work (both in the context of this project and in general)
+
+
+# Writing data
+
+(overview diagram)
 ![data struct](../docs/images/lsm-data-struct.png "data struct")
 
-![Reads](../docs/images/lsm-Reads.drawio.png "reads")
+# Data Structures 
+
+## MemTable
+## WAL
+## Sorted String Table
+
+- sparse index
+- levels
+- bloom filter
 
 ![SST Level 0](../docs/images/lsm-level-0.png "SST Level 0")
 ![SST Level 1](../docs/images/lsm-level-1.png "SST Level 1")
 ![SST Index](../docs/images/lsm-sst-index.png "SST Index")
+
+# Reading data
+
+![Reads](../docs/images/lsm-Reads.drawio.png "reads")
+
+# Older notes -
 
 # Data structures
 
