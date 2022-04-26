@@ -12,39 +12,66 @@ This project uses an LSM tree to store data in terms of key/value pairs. Keys ma
 
 This document provides an overview of how LSM trees work (both in the context of this project and in general)
 
+# High-Level Design
 
-# Writing data
-
-(overview diagram)
 ![data struct](../docs/images/lsm-data-struct.png "data struct")
 
-inserts
-deletes - tombstone
+At a high level, data is always added to an LSM tree using sequential writes. Data is only written to disk using append operations. This allows fast write operations but does require subsequent compaction to free extra records written when a key is updated or deleted.
 
-write amplification
+When data is added to the LSM tree it is written to two different places. 
+
+The MemTable, a data structure stored in memory, is initially used to store data. Operations here are very fast but space is limited and the data cannot be retained if the process is restarted. 
+
+In order to recover data across restarts, the same data is also appended to the Write Ahead Log (WAL). The WAL is a simple append-only log that contains a single record for each operation made to the LSM tree. This
+
+Eventually the MemTable will become too large to efficiently hold in memory and the data is flushed to a Sorted String Table (SST) file on disk. 
+
+SST files are indexed and immutable, allowing fast concurrent data access. Eventually when enough SST files are generated a background job will compact them and merge the data into a new "level" of SST files. This gives the
+
+(SST files can efficiently serve large data sets...)
 
 # Data Structures 
 
 ## MemTable
 
-tree / skiplist
+(- Memtable - All data goes here first, an in-memory cache)
+
+In our implementation the MemTable is stored using a [skip list](https://en.wikipedia.org/wiki/Skip_list). That said, another data structure such as a balanced tree could work as well.
+
+if a key is in the table it can be updated
+
+(deletes must be retained in the table as well, later resolved in SST)
+
+(immutable memtable while waiting to be flushed)
 
 ## WAL
 
-plain-text dump of all inserts
+The WAL contains a plain-text dump of all operations on the table.
+
+WAL - Write ahead log, disk storage for a transaction log of sorts. This allows reconstructing the in-memory portion of the tree in the event of service crash/restart, for data that has not been flushed to SST yet
 
 in our implementation wal is purged after SST is written to disk
 - prevents infinite growth
 
 ## Sorted String Table
 
-- sorted strings (binary search)
+SST - sorted string table, primary data representation for storing LSM on disk
+
+- SST
+  - Level - Data divided into multiple levels, starting at 0. Files at level 0 may contain overlapping data. Higher levels contain data in non-overlapping, sorted order across all files.
+  - Segment - Data is divided into segments on disk, one per SST file
+  - Block - Data within an SST is divided into blocks. There is one sparse index per block
+
+- immutable
+- sorted strings (binary search algorithm)
 - data layout
   - segment (single sst file)
   - block (keys within a single sparse index)
 - sparse index
 - levels
 - bloom filter
+- compact/merge
+  - k-way merge algorithm
 
 this implementation
 - size of each segment / index
@@ -54,31 +81,27 @@ this implementation
 ![SST Level 1](../docs/images/lsm-level-1.png "SST Level 1")
 ![SST Index](../docs/images/lsm-sst-index.png "SST Index")
 
+
+# Writing data
+
+
+inserts
+deletes - tombstone
+
+write amplification
+
 # Reading data
 
 TODO: relocate section above data structures??
 
 ![Reads](../docs/images/lsm-Reads.drawio.png "reads")
 
+
+
 # Older notes -
 
-# Data structures
 
-LSM Tree - log-structured merge tree
-WAL - Write ahead log, disk storage for a transaction log of sorts. This allows reconstructing the in-memory portion of the tree in the event of service crash/restart, for data that has not been flushed to SST yet
-Memtable - In-memory table holding some portion of the LSM tree
-SST - sorted string table, primary data representation for storing LSM on disk
-
-# Data Layout
-
-- (WAL)
-- Memtable - All data goes here first, an in-memory cache
-- SST
-  - Level - Data divided into multiple levels, starting at 0. Files at level 0 may contain overlapping data. Higher levels contain data in non-overlapping, sorted order across all files.
-  - Segment - Data is divided into segments on disk, one per SST file
-  - Block - Data within an SST is divided into blocks. There is one sparse index per block
-
-# Notes
+## Notes
 
 How we ideally want this to work:
 
