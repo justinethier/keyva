@@ -97,6 +97,14 @@ TODO: relocate section above data structures??
 ![Reads](../docs/images/lsm-Reads.drawio.png "reads")
 
 
+# Conclusion
+
+And there you have it.
+
+(project link)
+
+(what else?)
+
 
 # Older notes -
 
