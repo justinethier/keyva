@@ -68,6 +68,8 @@ A bloom filter is used to determine if an SST might contain a key before we read
 
 ## MemTable
 
+![binary tree](../docs/images/tree.png "binary tree")
+
 All data added to the LSM tree is initially stored in Memtable, essentially an in-memory cache.
 
 Data in the MemTable needs to be arranged for fast access and ideally for low-cost concurrent read/write operations. A self-balanced tree such as a red-black tree can work well for this purpose. Our implementation a [skip list](https://en.wikipedia.org/wiki/Skip_list). 
