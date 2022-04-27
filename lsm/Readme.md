@@ -99,6 +99,8 @@ SST files are the primary data representation for storing an LSM tree on disk.
 
 - immutable
 - sorted strings (binary search algorithm, link to wiki/code)
+- binary files
+  - optional gzip
 - data layout
   - segment (single sst file)
   - block (keys within a single sparse index)
