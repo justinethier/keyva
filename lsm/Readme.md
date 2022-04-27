@@ -1,8 +1,6 @@
 # Overview
 
-The Log-structured merge tree (LSM tree) is a popular alternative to B-trees that databases use for persistently storing data. 
-
-LSM tree are specifically designed to handle write-heavy workloads...
+The Log-structured merge tree (LSM tree) is a popular alternative to B-trees for persistently storing data.  LSM tree are specifically designed to handle write-heavy workloads.
 
 Used in many popular NoSQL databases including Apache Cassandra, Elasticsearch, Google Bigtable, Apache HBase, and InfluxDB.
 
@@ -10,13 +8,13 @@ Embedded data stores - (LevelDB and RocksDB)
 
 This project uses an LSM tree to store data in terms of key/value pairs. Keys may be any UTF-8 encoded string and each value is a sequence of bytes.
 
-This document provides an overview of how LSM trees work (both in the context of this project and in general)
+This document provides an overview of how LSM trees work. Both in the context of this project and in general)
 
 # High-Level Design
 
 ![data struct](../docs/images/lsm-data-struct.png "data struct")
 
-At a high level, data is always added to an LSM tree using sequential writes. Data is only written to disk using append operations. This allows fast write operations but does require subsequent compaction to free extra records written when a key is updated or deleted.
+Data is always added to an LSM tree using sequential writes. That is, data is only written to disk using append operations. This allows fast write operations but does require subsequent compaction to free extra records written when a key is updated or deleted.
 
 When data is added to the LSM tree it is written to two different places. 
 
@@ -33,9 +31,26 @@ SST files are indexed and immutable, allowing fast concurrent data access. Event
 # Writing data
 
 inserts
-deletes - tombstone
 
-write amplification
+## Deletes
+
+![tombstone](../docs/images/tombstone.png "tombstone")
+
+Data cannot be deleted directly from an SST. Instead, the key is flagged as deleted, and the data is deleted later when the SST is compacted. These flagged records are called tombstones.
+
+You can see the `Deleted` flag used in our implementation:
+
+    type SstEntry struct {
+    	Key     string
+    	Value   []byte
+    	Deleted bool
+    }
+
+There is an opportunity here to save space by clearing `Value` when a key is deleted.
+
+#e Write Amplification
+
+TBD
 
 # Reading data
 
