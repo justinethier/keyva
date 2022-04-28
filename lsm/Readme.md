@@ -107,17 +107,21 @@ notes
 
 #### Level
 
-SST files are organized into a series of multiple levels starting at level 0. Each level contains more data than the last. The maximum number of levels is configurable.
+SST files are organized into a series of multiple levels starting at level 0. Each level contains more data than the last and the maximum number of levels is configurable.
 
 ![SST Level 0](../docs/images/lsm-level-0.png "SST Level 0")
 
-As shown above files at level 0 may contain overlapping data. This is necessary as files are added on-demand as the MemTable reaches capacity. Thus in order to find the most recent value for a key in level 0 each SST file must be checked, starting from the most recent file and working back to the oldest file.
+As shown above files at level 0 may contain overlapping data. For example, oObserve how the first file contains a key for "Tucson" while the first key in the second file is "Atlanta". 
+
+This ordering is necessary as files are added on-demand as the MemTable reaches capacity. The problem is that in order to find the most recent value for a key in level 0 each SST file must be checked. We need to start from the most recent file and work back to the oldest file.
 
 Higher levels are arranged more efficiently. Consider the same data after being merged to level 1:
 
 ![SST Level 1](../docs/images/lsm-level-1.png "SST Level 1")
 
 As you can see data is guaranteed to be in sorted order across all files in this level. A binary search may be used to find the SST file containing a given key.
+
+(As a result we probably want to minimize the amount of data in level 0, especially for a large dataset)
 
 #### Segment
 
