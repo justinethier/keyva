@@ -1,12 +1,10 @@
-# Overview
+# Introduction
 
 The Log-structured merge tree (LSM tree) is a popular alternative to B-trees for persistently storing data.  LSM tree are specifically designed to handle write-heavy workloads.
 
 Used in many popular NoSQL databases including Apache Cassandra, Elasticsearch, Google Bigtable, Apache HBase, and InfluxDB.
 
 Embedded data stores - (LevelDB and RocksDB)
-
-This project uses an LSM tree to store data in terms of key/value pairs. Keys may be any UTF-8 encoded string and each value is a sequence of bytes.
 
 This document provides an overview of how LSM trees work. Both in the context of this project and in general)
 
@@ -28,11 +26,17 @@ SST files are indexed and immutable, allowing fast concurrent data access. Event
 
 (SST files can efficiently serve large data sets...)
 
-# Writing data
+# Data Model
 
-inserts
+## Key-Value Store
 
-## Deletes
+This project uses an LSM tree to store data in terms of key/value pairs. Keys may be any UTF-8 encoded string and each value is a sequence of bytes.
+
+## Insert
+
+## Update
+
+## Delete
 
 ![tombstone](../docs/images/tombstone.png "tombstone")
 
@@ -49,6 +53,10 @@ You can see the `Deleted` flag used in our implementation:
 `Value` may be stored as an empty array for a deleted record, so at least we save a bit of space there.
 
 Unfortunately a tombstone cannot be immediately removed when its SST is compacted. The tombstone must reach the highest SST level in the tree before it can be safely removed.
+
+## Read
+
+(find most recent value for a key)
 
 ## Write Amplification
 
@@ -105,7 +113,10 @@ Files at level 0 may contain overlapping data. This is necessary as files are ad
 
 ![SST Level 0](../docs/images/lsm-level-0.png "SST Level 0")
 
-Higher levels are arranged more efficiently. Data is guaranteed to be in sorted order across all files in the level:
+In order to find the most recent value for a key in level 0 each SST file must be checked, starting from the most recent file and working back to the oldest file.
+
+
+Higher levels are arranged more efficiently. Data is guaranteed to be in sorted order across all files in the level. So a binary search may be used to find the SST file containing a given key:
 
 ![SST Level 1](../docs/images/lsm-level-1.png "SST Level 1")
 
@@ -148,6 +159,10 @@ And there you have it.
 (project link)
 
 (what else?)
+
+# References
+
+TBD
 
 
 # Older notes -
