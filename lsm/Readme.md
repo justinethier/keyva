@@ -54,16 +54,6 @@ Unfortunately a tombstone cannot be immediately removed when its SST is compacte
 
 The same data may be written to disk multiple times as a key/value is promoted from one level of the SST to another. (An important consideration is to minimize the number of writes)
 
-# Reading data
-
-TODO: relocate section above data structures??
-
-![Reads](../docs/images/lsm-Reads.drawio.png "reads")
-
-## Bloom Filters
-
-A bloom filter is used to determine if an SST might contain a key before we read the SST. This helps speed up read operations by reducing the number of disk reads.
-
 # Data Structures 
 
 ## MemTable
@@ -90,38 +80,65 @@ In our implementation, a separate WAL file is used for each MemTable. After a Me
 
 ## Sorted String Table
 
-SST files are the primary data representation for storing an LSM tree on disk.
+SST files are the primary data representation for storing an LSM tree on disk. Each one contains a series of key/values sorted by key:
 
-- SST
-  - Level - Data divided into multiple levels, starting at 0. Files at level 0 may contain overlapping data. Higher levels contain data in non-overlapping, sorted order across all files.
-  - Segment - Data is divided into segments on disk, one per SST file
-  - Block - Data within an SST is divided into blocks. There is one sparse index per block
+![SST File](../docs/images/lsm-sst.png "SST File")
 
-- sequence number
+Each file is immutable, making it easier to access data concurrently.
 
-- immutable
-- sorted strings (binary search algorithm, link to wiki/code)
+### Sparse Index
+
+notes 
+- index does not need to contain all keys since data is sorted
+- include every Nth key in the "sparse" index
+- bloom filter helps avoid searching a sparse index that does not contain key
+
+![SST Index](../docs/images/lsm-sst-index.png "SST Index")
+
+### Data Layout
+
+#### Level
+
+SST files are organized into a series of multiple levels starting at level 0. The maximum number of levels is configurable.
+
+Files at level 0 may contain overlapping data. This is necessary as files are added on-demand as the MemTable reaches capacity:
+
+![SST Level 0](../docs/images/lsm-level-0.png "SST Level 0")
+
+Higher levels are arranged more efficiently. Data is guaranteed to be in sorted order across all files in the level:
+
+![SST Level 1](../docs/images/lsm-level-1.png "SST Level 1")
+
+#### Segment
+
+Data is divided into segments on disk, one per SST file.
+
+Each segment also contains a header (sequence number) and an index.
+
+#### Block 
+
+Data within an SST is divided into blocks. There is one sparse index per block
 - binary files
   - optional gzip
-- data layout
-  - segment (single sst file)
   - block (keys within a single sparse index)
-- sparse index
-- levels
-- bloom filter
+
+this implementation
+- size of each segment / index
+- caching
+
+# Merge
+
 - compact/merge
   - [k-way merge algorithm](https://en.wikipedia.org/wiki/K-way_merge_algorithm) - link to wiki and code for this
   - when to begin, when to delete files, etc
   - implemented as a streaming algorithm, to allow handling large datasets
   - (keyva - reload levels afterwards, etc)
 
-this implementation
-- size of each segment / index
-- caching
+# Bloom Filter
 
-![SST Level 0](../docs/images/lsm-level-0.png "SST Level 0")
-![SST Level 1](../docs/images/lsm-level-1.png "SST Level 1")
-![SST Index](../docs/images/lsm-sst-index.png "SST Index")
+A bloom filter is used to determine if an SST might contain a key before we check the SST. This helps speed up read operations by reducing the amount of disk accesses when reading data:
+
+![Reads](../docs/images/lsm-Reads.drawio.png "reads")
 
 
 # Conclusion
