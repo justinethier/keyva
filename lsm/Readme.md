@@ -111,7 +111,7 @@ SST files are organized into a series of multiple levels starting at level 0. Ea
 
 ![SST Level 0](../docs/images/lsm-level-0.png "SST Level 0")
 
-As shown above files at level 0 may contain overlapping data. For example, oObserve how the first file contains a key for "Tucson" while the first key in the second file is "Atlanta". 
+As shown above files at level 0 may contain overlapping data. For example, observe how the first file contains a key for "Tucson" while the first key in the second file is "Atlanta". 
 
 This ordering is necessary as files are added on-demand as the MemTable reaches capacity. The problem is that in order to find the most recent value for a key in level 0 each SST file must be checked. We need to start from the most recent file and work back to the oldest file.
 
