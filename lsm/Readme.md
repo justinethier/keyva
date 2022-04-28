@@ -1,42 +1,40 @@
 # Introduction
 
-The Log-structured merge tree (LSM tree) is a popular alternative to B-trees for persistently storing data.  LSM tree are specifically designed to handle write-heavy workloads.
+The Log-structured merge tree (LSM tree) is a popular alternative to B-trees for persistently storing data.  
 
-Used in many popular NoSQL databases including Apache Cassandra, Elasticsearch, Google Bigtable, Apache HBase, and InfluxDB.
+LSM tree are specifically designed to handle write-heavy workloads. They are used in many popular NoSQL databases including Apache Cassandra, Elasticsearch, Google Bigtable, Apache HBase, and InfluxDB. As well as embedded data stores such as LevelDB and RocksDB.
 
-Embedded data stores - (LevelDB and RocksDB)
-
-This document provides an overview of how LSM trees work. Both in the context of this project and in general)
+This document provides implementation details for the LSM tree used by our project, [keyva](https://github.com/justinethier/keyva). However the details are generic and  apply to many other implementations as well.
 
 # High-Level Design
 
 ![data struct](../docs/images/lsm-data-struct.png "data struct")
 
-Data is always added to an LSM tree using sequential writes. That is, data is only written to disk using append operations. This allows fast write operations but does require subsequent compaction to free extra records written when a key is updated or deleted.
+Data is always added to an LSM tree using sequential writes. That is, data is only written to storage using append operations. This allows fast write operations but does require subsequent compaction to free extra records written when a key is updated or deleted.
 
-When data is added to the LSM tree it is written to two different places. 
+The MemTable, a data structure stored entirely in memory, is initially used to store new data. Operations here are very fast but space is limited and the data cannot be retained if the process is restarted. 
 
-The MemTable, a data structure stored in memory, is initially used to store data. Operations here are very fast but space is limited and the data cannot be retained if the process is restarted. 
+In order to recover data across restarts, the same data is also appended to a Write Ahead Log (WAL). The WAL is a simple append-only log that contains a single record for each operation made to the LSM tree.
 
-In order to recover data across restarts, the same data is also appended to the Write Ahead Log (WAL). The WAL is a simple append-only log that contains a single record for each operation made to the LSM tree. This
+Eventually the MemTable will become too large to efficiently hold in memory and the data is flushed to a Sorted String Table (SST) file on disk. SST files are indexed and immutable, allowing fast concurrent data access. Eventually when enough SST files are generated a background job will compact them and merge the data into a new "level" of SST files. This gives the tree a chance to remove redudant records and efficiently re-organize data.
 
-Eventually the MemTable will become too large to efficiently hold in memory and the data is flushed to a Sorted String Table (SST) file on disk. 
-
-SST files are indexed and immutable, allowing fast concurrent data access. Eventually when enough SST files are generated a background job will compact them and merge the data into a new "level" of SST files. This gives the
-
-(SST files can efficiently serve large data sets...)
+SST files can efficiently serve large data sets. (TODO: ref Google Bigtable TB or more of data)
 
 # Data Model
 
 ## Key-Value Store
 
-This project uses an LSM tree to store data in terms of key/value pairs. Keys may be any UTF-8 encoded string and each value is a sequence of bytes.
+Keyva uses a LSM tree to store data in terms of key/value pairs. Each key is an UTF-8 encoded string and each value is a sequence of bytes.
 
-## Insert
+## Inserts and Updates
 
-## Update
+As depicted in the overview diagram, data is inserted into the MemTable/WAL and then flows into a series of SST tables. An important consideration is that when data is updated, the original value for the key may still remain in the tree for some time. An update will be added to the MemTable/WAL just like any other insert operation. If they key already resides in the MemTable it will be overwritten with the new value. However, if the old key/value already exists in the table it most likely has already been flushed to an SST and will remain there until the new key/value is merged into that SST level. At this point the old data will finally be discarded and only the latest value will be retained for the key.
 
-## Delete
+## Reads
+
+Continuing on the previous point, when reading data an LSM tree must find the most recent value for a given key. Thus any read operation will start with the MemTable before moving to SST level 0, level 1, etc.
+
+## Deletes
 
 ![tombstone](../docs/images/tombstone.png "tombstone")
 
@@ -53,10 +51,6 @@ You can see the `Deleted` flag used in our implementation:
 `Value` may be stored as an empty array for a deleted record, so at least we save a bit of space there.
 
 Unfortunately a tombstone cannot be immediately removed when its SST is compacted. The tombstone must reach the highest SST level in the tree before it can be safely removed.
-
-## Read
-
-(find most recent value for a key)
 
 ## Write Amplification
 
