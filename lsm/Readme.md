@@ -64,11 +64,11 @@ The same data may be written to disk multiple times as a key/value is promoted f
 
 All data added to the LSM tree is initially stored in Memtable, essentially an in-memory cache.
 
-Data in the MemTable needs to be arranged for fast access and ideally for low-cost concurrent read/write operations. A self-balanced tree such as a red-black tree can work well for this purpose. Our implementation a [skip list](https://en.wikipedia.org/wiki/Skip_list). 
+Data in the MemTable needs to be arranged for fast access and ideally for low-cost concurrent read/write operations. A self-balanced tree such as a red-black tree can work well for this purpose. Our implementation uses a [skip list](https://en.wikipedia.org/wiki/Skip_list). 
 
-If a key already exists in the table when a request is recieved, the value will be updated directly. This is different than the other data structures employed by the LSM tree, which are immutable.
+If a key already exists in the table when a request is recieved the value will be updated directly. This is different than the other data structures employed by the LSM tree, which are immutable.
 
-Deletes must be retained in the table as well. It is important to store the tombstone in case the key still contains data in the SST. The deletion will be resolved later when we compact SST files.
+Deletes must be retained in the table as well. It is important to store a tombstone in case the key still contains data in the SST. The deletion will be resolved later when we compact SST files.
 
 Finally, when the MemTable reaches a certain threshold it must be flushed to disk. A potential optimization here is to allocate a new MemTable and designate the current MemTable as read-only. The old table can then be set off to the side for a background job to write to disk.
 
@@ -78,7 +78,7 @@ The WAL is a plain-text file containing a dump of all operations on the table. E
 
 This allows reconstructing the in-memory portion of the tree in the event of service restart for data that has not been flushed to SST yet.
 
-In our implementation, a separate WAL file is used for each MemTable. After a MemTable is written to disk its WAL file is purged. This prevents infinite growth of the WAL. And the WAL file is not necessary at that point as its data is now retained in persistent storage by the SST. 
+In our implementation a separate WAL file is used for each MemTable. After a MemTable is written to disk its WAL file is purged, as the data is now retained in persistent storage by an SST. This prevents infinite growth of the WAL.  
 
 ## Sorted String Table
 
@@ -143,6 +143,16 @@ this implementation
   - (keyva - reload levels afterwards, etc)
 - background job/thread
 
+## older notes on Compact
+
+* Take files from level `n`
+* Compact into new file(s) at level `n + 1`
+* Lock the LSM, swap in new files, and delete old files from first step
+
+When to do this? Want a web API function and potentially a background job as well.
+
+See article on this (Link TBD). Can compact at thresholds, time intervals (EG: time series DB), etc. Ultimately would want this to be flexible.
+
 # Bloom Filter
 
 A bloom filter is used to determine if an SST might contain a key before we check the SST. This helps speed up read operations by reducing the amount of disk accesses when reading data:
@@ -165,23 +175,8 @@ TBD
 
 # Older notes -
 
-## SST
-
 ### Caching
  
- * right now an SST file is cached in memory when read. need a GC job and background thread for this
-
-### Compact
-
-* Take files from level `n`
-* Compact into new file(s) at level `n + 1`
-* Lock the LSM, swap in new files, and delete old files from first step
-
-When to do this? Want a web API function and potentially a background job as well.
-
-See article on this. Can compact at thresholds, time intervals (EG: time series DB), etc. Ultimately would want this to be flexible.
-
-## Other stuff
-
+* right now an SST file is cached in memory when read. need a GC job and background thread for this
 * GC cached data
 * optional TTL for keys?
