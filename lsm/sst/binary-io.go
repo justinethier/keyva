@@ -2,11 +2,35 @@ package sst
 
 import (
 	"encoding/binary"
+	"github.com/justinethier/keyva/bloom"
 	"io"
 	"log"
 	"os"
 	"unicode/utf8"
 )
+
+func DumpBin(filename string) {
+	f, err := os.Open(filename)
+	check(err)
+	defer f.Close()
+	entries := readEntries(f)
+	for _, e := range entries {
+		log.Println("Key", e.Key, "Val", e.Value, "Del", e.Deleted)
+	}
+}
+
+func DumpIndex(filename string) {
+	f, err := os.Open(filename)
+	check(err)
+	defer f.Close()
+	index, header, err := readIndex(f)
+	log.Println("Header", header)
+	if err == nil {
+		for _, e := range index {
+			log.Println("Key", e.Key, "offset", e.offset)
+		}
+	}
+}
 
 // readEntries reads all entries from the given SST file pointer and
 // returns them as an array
@@ -19,6 +43,31 @@ func readEntries(f *os.File) []SstEntry {
 		e, err = readEntry(f)
 		if err == nil {
 			lis = append(lis, e)
+		}
+	}
+	return lis
+}
+
+func readDataBlockEntries(f *os.File, _start int, _end int) []SstEntry {
+	var lis []SstEntry
+	var err error
+	var e SstEntry
+
+	var start, end int64 = int64(_start), int64(_end)
+	offset, err := f.Seek(start, 0)
+	check(err)
+
+	for err == nil {
+		e, err = readEntry(f)
+		if err == nil {
+			lis = append(lis, e)
+		} else if err == io.EOF {
+			break
+		}
+		// Read until we reach the end of the block
+		offset, err = f.Seek(0, 1) // Current position
+		if err == nil && end > 0 && offset >= end {
+			break
 		}
 	}
 	return lis
@@ -66,15 +115,16 @@ func readEntry(f *os.File) (SstEntry, error) {
 
 // writeSst creates an SST file and corresponding index file using the given data.
 // seqNum is the sequence number of the latest entry.
-// keysPerSegment is the number of keys that will be stored for each sparse index.
-func writeSst(filename string, keys []string, m map[string]SstEntry, seqNum uint64, keysPerSegment int) {
-	f, err := os.Create(filename + ".bin")
+// keysPerIndex is the number of keys that will be stored for each sparse index.
+func writeSst(filename string, keys []string, m map[string]SstEntry, seqNum uint64, keysPerIndex int) {
+	baseFilename := sstBaseFilename(filename)
+	f, err := os.Create(baseFilename + ".bin")
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer f.Close()
 
-	findex, err := os.Create(filename + ".index")
+	findex, err := os.Create(baseFilename + ".index")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -88,15 +138,26 @@ func writeSst(filename string, keys []string, m map[string]SstEntry, seqNum uint
 	for i, k := range keys {
 		var e SstEntry
 		e = m[k]
-		bytes, err := writeEntry(f, e)
+		bytes, err := writeEntry(f, &e)
 		if err != nil {
 			log.Fatal(err)
 		}
-		if (i % keysPerSegment) == 0 {
-			writeKeyToIndex(findex, e.Key, bytes)
+		if (i % keysPerIndex) == 0 {
+			writeKeyToIndex(findex, e.Key, offset)
 		}
 		offset += bytes
 	}
+}
+
+func readIndexFile(filename string) ([]SstIndex, SstFileHeader, error) {
+	indexFilename := indexFileForBin(filename)
+	fp, err := os.Open(indexFilename)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer fp.Close()
+
+	return readIndex(fp)
 }
 
 // readIndex reads and returns the contents of the given SST index file pointer.
@@ -175,7 +236,7 @@ func writeKeyToIndex(f *os.File, key string, offset int) error {
 }
 
 // writeEntry writes data for a single key/value pair to file
-func writeEntry(f *os.File, data SstEntry) (int, error) {
+func writeEntry(f *os.File, data *SstEntry) (int, error) {
 	var bcount int = 0
 	var bytes int32 = int32(utf8.RuneCountInString(data.Key))
 
@@ -218,4 +279,11 @@ func writeEntry(f *os.File, data SstEntry) (int, error) {
 	bcount += 1
 
 	return bcount, nil
+}
+
+func NewSstFile(path string, filename string, filter *bloom.Filter) SstFile {
+	index, _, err := readIndexFile(path + "/" + filename)
+	check(err)
+	cache := make([]SstIndexData, len(index))
+	return SstFile{filename, filter, index, cache}
 }

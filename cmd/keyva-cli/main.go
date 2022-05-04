@@ -113,7 +113,7 @@ func dbMerge(level string) {
 }
 
 func main() {
-	db.SetMergeSettings(lsm.MergeSettings{MaxLevels: 5, NumberOfSstFiles: 2, Interval: 5 * time.Second})
+	db.SetMergeSettings(lsm.MergeSettings{MaxLevels: 5, NumberOfSstFiles: 2, Interval: 120 * time.Second})
 	commands := map[string]interface{}{
 		"help": help,
 		"cls":  cls,

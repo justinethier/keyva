@@ -2,11 +2,11 @@ package main
 
 import (
 	"bytes"
-  "fmt"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
-  "time"
+	"time"
 )
 
 func get(key string) {
@@ -45,9 +45,9 @@ func set(key string, contentType string, data []byte) {
 func main() {
 	//set("data-test", "text/plain", []byte("testing 1, 2, 3..."))
 	//get("data-test")
-  for i := 0; i < 100000; i++ {
-    key := fmt.Sprintf("%d", i)
-    doc := fmt.Sprintf("%d", time.Now().UnixNano())
-	  set(key, "text/plain", []byte(doc))
-  }
+	for i := 0; i < 100000; i++ {
+		key := fmt.Sprintf("%d", i)
+		doc := fmt.Sprintf("%d", time.Now().UnixNano())
+		set(key, "text/plain", []byte(doc))
+	}
 }

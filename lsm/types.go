@@ -28,8 +28,8 @@ type LsmTree struct {
 }
 
 type Config struct {
-  MemtblDataSize uint32
-  Merge MergeSettings
+	MemtblDataSize uint32
+	Merge          MergeSettings
 }
 
 // Define parameters for managing the SST levels

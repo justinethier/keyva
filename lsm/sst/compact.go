@@ -1,8 +1,8 @@
 package sst
 
 import (
-	"bufio"
 	"container/heap"
+	"encoding/binary"
 	"io/ioutil"
 	"log"
 	"os"
@@ -30,22 +30,28 @@ import (
 // is written. Note this is only applicable to SST level 0 which contains SST files that
 // may contain overlapping data.
 //
-func Compact(filenames []string, path string, recordsPerSst int, removeDeleted bool) (string, error) {
+func Compact(filenames []string, path string, recordsPerSst int, keysPerSegment int, removeDeleted bool) (string, error) {
 	h := &SstHeap{}
 	heap.Init(h)
 
-	// load header, reader from each SST file
+	// load header, file pointer from each SST
 	var seqNum uint64 = 0
 	for _, filename := range filenames {
-		_, reader, header, err := Open(filename)
+		_, header, err := readIndexFile(filename)
 		if err != nil {
 			return "", err
 		}
 		if header.Seq > seqNum {
 			seqNum = header.Seq
 		}
+		f, err := os.Open(filename)
+		if err != nil {
+			log.Fatal(err)
+			return "", err
+		}
+		defer f.Close()
 
-		pushNextToHeap(h, reader, header.Seq)
+		pushNextToHeap(h, f, header.Seq)
 	}
 
 	tmpDir, err := ioutil.TempDir(path, "merged-sst")
@@ -54,21 +60,45 @@ func Compact(filenames []string, path string, recordsPerSst int, removeDeleted b
 		return "", err
 	}
 
+	// create index/sst files
 	count := 0
-	filename := NextFilename(tmpDir)
-	f, err := os.Create(tmpDir + "/" + filename)
+	var offset int = 0
+	createFiles := func() (*os.File, *os.File) {
+		filename := NextFilename(tmpDir)
+		indexFilename := indexFileForBin(filename)
+		fbin, err := os.Create(tmpDir + "/" + filename)
+		check(err)
+		fidx, err := os.Create(tmpDir + "/" + indexFilename)
+		check(err)
+		return fbin, fidx
+	}
+	myWriteEntry := func(f *os.File, fidx *os.File, e *SstEntry, removeDeleted bool) {
+		if (e.Deleted && removeDeleted) || e == nil {
+			return
+		}
+		log.Println("Debug compact writing entry", e.Key)
+		bytes, _ := writeEntry(f, e)
+		if (count % keysPerSegment) == 0 {
+			log.Println("Debug compact writing to index", e.Key)
+			writeKeyToIndex(fidx, e.Key, offset)
+		}
+		offset += bytes
+	}
+	fbin, fidx := createFiles()
+	// write seq header to index file
+	err = binary.Write(fidx, binary.LittleEndian, seqNum)
 	check(err)
-	writeSstFileHeader(f, seqNum)
 
+	// while data
 	var cur, next *SstHeapNode
 	if h.Len() > 0 {
 		cur = heap.Pop(h).(*SstHeapNode)
-		pushNextToHeap(h, cur.Reader, cur.Seq)
+		pushNextToHeap(h, cur.File, cur.Seq)
 	}
 	for h.Len() > 0 {
 		// Get next heap entry
 		next := heap.Pop(h).(*SstHeapNode)
-		pushNextToHeap(h, next.Reader, next.Seq)
+		pushNextToHeap(h, next.File, next.Seq)
 
 		// Account for duplicate keys
 		if next.Entry.Key == cur.Entry.Key {
@@ -78,16 +108,18 @@ func Compact(filenames []string, path string, recordsPerSst int, removeDeleted b
 			continue
 		}
 
-		writeSstEntry(f, cur.Entry, removeDeleted)
+		// write data to index and SST file
+		myWriteEntry(fbin, fidx, cur.Entry, removeDeleted)
 		cur = next
 		count++
 		if count > recordsPerSst {
 			count = 0
-			f.Close()
-			filename = NextFilename(tmpDir)
-			f, err = os.Create(tmpDir + "/" + filename)
+			offset = 0
+			fbin.Close()
+			fidx.Close()
+			fbin, fidx = createFiles()
+			err = binary.Write(fidx, binary.LittleEndian, seqNum)
 			check(err)
-			writeSstFileHeader(f, seqNum)
 		}
 	}
 
@@ -95,22 +127,22 @@ func Compact(filenames []string, path string, recordsPerSst int, removeDeleted b
 	// Special case, only one SST entry
 	if next == nil {
 		if cur != nil {
-			writeSstEntry(f, cur.Entry, removeDeleted)
+			myWriteEntry(fbin, fidx, cur.Entry, removeDeleted)
 		}
 	} else {
-		writeSstEntry(f, next.Entry, removeDeleted)
+		myWriteEntry(fbin, fidx, next.Entry, removeDeleted)
 	}
 
 	log.Println("done writing sst files")
-	f.Close()
+	fbin.Close()
+	fidx.Close()
 
 	return tmpDir, nil
 }
 
-// pushNextToHeap is a helper function to read the next entry from the given file reader and push it onto the heap.
-func pushNextToHeap(h *SstHeap, reader *bufio.Reader, seq uint64) {
-	entry, err := Readln(reader)
+func pushNextToHeap(h *SstHeap, f *os.File, seq uint64) {
+	entry, err := readEntry(f)
 	if err == nil {
-		heap.Push(h, &SstHeapNode{seq, &entry, reader})
+		heap.Push(h, &SstHeapNode{seq, &entry, f})
 	}
 }

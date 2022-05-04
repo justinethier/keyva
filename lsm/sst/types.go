@@ -1,18 +1,13 @@
 package sst
 
 import (
-	"bufio"
 	"github.com/justinethier/keyva/bloom"
+	"os"
 	"time"
 )
 
 type SstFileHeader struct {
 	Seq uint64
-}
-
-type SstIndex struct {
-  Key string
-  offset int
 }
 
 type SstLevel struct {
@@ -22,7 +17,17 @@ type SstLevel struct {
 type SstFile struct {
 	Filename string
 	Filter   *bloom.Filter
-	Cache    []SstEntry // cached file contents
+	Index    []SstIndex
+	Cache    []SstIndexData
+}
+
+type SstIndex struct {
+	Key    string
+	offset int
+}
+
+type SstIndexData struct {
+	Data     []SstEntry // cached file contents
 	CachedAt time.Time  // timestamp when cache was last accessed
 	// may convert to seconds (best way to compare???) using -
 	//now := time.Now()      // current local time
@@ -40,9 +45,9 @@ type SstEntry struct {
 }
 
 type SstHeapNode struct {
-	Seq    uint64
-	Entry  *SstEntry
-	Reader *bufio.Reader
+	Seq   uint64
+	Entry *SstEntry
+	File  *os.File
 }
 
 // An min-heap of SST entries
