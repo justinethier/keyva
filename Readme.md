@@ -164,19 +164,16 @@ A bloom filter is used to determine if an SST might contain a key before we chec
 
 And there you have it.
 
-(project link)
-
-(what else?)
-
 # References
 
-TBD
+ * Key-value database (Wikipedia)
+ * B-tree data structure (Wikipedia)
+ * Atomicity (Wikipedia)
+ * How I built a key value store in Go ([web])(https://medium.com/@naqvi.jafar91/how-i-built-a-key-value-store-in-go-bd89f68062a8)
+ * Badger: Fast key-value DB in Go ([GitHub](https://github.com/dgraph-io/badger))
+ * https://github.com/gostor/awesome-go-storage
+ * If you want to dive deeper with databases: Database Design for Mere Mortals (Amazon)
+ * LSM tree paper - https://www.cs.umb.edu/~poneil/lsmtree.pdf
+ * https://www.igvita.com/2012/02/06/sstable-and-log-structured-storage-leveldb/
+ * https://medium.com/swlh/log-structured-merge-trees-9c8e2bea89e8
 
-
-# Older notes -
-
-### Caching
- 
-* right now an SST file is cached in memory when read. need a GC job and background thread for this
-* GC cached data
-* optional TTL for keys?
