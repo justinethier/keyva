@@ -162,7 +162,9 @@ A bloom filter is used to determine if an SST might contain a key before we chec
 
 # Conclusion
 
-And there you have it.
+![All done](docs/images/summer.jpg "all done")
+
+And there you have it!
 
 # References
 
