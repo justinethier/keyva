@@ -28,6 +28,7 @@ jobs:
       # Runs a single command using the runners shell
       - name: Test
         run: |
+          go get github.com/huandu/skiplist
           go version
           make test
 
