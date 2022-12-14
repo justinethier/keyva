@@ -91,6 +91,8 @@ Each file is immutable, making it easier to access data concurrently.
 
 A sparse index may be used to find data contained in an SST file. The index does not need to contain all keys since data is sorted. Instead it may include every Nth key.
 
+![SST Index](docs/images/lsm-sst-index.png "SST Index")
+
 ### Bloom Filter
 
 A bloom filter is used to determine if an SST might contain a key before we check the SST. If the bloom filter cannot find a key then we know the key cannot be contained in the corresponding SST.
@@ -98,8 +100,6 @@ A bloom filter is used to determine if an SST might contain a key before we chec
 This helps speed up read operations by reducing the amount of disk accesses when reading data:
 
 ![Reads](docs/images/lsm-Reads.drawio.png "reads")
-
-![SST Index](docs/images/lsm-sst-index.png "SST Index")
 
 ### Data Layout
 
