@@ -20,6 +20,8 @@ Eventually the MemTable will become too large to efficiently hold in memory and 
 
 SST files can efficiently serve large data sets.
 
+For example, Google Bigtable uses log-structured storage and is designed to scale to the petabyte range across a cluster of servers.
+
 # Data Model
 
 ## Key-Value Store
