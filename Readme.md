@@ -28,7 +28,9 @@ Keyva uses a LSM tree to store data in terms of key/value pairs. Each key is an 
 
 ## Inserts and Updates
 
-As depicted in the overview diagram, data is inserted into the MemTable/WAL and then flows into a series of SST tables. When data is updated, the original value for the key may still remain in the tree for some time. An update will be added to the MemTable/WAL just like any other insert operation. If the key already resides in the MemTable it will be overwritten with the new value. However, if the old key/value already exists in the table it most likely has already been flushed to an SST and will remain there until the new key/value is merged into that SST level. At this point the old data will finally be discarded and only the latest value will be retained for the key.
+As depicted in the overview diagram, data is inserted into the MemTable/WAL and then flows into a series of SST tables. 
+
+An update will be added to the MemTable/WAL just like any other insert operation. If the key already resides in the MemTable it will be overwritten with the new value. However, if the old key/value already exists in the table it most likely has already been flushed to an SST and will remain there for some time until the new key/value is merged into that SST level. At this point the old data will finally be discarded and only the latest value will be retained for the key.
 
 ## Reads
 
