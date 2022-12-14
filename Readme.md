@@ -4,7 +4,7 @@
 
 LSM trees are specifically designed to handle write-heavy workloads. They are used in many popular NoSQL databases including Apache Cassandra, Elasticsearch, Google Bigtable, Apache HBase, and InfluxDB. As well as embedded data stores such as LevelDB and RocksDB.
 
-This document provides implementation details for the LSM tree used by our project. The details are generic and would also apply to other implementations.
+This document provides implementation details for the LSM tree used by our project, keyva. The details are generic and would also apply to other implementations.
 
 # High-Level Design
 
@@ -16,9 +16,9 @@ The MemTable, a data structure stored entirely in memory, is initially used to s
 
 In order to recover data across restarts, the same data is also appended to a Write Ahead Log (WAL). The WAL is a simple append-only log that contains a single record for each operation made to the LSM tree.
 
-Eventually the MemTable will become too large to efficiently hold in memory and the data is flushed to a Sorted String Table (SST) file on disk. SST files are indexed and immutable, allowing fast concurrent data access. Eventually when enough SST files are generated a background job will compact them and merge the data into a new "level" of SST files. This gives the tree a chance to remove redudant records and efficiently re-organize data.
+Eventually the MemTable will become too large to efficiently hold in memory and the data is flushed to a Sorted String Table (SST) file on disk. SST files are indexed and immutable, allowing fast concurrent data access. Eventually when enough SST files are generated a background job will compact them and merge the data into a new "level" of SST files. This gives the tree a chance to remove redundant records and efficiently re-organize data.
 
-SST files can efficiently serve large data sets. (TODO: ref Google Bigtable TB or more of data)
+SST files can efficiently serve large data sets.
 
 # Data Model
 
@@ -28,7 +28,7 @@ Keyva uses a LSM tree to store data in terms of key/value pairs. Each key is an 
 
 ## Inserts and Updates
 
-As depicted in the overview diagram, data is inserted into the MemTable/WAL and then flows into a series of SST tables. An important consideration is that when data is updated, the original value for the key may still remain in the tree for some time. An update will be added to the MemTable/WAL just like any other insert operation. If they key already resides in the MemTable it will be overwritten with the new value. However, if the old key/value already exists in the table it most likely has already been flushed to an SST and will remain there until the new key/value is merged into that SST level. At this point the old data will finally be discarded and only the latest value will be retained for the key.
+As depicted in the overview diagram, data is inserted into the MemTable/WAL and then flows into a series of SST tables. When data is updated, the original value for the key may still remain in the tree for some time. An update will be added to the MemTable/WAL just like any other insert operation. If the key already resides in the MemTable it will be overwritten with the new value. However, if the old key/value already exists in the table it most likely has already been flushed to an SST and will remain there until the new key/value is merged into that SST level. At this point the old data will finally be discarded and only the latest value will be retained for the key.
 
 ## Reads
 
@@ -65,8 +65,7 @@ The same data may be written to disk multiple times as a key/value is promoted f
 All data added to the LSM tree is initially stored in Memtable, essentially an in-memory cache.
 
 Data in the MemTable needs to be arranged for fast access and ideally for low-cost concurrent read/write operations. A self-balanced tree such as a red-black tree can work well for this purpose. Our implementation uses a [skip list](https://en.wikipedia.org/wiki/Skip_list). 
-
-If a key already exists in the table when a request is recieved the value will be updated directly. This is different than the other data structures employed by the LSM tree, which are immutable.
+If a key already exists in the table when a request is received the value will be updated directly. This is different than the other data structures employed by the LSM tree, which are immutable.
 
 Deletes must be retained in the table as well. It is important to store a tombstone in case the key still contains data in the SST. The deletion will be resolved later when we compact SST files.
 
@@ -90,10 +89,15 @@ Each file is immutable, making it easier to access data concurrently.
 
 ### Sparse Index
 
-notes 
-- index does not need to contain all keys since data is sorted
-- include every Nth key in the "sparse" index
-- bloom filter helps avoid searching a sparse index that does not contain key
+A sparse index may be used to find data contained in an SST file. The index does not need to contain all keys since data is sorted. Instead it may include every Nth key.
+
+### Bloom Filter
+
+A bloom filter is used to determine if an SST might contain a key before we check the SST. If the bloom filter cannot find a key then we know the key cannot be contained in the corresponding SST.
+
+This helps speed up read operations by reducing the amount of disk accesses when reading data:
+
+![Reads](docs/images/lsm-Reads.drawio.png "reads")
 
 ![SST Index](docs/images/lsm-sst-index.png "SST Index")
 
@@ -115,7 +119,9 @@ Higher levels are arranged more efficiently. Consider the same data after being 
 
 As you can see data is guaranteed to be in sorted order across all files in this level. A binary search may be used to find the SST file containing a given key.
 
-(As a result we probably want to minimize the amount of data in level 0, especially for a large dataset)
+As a result we probably want to minimize the amount of data in level 0, especially for a large dataset.
+
+Each subsequent SST level will contain more data than the previous. With each subsequent level containing an order of magnitude more data than the previous there do not need to be many levels.
 
 #### Segment
 
@@ -125,40 +131,19 @@ Each segment also contains a header (sequence number) and an index.
 
 #### Block 
 
-Data within an SST is divided into blocks. There is one sparse index per block
-- binary files
-  - optional gzip
-  - block (keys within a single sparse index)
+Data within an SST is divided into blocks. There is one sparse index per block.
 
-this implementation
-- size of each segment / index
-- caching
+SST files may be binary files that are optionally compressed to save space.
 
 # Merge
 
-- compact/merge
-  - [k-way merge algorithm](https://en.wikipedia.org/wiki/K-way_merge_algorithm) - link to wiki and code for this
-  - when to begin, when to delete files, etc
-  - implemented as a streaming algorithm, to allow handling large datasets
-  - (keyva - reload levels afterwards, etc)
-- background job/thread
+A [k-way merge algorithm](https://en.wikipedia.org/wiki/K-way_merge_algorithm) is used to combine many SST files into a new SST level. Or alternatively to compact data within a single SST level.
 
-## older notes on Compact
+This algorithm can be implemented as a streaming algorithm to handle large datasets. For each SST file a single record containing the latest string and a file handle may be added to a heap. The next record is then taken from the heap, written to the current SST file, and a new record from the source SST is added back to the heap with the next string from that SST file. 
 
-* Take files from level `n`
-* Compact into new file(s) at level `n + 1`
-* Lock the LSM, swap in new files, and delete old files from first step
+In keyva the merge is implemented by [`sst.Compact`](https://github.com/justinethier/keyva/blob/e6ace48e588fc7eb6c1e98128c3a5de00280ee56/lsm/sst/compact.go#L33).
 
-When to do this? Want a web API function and potentially a background job as well.
-
-See article on this (Link TBD). Can compact at thresholds, time intervals (EG: time series DB), etc. Ultimately would want this to be flexible.
-
-# Bloom Filter
-
-A bloom filter is used to determine if an SST might contain a key before we check the SST. This helps speed up read operations by reducing the amount of disk accesses when reading data:
-
-![Reads](docs/images/lsm-Reads.drawio.png "reads")
-
+Data can be merged at regular intervals or at certain thresholds. For example a time series database might merge data at certain time intervals (daily, hourly, etc).
 
 # Conclusion
 
