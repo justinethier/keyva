@@ -27,5 +27,7 @@ jobs:
 
       # Runs a single command using the runners shell
       - name: Test
-        run: make test
+        run: |
+          go version
+          make test
 
