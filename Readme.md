@@ -18,9 +18,7 @@ In order to recover data across restarts, the same data is also appended to a Wr
 
 Eventually the MemTable will become too large to efficiently hold in memory and the data is flushed to a Sorted String Table (SST) file on disk. SST files are indexed and immutable, allowing fast concurrent data access. Eventually when enough SST files are generated a background job will compact them and merge the data into a new "level" of SST files. This gives the tree a chance to remove redundant records and efficiently re-organize data.
 
-SST files can efficiently serve large data sets.
-
-For example, Google Bigtable uses log-structured storage and is designed to scale to the petabyte range across a cluster of servers.
+SST files can efficiently serve large data sets. For example, Google Bigtable uses log-structured storage and is designed to scale to the petabyte range across a cluster of servers.
 
 # Data Model
 
