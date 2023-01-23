@@ -147,12 +147,6 @@ In keyva the merge is implemented by [`sst.Compact`](https://github.com/justinet
 
 Data can be merged at regular intervals or at certain thresholds. For example a time series database might merge data at certain time intervals (daily, hourly, etc).
 
-# Conclusion
-
-![All done](docs/images/summer.jpg "all done")
-
-And there you have it!
-
 # References
 
  * Key-value database (Wikipedia)
